@@ -29,7 +29,7 @@ import Security from "./pages/Settings/Security";
 import PhotoAndCover from "./pages/Settings/PhotoAndCover";
 import OAuthCallback from "./pages/OAuthCallback";
 import { AdminLayout } from "./components/admin/AdminLayout";
-import UsersPage from "./pages/admin/User";
+import UsersPage from "./pages/admin/user";
 import CommunicationPage from "./pages/admin/communication";
 import ReportsPage from "./pages/admin/reports";
 import TrashPage from "./pages/admin/trash";
