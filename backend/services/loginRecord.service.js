@@ -83,7 +83,8 @@ export const getActiveSessions = async (userId) => {
 };
 
 export const logoutAllSessions = async (userId) => {
-  return await LoginRecord.updateMany(
+  console.log(userId);
+  const result = await LoginRecord.updateMany(
     {
       userId,
       isRevoked: false,
@@ -94,4 +95,6 @@ export const logoutAllSessions = async (userId) => {
       isRevoked: true,
     }
   );
+  console.log(result);
+  return result;
 };

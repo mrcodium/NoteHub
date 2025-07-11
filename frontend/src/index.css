@@ -826,6 +826,11 @@ div[role="menuitem"] {
   @apply opacity-50 pointer-events-none;
 }
 
+input[type="password"]::-ms-reveal,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none;
+}
+
 .scrollbar-sm::-webkit-scrollbar {
   @apply w-1 h-1;
 }

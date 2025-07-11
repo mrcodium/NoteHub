@@ -143,7 +143,7 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="flex pt-8 items-center justify-center h-screen bg-background">
+    <div className="flex pt-8 items-center justify-center h-svh bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password</CardTitle>
@@ -301,15 +301,11 @@ const ForgotPasswordPage = () => {
                     !user || cooldown > 0 || isSendingOtp || !isValidIdentifier
                   }
                 >
-                  {isSendingOtp ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2 size-4" />
-                    </>
-                  ) : cooldown > 0 ? (
-                    `Resend in ${cooldown}s`
-                  ) : (
-                    "Get OTP"
-                  )}
+                  {
+                    isSendingOtp 
+                    ? <Loader2 className="animate-spin mr-2 size-4" />
+                    : cooldown > 0 ? cooldown : "Get OTP"
+                  }
                 </Button>
               </div>
 

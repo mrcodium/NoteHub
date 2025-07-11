@@ -111,7 +111,7 @@ function App() {
               path="/login"
               element={!authUser ? <LogInPage /> : <Navigate to="/" />}
             />
-            <Route path="/forget-password" element={<ForgetPasswordPage />} />
+            <Route path="/forgot-password" element={<ForgetPasswordPage />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
 
             {/* Nested routes inside Dashboard */}

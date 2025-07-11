@@ -12,7 +12,6 @@ export const protectRoute = async (req, res, next) => {
         code: "AUTH_REQUIRED",
       });
     }
-
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET, {
@@ -52,7 +51,7 @@ export const protectRoute = async (req, res, next) => {
     }
 
     // Fetch user separately
-    const user = await User.findById(session.userId).select("-password");
+    const user = await User.findById(session.userId).select("+password");
     if (!user) {
       await LoginRecord.findByIdAndUpdate(session._id, {
         isRevoked: true,

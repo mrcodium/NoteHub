@@ -289,7 +289,8 @@ export const logout = async (req, res) => {
 export const logoutAll = async (req, res) => {
   try {
     const { userId } = req.body; // todo req.user
-
+    if(!userId) return res.status(400).json({message: "UserID not provided"});
+    
     // Revoke all active sessions
     const result = await logoutAllSessions(userId);
 

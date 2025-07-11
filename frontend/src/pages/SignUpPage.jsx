@@ -219,7 +219,7 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="flex pt-8 items-center justify-center h-screen bg-background">
+    <div className="flex pt-8 items-center justify-center h-svh bg-background">
       <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
         <Card>
           <CardHeader>
@@ -360,15 +360,10 @@ const SignupPage = () => {
                         cooldown > 0 || isSendingOtp || emailStatus === "taken"
                       }
                     >
-                      {isSendingOtp ? (
-                        <>
-                          <Loader2 className="animate-spin mr-2 size-4" />
-                        </>
-                      ) : cooldown > 0 ? (
-                        `${cooldown}s`
-                      ) : (
-                        "Send OTP"
-                      )}
+                      {isSendingOtp 
+                        ? <Loader2 className="animate-spin mr-2 size-4" />
+                        : cooldown > 0 ? cooldown : "Send OTP"
+                      }
                     </Button>
                     {errors.otp && (
                       <p className="text-xs absolute left-0 -bottom-4 text-red-500">

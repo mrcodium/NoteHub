@@ -69,6 +69,24 @@ export const useAuthStore = create((set, get) => ({
       set({ isResettingPassword: false });
     }
   },
+
+  updatePassword: async ({currentPassword, newPassword})=>{
+    try {
+      set({isResettingPassword: true});
+      const response = await axiosInstance.put("/password/update", {
+        currentPassword, newPassword
+      });
+      toast.success(response.data.message || "Password updated successfully!");
+      return response.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update password");
+      console.error("Update password error:", error);
+      return null;
+    } finally{
+      set({isResettingPassword: false});
+    }
+  },
+
   getUser: async (identifier) => {
     try {
       const response = await axiosInstance.get(`/user/${identifier}`);
@@ -374,7 +392,6 @@ export const useAuthStore = create((set, get) => ({
 
     socket.on("online-users", (onlineUsers) => {
       set({ onlineUsers });
-      console.log(get().onlineUsers)
     });
   },
 

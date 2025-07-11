@@ -30,7 +30,7 @@ io.on("connection", (socket) => {
   if(!onlineUsers.has(userId)){
     onlineUsers.set(userId, new Set());
   }
-  console.log("connected: ", userId);
+  // console.log("connected: ", userId);
   onlineUsers.get(userId).add(socket.id);
 
   io.emit("online-users", getOnlineUsers());

@@ -10,18 +10,16 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import {
-  SidebarCloseTrigger,
   SidebarInset,
   SidebarOpenTrigger,
   SidebarProvider,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Link, Outlet } from "react-router-dom";
 import { useRouteStore } from "@/stores/useRouteStore";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Github, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import AddNoteDialog from "@/components/AddNoteDialog";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";

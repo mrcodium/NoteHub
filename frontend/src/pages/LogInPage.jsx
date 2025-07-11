@@ -52,7 +52,7 @@ const LogInPage = () => {
   };
 
   return (
-    <div className="flex pt-8 items-center justify-center h-screen bg-background">
+    <div className="flex pt-8 items-center justify-center h-svh bg-background">
       <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
         <Card>
           <CardHeader>
@@ -124,7 +124,7 @@ const LogInPage = () => {
                     )}
                   </div>
                   <Link
-                    to="/forget-password"
+                    to="/forgot-password"
                     className="text-sm underline-offset-2 hover:underline w-min whitespace-nowrap"
                   >
                     Forgot your password?

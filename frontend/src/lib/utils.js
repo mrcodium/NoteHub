@@ -34,3 +34,17 @@ export const formatDate = (isoString) => {
   return formattedDate;
 }
 
+export const formatDeviceInfo = (device) => {
+  if (!device) return "Unknown device";
+  return `${device.browser?.name || "Unknown browser"} on ${
+    device.os?.name || "Unknown OS"
+  }`;
+};
+
+
+export const formatLocation = (location) => {
+  if (!location) return "Unknown location";
+  return `${location.city || ""}${
+    location.city && location.country ? ", " : ""
+  }${location.country || ""}`;
+};

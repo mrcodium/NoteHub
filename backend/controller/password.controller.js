@@ -2,30 +2,31 @@ import bcrypt from "bcryptjs";
 import validator from "validator";
 import User from "../model/user.model.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
+import { logoutAllSessions } from "../services/loginRecord.service.js";
 
 export const requestResetPasswordOtp = async (req, res) => {
   const { identifier } = req.body;
-  
+
   if (!identifier) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: "Username or email is required" 
+      message: "Username or email is required",
     });
   }
 
   try {
     // Check if identifier is email or username
     const isEmail = validator.isEmail(identifier);
-    const query = isEmail 
+    const query = isEmail
       ? { email: validator.normalizeEmail(identifier) }
       : { userName: identifier };
 
     const user = await User.findOne(query);
 
     if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "User not found" 
+        message: "User not found",
       });
     }
 
@@ -37,13 +38,16 @@ export const requestResetPasswordOtp = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: `OTP sent to ${user.email}`,
-      email: user.email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + b.replace(/./g, '*') + c) // Partially mask email
+      email: user.email.replace(
+        /(.{2})(.*)(@.*)/,
+        (_, a, b, c) => a + b.replace(/./g, "*") + c
+      ), // Partially mask email
     });
   } catch (error) {
     console.error("Password reset OTP error:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      message: "Failed to send OTP" 
+      message: "Failed to send OTP",
     });
   }
 };
@@ -52,31 +56,32 @@ export const resetPassword = async (req, res) => {
   const { identifier, newPassword, otp } = req.body;
 
   if (!identifier || !newPassword || !otp) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: "All fields are required" 
+      message: "All fields are required",
     });
   }
 
-  if (!validator.isLength(inputPassword, { min: 6 })) {
+  if (!validator.isLength(newPassword, { min: 6 })) {
     return res.status(400).json({
       success: false,
-      message: "Password must be at least 6 characters with uppercase, lowercase, number and symbol"
+      message:
+        "Password must be at least 6 characters with uppercase, lowercase, number and symbol",
     });
   }
 
   try {
     const isEmail = validator.isEmail(identifier);
     const user = await User.findOne(
-      isEmail 
-        ? { email: validator.normalizeEmail(identifier) } 
+      isEmail
+        ? { email: validator.normalizeEmail(identifier) }
         : { userName: identifier }
     );
 
     if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "User not found" 
+        message: "User not found",
       });
     }
 
@@ -89,52 +94,62 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     user.password = hashedPassword;
     await user.save();
-
-    return res.status(200).json({ 
+    await logoutAllSessions(user._id);
+    return res.status(200).json({
       success: true,
-      message: "Password reset successfully" 
+      message: "Password reset successfully",
     });
   } catch (error) {
     console.error("Password reset error:", error);
-    const status = error.name === 'ValidationError' ? 400 : 500;
+    const status = error.name === "ValidationError" ? 400 : 500;
     return res.status(status).json({
       success: false,
-      message: error.message || "Password reset failed"
+      message: error.message || "Password reset failed",
     });
   }
 };
 
 export const updatePassword = async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+  const { currentPassword, newPassword } = req.body;
   const { user } = req;
+  console.log({
+    currentPassword,
+    newPassword,
+    user,
+  });
 
-  if (!oldPassword || !newPassword) {
-    return res.status(400).json({ 
+  if (!user || !user.password) {
+    return res.status(401).json({message: "Unauthorized user"});
+  }
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
       success: false,
-      message: "Both old and new passwords are required" 
+      message: "Both old and new passwords are required",
     });
   }
 
-  if (oldPassword === newPassword) {
+  if (currentPassword === newPassword) {
     return res.status(400).json({
       success: false,
-      message: "New password must be different from old password"
+      message: "New password must be different from old password",
     });
   }
 
-  if (!validator.isLength(inputPassword, { min: 6 })) {
+  if (!validator.isLength(newPassword, { min: 6 })) {
     return res.status(400).json({
       success: false,
-      message: "New password must contain at least 6 characters with uppercase, lowercase, number and symbol"
+      message:
+        "New password must contain at least 6 characters with uppercase, lowercase, number and symbol",
     });
   }
 
   try {
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: "Current password is incorrect" 
+        message: "Current password is incorrect",
       });
     }
 
@@ -143,18 +158,18 @@ export const updatePassword = async (req, res) => {
     await user.save();
 
     // Return user data without sensitive information
+    await logoutAllSessions(user._id);
     const { password, ...safeUser } = user.toObject();
-    
     return res.status(200).json({
       success: true,
       user: safeUser,
-      message: "Password updated successfully"
+      message: "Password updated successfully",
     });
   } catch (error) {
     console.error("Password update error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to update password"
+      message: "Failed to update password",
     });
   }
 };
