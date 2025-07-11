@@ -834,10 +834,16 @@ div[role="menuitem"] {
 }
 
 *::-webkit-scrollbar-track {
-  @apply bg-accent rounded-full;
+  @apply bg-accent;
 }
 *::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/50 rounded-full;
+  @apply bg-muted-foreground/50;
+}
+@media (max-width: 640px) {
+  *::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
 }
 
 .line-clamp-2 {
@@ -882,6 +888,7 @@ div:has(> .tiptap.ProseMirror) {
   flex: 1;
   overflow-y: auto;
 }
+
 .tiptap.ProseMirror {
   @apply max-w-screen-md;
 }

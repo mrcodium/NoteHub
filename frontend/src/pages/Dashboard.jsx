@@ -54,7 +54,7 @@ const DashboardContent = () => {
 
       <SidebarInset className="scrollbar-custom relative w-max h-svh overflow-hidden">
         <header className="z-50 flex border border-b sticky top-0 bg-background justify-between h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex items-center gap-2 px-4 min-w-0 flex-1">
             {!isSidebarOpen && (
               <>
                 <TooltipWrapper message={"Open Sidebar Ctrl M"}>
@@ -63,7 +63,8 @@ const DashboardContent = () => {
                 <Separator orientation="vertical" className="mr-2 h-4" />
               </>
             )}
-            <Breadcrumb>
+
+            <Breadcrumb className="flex-1 min-w-0">
               <BreadcrumbList className="flex-nowrap">
                 {routes.length > 1 ? (
                   <>
@@ -97,10 +98,10 @@ const DashboardContent = () => {
 
                 {/* Always show the last route */}
                 {routes.length > 0 && (
-                  <BreadcrumbItem className="whitespace-nowrap overflow-hidden overflow-ellipsis">
+                  <BreadcrumbItem className="min-w-0">
                     <Link
                       to={routes[routes.length - 1].path}
-                      className="text-foreground"
+                      className="text-foreground truncate block min-w-0"
                     >
                       {routes[routes.length - 1].name}
                     </Link>
@@ -110,7 +111,7 @@ const DashboardContent = () => {
             </Breadcrumb>
           </div>
 
-          <div className="mr-4 flex items-center gap-2">
+          <div className="flex-shrink-0 mr-4 flex items-center gap-2">
             <AddNoteDialog
               trigger={
                 <Button className={`size-8 sm:size-auto`}>

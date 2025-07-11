@@ -36,7 +36,6 @@ import {
   COLORS,
 } from "./config/menu.config";
 import FileDropZone from "../FileDropZone";
-import { MathsSymbol } from "./MathsSymbol";
 import { LinkDialog } from "./LinkDialog";
 
 export const MenuBar = ({ noteId }) => {
@@ -74,12 +73,12 @@ export const MenuBar = ({ noteId }) => {
 
   if (!editor) {
     return (
-      <div className="control-group mb-2 sticky top-0 z-10 bg-background border-b border-input" />
+      <div className="controll-group mb-2 sticky top-0 z-10 bg-background border-b border-input" />
     );
   }
 
   return (
-    <div className="control-group mb-2 sticky top-0 z-10 bg-background border-b border-input">
+    <div className="controll-group mb-2 sticky top-0 z-10 bg-background border-b border-input">
       <div className="Button-group flex flex-wrap gap-1">
         {FORMATTING_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
           <TooltipWrapper key={index} message={tooltip}>
@@ -170,8 +169,6 @@ export const MenuBar = ({ noteId }) => {
           </TooltipWrapper>
         ))}
         <SelectHeading editor={editor} />
-
-        <MathsSymbol editor={editor} />
 
         <ColorPicker
           icon={HighlighterIcon}

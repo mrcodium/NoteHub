@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNoteStore } from "@/stores/useNoteStore";
-import { Copy, CopyCheck, Download, Pencil, X } from "lucide-react";
+import { Copy, CopyCheck, Pencil } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import parse from "html-react-parser";
@@ -11,12 +11,8 @@ import { createRoot } from "react-dom/client";
 import { toast } from "sonner";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import TooltipWrapper from "@/components/TooltipWrapper";
 
 const NotePage = () => {
   const { id } = useParams();
@@ -169,27 +165,33 @@ const NotePage = () => {
           open={!!selectedImage}
           onOpenChange={(open) => !open && setSelectedImage(null)}
         >
-          <DialogContent className="overflow-hidden p-0 sm:max-w-[90vw] sm:max-h-[90vh] w-max">
-            <div className="flex items-center justify-center">
+          <DialogContent
+            closeButtonClassName="top-2 left-2 right-auto bg-black md:size-6 flex items-center justify-center bg-neutral-200 text-neutral-600"
+            className="p-0 border-none w-auto h-auto max-w-[100vw] max-h-[100vh] overflow-hidden sm:rounded-lg"
+          >
+            <DialogTitle className="hidden">Image Dialog</DialogTitle>
+            <div className="flex items-center justify-center w-full h-full">
               {selectedImage && (
                 <img
                   src={selectedImage}
                   alt="Preview"
-                  className="max-w-full max-h-[70vh] object-contain"
+                  className="object-contain w-auto h-auto max-w-[100vw] max-h-[100vh]"
                 />
               )}
             </div>
           </DialogContent>
         </Dialog>
 
-        <Button
-          onClick={() => navigate(`editor`)}
-          variant="secondary"
-          className="fixed right-2 top-20 shadow-md z-10 font-bold flex items-center justify-center md:space-x-2 w-10 h-10 md:w-auto md:h-auto"
-        >
-          <Pencil />
-          <span className="hidden md:block">Edit</span>
-        </Button>
+        <TooltipWrapper message="Edit Content">
+          <Button
+            onClick={() => navigate(`editor`)}
+            variant="secondary"
+            className="fixed right-2 bottom-2 shadow-md z-10 font-bold flex items-center justify-center md:space-x-2 size-8 md:w-auto md:h-auto"
+          >
+            <Pencil />
+            <span className="hidden md:block">Edit</span>
+          </Button>
+        </TooltipWrapper>
         {parse(content)}
       </div>
     </div>
