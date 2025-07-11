@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import imageCompression from "browser-image-compression";
-import Calendar from "@/components/contributionCalendar/calendar";
+import Calendar from "@/components/contributionCalendar/Calendar";
 
 const ProfilePage = () => {
   const { authUser, uploadUserAvatar, isUploadingAvatar } = useAuthStore();
