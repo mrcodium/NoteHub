@@ -53,7 +53,7 @@ const DashboardContent = () => {
       <AppSidebar />
 
       <SidebarInset className="scrollbar-custom relative w-max h-svh overflow-hidden">
-        <header className="z-50 flex border border-b sticky top-0 bg-background justify-between h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <header className="z-50 flex border-b sticky top-0 bg-background justify-between h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4 min-w-0 flex-1">
             {!isSidebarOpen && (
               <>
