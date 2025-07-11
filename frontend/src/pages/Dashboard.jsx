@@ -78,15 +78,15 @@ const DashboardContent = () => {
                           <span className="sr-only">Toggle menu</span>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                          className="bg-popover w-32 max-w-52 p-1 border transition-all rounded-lg"
+                          className="w-32 max-w-52 transition-all"
                           align="start"
                         >
                           {routes.slice(0, -1).map((route, index) => (
                             <DropdownMenuItem
                               key={index}
-                              className="px-2 py-1 whitespace-nowrap overflow-hidden overflow-ellipsis cursor-pointer hover:bg-accent rounded-sm text-foreground"
+                              className="px-2 py-1 min-w-0 "
                             >
-                              <Link to={route.path}>{route.name}</Link>
+                              <Link className="block truncate whitespace-nowrap" to={route.path}>{route.name}</Link>
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>
