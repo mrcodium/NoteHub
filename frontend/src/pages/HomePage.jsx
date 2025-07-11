@@ -215,7 +215,7 @@ const HomePage = () => {
       <div className="space-y-8 max-w-screen-lg mx-auto">
         <div className="mb-8 text-2xl font-bold">
           <span>Welcome </span>
-          <span>{authUser?.fullName?.trim().split(/\s+/)[0] || "To Notehub"}</span>
+          <span>{authUser?.fullName?.trim()?.split(/\s+/)[0] || "To Notehub"}</span>
         </div>
         {isLoading ? (
           <NotesSkeleton />

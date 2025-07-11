@@ -44,13 +44,13 @@ const NavUser = () => {
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={authUser?.avatar} alt={authUser?.fullName} />
                 <AvatarFallback className="rounded-lg">
-                  {authUser
-                    ? authUser?.fullName
+                  {authUser?.fullName
+                    ? authUser.fullName
                         .trim()
                         .split(/\s+/)
-                        .map((w) => w[0].toUpperCase())
+                        .map((w) => w[0]?.toUpperCase() || "")
                         .join("")
-                        .slice(0, 2) || ""
+                        .slice(0, 2) || "NH"
                     : "NH"}
                 </AvatarFallback>
               </Avatar>
@@ -78,13 +78,13 @@ const NavUser = () => {
                     alt={authUser?.fullName}
                   />
                   <AvatarFallback className="rounded-lg">
-                    {authUser
+                    {authUser?.fullName
                       ? authUser.fullName
                           .trim()
                           .split(/\s+/)
-                          .map((w) => w[0].toUpperCase())
+                          .map((w) => w[0]?.toUpperCase() || "")
                           .join("")
-                          .slice(0, 2)
+                          .slice(0, 2) || "NH"
                       : "NH"}
                   </AvatarFallback>
                 </Avatar>

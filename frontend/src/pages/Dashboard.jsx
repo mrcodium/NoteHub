@@ -148,11 +148,11 @@ const DashboardContent = () => {
                     referrerPolicy="no-referrer"
                   />
                   <AvatarFallback className="rounded-lg">
-                    {authUser
-                      ? authUser?.fullName
+                    {authUser?.fullName
+                      ? authUser.fullName
                           .trim()
                           .split(/\s+/)
-                          .map((w) => w[0].toUpperCase())
+                          .map((w) => w[0]?.toUpperCase() || "")
                           .join("")
                           .slice(0, 2) || "NH"
                       : "NH"}
