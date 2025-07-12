@@ -187,9 +187,10 @@ export const useNoteStore = create((set, get) => ({
     try {
       const res = await axiosInstance.put("collection/", data);
       const { collection, message } = res.data;
+      console.log({collection, message});
       set((state) => ({
         collections: state.collections.map((c) => {
-          if (c.id === collection._id) {
+          if (c._id === collection._id) {
             return {
               ...c,
               name: collection.name,
@@ -199,7 +200,7 @@ export const useNoteStore = create((set, get) => ({
           return c;
         }),
       }));
-
+      console.log(get().collections);
       toast.success(message);
     } catch (error) {
       console.log(error);

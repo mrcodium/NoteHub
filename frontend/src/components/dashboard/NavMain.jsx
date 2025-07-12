@@ -236,18 +236,23 @@ const NavMain = ({ collections, searchQuery }) => {
 
     const filteredCollections = collections
         .map((collection) => {
-            const processedNotes = collection.notes
+            // Only filter notes if there's a search query
+            const processedNotes = searchQuery
+                ? collection.notes
                     .filter((note) => note.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .map((note)=>({
+                    .map((note) => ({
                         ...note,
                         name: highlightMatch(note.name, searchQuery)
                     }))
+                : collection.notes; // Return all notes when not searching
+
             return {
                 ...collection,
                 notes: processedNotes,
             };
         })
-        .filter((collection) => collection.notes.length > 0)
+        // Only filter out empty collections when searching
+        .filter((collection) => !searchQuery || collection.notes.length > 0)
         .sort((a, b) => {
             const aPinned = pinnedCollections.includes(a._id);
             const bPinned = pinnedCollections.includes(b._id);
