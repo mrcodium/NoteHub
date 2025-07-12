@@ -72,20 +72,38 @@ const CollectionsOption = ({
 
   const handleDelete = useCallback(() => {
     deleteCollection(collection._id);
-    setOpen(false);
     setIsDeleteDialogOpen(false);
+    setOpen(false);
+    setDeleteConfirmationText('');
   }, [collection._id, deleteCollection]);
 
   const handleOpenChange = useCallback((isOpen) => {
+    if (!isOpen && isDeleteDialogOpen) {
+      // Don't close if delete dialog is open
+      return;
+    }
     setOpen(isOpen);
     onOpenChange?.(isOpen);
-  }, [onOpenChange]);
+  }, [onOpenChange, isDeleteDialogOpen]);
 
   return (
     <>
       {/* Delete Confirmation Dialog */}
-       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+      <Dialog 
+        open={isDeleteDialogOpen} 
+        onOpenChange={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) {
+            setDeleteConfirmationText('');
+          }
+        }}
+      >
+        <DialogContent
+          onInteractOutside={(e) => {
+            // Prevent closing when clicking outside
+            e.preventDefault();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Delete Collection</DialogTitle>
             <DialogDescription>
@@ -122,7 +140,7 @@ const CollectionsOption = ({
         </DialogContent>
       </Dialog>
 
-
+      {/* Main Popover */}
       <Popover
         modal={true}
         open={open}
