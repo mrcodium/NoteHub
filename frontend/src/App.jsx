@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import "./stores/useNetworkStore";
 import { ThemeProvider } from "./components/theme-provider";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "./stores/useAuthStore";
