@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     const sockets = onlineUsers.get(userId);
     sockets.delete(socket.id);
-    console.log(`Socket ${socket.id} disconnected for user ${userId}`);
+    // console.log(`Socket ${socket.id} disconnected for user ${userId}`);
     
     if(sockets.size === 0) onlineUsers.delete(userId);
     io.emit("online-users", getOnlineUsers());

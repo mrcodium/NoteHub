@@ -227,7 +227,7 @@ export const MenuBar = ({ noteId }) => {
             <FileDropZone editor={editor} />
           </DialogContent>
         </Dialog>
-        {console.log("editor: ", editor)}
+        
         <LinkDialog editor={editor} />
 
         <TooltipWrapper message={"Save Content"}>

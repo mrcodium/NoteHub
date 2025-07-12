@@ -1,16 +1,16 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import {
   Bold,
   Code2,
   EllipsisVertical,
   File,
-  Folder,
   Hash,
   ListChecksIcon,
   Plus,
   Table,
 } from "lucide-react";
+
 import { axiosInstance } from "@/lib/axios";
 import { formatTime, formatDate } from "@/lib/utils.js";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import NotesOption from "@/components/NotesOption";
 import { Badge } from "@/components/ui/badge";
 import AddNoteDialog from "@/components/AddNoteDialog";
 import { Input } from "@/components/ui/input";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 // Feature card data
 const featureCards = [
@@ -185,29 +185,30 @@ const EmptyState = () => (
 // Main component
 const HomePage = () => {
   const { authUser } = useAuthStore();
-  const { collections } = useNoteStore();
+  const { collections, isCollectionsLoading } = useNoteStore();
 
-  const [notes, setNotes] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const NOTES_LIMIT = 10;
+  const totalNotesCount = useMemo(() => {
+    return collections.reduce(
+      (total, collection) => total + (collection.notes?.length || 0),
+      0
+    );
+  }, [collections]);
+  const latestNotes = useMemo(() => {
+    if (!collections || collections.length === 0) return [];
 
-  const fetchNotes = async () => {
-    try {
-      const res = await axiosInstance.get("/note");
-      setNotes(res.data.notes);
-    } catch (error) {
-      console.error("Error fetching notes", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Flatten all notes from all collections
+    const allNotes = collections.flatMap((collection) =>
+      collection.notes.map((note) => ({
+        ...note,
+        collectionId: collection._id,
+        collectionName: collection.name,
+      }))
+    );
 
-  useEffect(() => {
-    setIsLoading(true);
-    fetchNotes();
-  }, []);
-
-  useEffect(() => {
-    fetchNotes();
+    return allNotes
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, NOTES_LIMIT);
   }, [collections]);
 
   return (
@@ -215,11 +216,13 @@ const HomePage = () => {
       <div className="space-y-8 max-w-screen-lg mx-auto">
         <div className="mb-8 text-2xl font-bold">
           <span>Welcome </span>
-          <span>{authUser?.fullName?.trim()?.split(/\s+/)[0] || "To Notehub"}</span>
+          <span>
+            {authUser?.fullName?.trim()?.split(/\s+/)[0] || "To Notehub"}
+          </span>
         </div>
-        {isLoading ? (
+        {isCollectionsLoading ? (
           <NotesSkeleton />
-        ) : notes.length === 0 ? (
+        ) : totalNotesCount === 0 ? (
           <>
             <EmptyState />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -235,15 +238,11 @@ const HomePage = () => {
           </>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {notes.map((note, index) => (
+            {latestNotes.map((note, index) => (
               <NoteCard
-                key={index}
+                key={`${note._id}-${index}`}
                 note={note}
-                collectionName={
-                  collections.find(
-                    (collection) => collection._id === note.collectionId
-                  )?.name
-                }
+                collectionName={note.collectionName}
               />
             ))}
           </div>

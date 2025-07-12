@@ -48,6 +48,7 @@ export const useNoteStore = create((set, get) => ({
       set({ isContentLoading: false });
     }
   },
+  
   getNoteName: (noteId) => {
     const { collections } = get();
     for (const collection of collections) {
@@ -273,4 +274,5 @@ export const useNoteStore = create((set, get) => ({
       toast.error(error.response.data.message);
     }
   },
+
 }));
