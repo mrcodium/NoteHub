@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, EllipsisVertical, File, Folder, MoreHorizontal, Pin } from "lucide-react"
+import { ChevronRight, EllipsisVertical, Folder, MoreHorizontal, Pin } from "lucide-react"
 import {
     Collapsible,
     CollapsibleContent,
@@ -24,8 +24,18 @@ import { Link } from "react-router-dom"
 import SidebarSkeleton from "../sekeletons/SidebarSkeleton"
 import NotesOption from "../NotesOption"
 import CollectionsOption from "../CollectionsOption"
-import { Button } from "../ui/button"
 import { useLocalStorage } from "@/stores/useLocalStorage"
+
+const highlightMatch = (text, query) => {
+  if (!query) return text;
+  
+  const parts = text.split(new RegExp(`(${query})`, 'gi'));
+  return parts.map((part, i) => 
+    part.toLowerCase() === query.toLowerCase() 
+      ? <span key={i} className="bg-yellow-200 text-black">{part}</span> 
+      : part
+  );
+};
 
 const NoteItem = ({ note }) => {
     const [isNoteRenaming, setIsNoteRenaming] = useState(false);
@@ -72,7 +82,6 @@ const NoteItem = ({ note }) => {
                 onClick={() => !isNoteRenaming && setselectedNote(note._id)}
             >
                 <div className={`flex items-center gap-0 w-full hover:bg-sidebar-accent rounded-md p-1 ${selectedNote === note._id && 'bg-accent'}`}>
-                    {/* <File className="opacity-50 size-4 flex-shrink-0" /> */}
 
                     {isNoteRenaming ? (
                         <Input
@@ -226,12 +235,18 @@ const NavMain = ({ collections, searchQuery }) => {
     }, []);
 
     const filteredCollections = collections
-        .map((collection) => ({
-            ...collection,
-            notes: collection.notes.filter((note) =>
-                note.name.toLowerCase().includes(searchQuery.toLowerCase())
-            ),
-        }))
+        .map((collection) => {
+            const processedNotes = collection.notes
+                    .filter((note) => note.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((note)=>({
+                        ...note,
+                        name: highlightMatch(note.name, searchQuery)
+                    }))
+            return {
+                ...collection,
+                notes: processedNotes,
+            };
+        })
         .filter((collection) => collection.notes.length > 0)
         .sort((a, b) => {
             const aPinned = pinnedCollections.includes(a._id);
