@@ -27,7 +27,7 @@ export function SidebarSearch({ inputRef, onSearch, defaultValue = '' }) {
         ref={inputRef}
         id="search"
         placeholder="Search notes..."
-        className="pl-8 h-8 w-full bg-background shadow-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+        className="text-sm pl-8 h-8 w-full bg-background shadow-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
       />

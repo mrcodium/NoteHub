@@ -10,14 +10,14 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import CollectionsOption from "@/components/CollectionsOption";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { axiosInstance } from "@/lib/axios";
 
 const ProfilePage = () => {
   const { username } = useParams();
   const { authUser, uploadUserAvatar, isUploadingAvatar } = useAuthStore();
   const [previewUrl, setPreviewUrl] = useState(null);
-  const { getCollections } = useNoteStore();
+  const { getAllCollections } = useNoteStore();
   const [pinnedCollections, setPinnedCollections] = useState([]);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -33,7 +33,7 @@ const ProfilePage = () => {
         const response = await axiosInstance.get(`/user/${username}`);
         setUser(response.data);
         
-        const collectionsData = await getCollections({
+        const collectionsData = await getAllCollections({
           userId: response.data?._id,
           guest: true,
         });
@@ -48,7 +48,7 @@ const ProfilePage = () => {
     };
 
     fetchData();
-  }, [username, getCollections]);
+  }, [username, getAllCollections]);
 
   const handleUploadAvatar = async (e) => {
     const file = e.target.files[0];
@@ -207,7 +207,7 @@ const ProfilePage = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{collection.name}</h3>
+                        <Link to={`${collection.name}`} className="hover:underline font-medium">{collection.name}</Link>
                         <Badge variant="secondary" className="text-xs">
                           {collection.notes.length} {collection.notes.length === 1 ? "note" : "notes"}
                         </Badge>

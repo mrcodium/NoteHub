@@ -9,7 +9,7 @@ const collectionSchema = new mongoose.Schema(
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
-            require: true,
+            required: true,
         },
         isGeneral: {
             type: Boolean,
@@ -19,5 +19,7 @@ const collectionSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-const Collection = mongoose.model('collection', collectionSchema);
+collectionSchema.index({ name: 1, userId: 1 }, { unique: true });
+
+const Collection = mongoose.model('Collection', collectionSchema);
 export default Collection;

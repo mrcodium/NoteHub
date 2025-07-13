@@ -165,10 +165,29 @@ export const useNoteStore = create((set, get) => ({
     }
   },
 
-  getCollections: async ({ userId, guest = false }) => {
+  getCollection: async ({ userId, name }) => {
+    try {
+      const res = await axiosInstance.get("collection/", {
+        params: {
+          userId,
+          name,
+        },
+      });
+      const { collection } = res.data;
+      return collection;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "failed to fetch collection"
+      );
+      console.log(error);
+      return null;
+    }
+  },
+
+  getAllCollections: async ({ userId, guest = false }) => {
     if (!guest) set({ isCollectionsLoading: true });
     try {
-      const res = await axiosInstance.get("collection/hierarchy", {
+      const res = await axiosInstance.get("collection/all-collections", {
         params: { userId },
       });
       const { collections } = res.data;

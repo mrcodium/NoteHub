@@ -25,16 +25,16 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { ModeToggleMini } from "../mode-toggle";
 
 const AppSidebar = (props) => {
-  const { getCollections, collections } = useNoteStore();
+  const { getAllCollections, collections } = useNoteStore();
   const { authUser } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const { collapseAll } = useLocalStorage();
 
   useEffect(() => {
-    getCollections({
+    getAllCollections({
       userId: authUser._id,
     });
-  }, [getCollections]);
+  }, [getAllCollections]);
 
   const handleCloseSearch = () => {
     setShowSearch(false);

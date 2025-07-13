@@ -13,6 +13,11 @@ export const createCollection = async (req, res) => {
         return res.status(400).json({ message: "Collection name is required." });
     }
     try {
+        const existingCollection = await Collection.findOne({name, userId: user._id});
+        if(existingCollection){
+            return res.status(400).json({message: `The repository ${name} already exists on this account`})
+        }
+
         const collection = await Collection.create({ name, userId: user._id });
         res.status(201).json({ 
             message: "Collection created successfully", 
@@ -81,45 +86,76 @@ export const renameCollection = async (req, res) => {
     }
 };
 
-export const getCollections = async (req, res) => {
+const getCollectionsAggregatePipeline = (userId, name = null) => {
+    const matchStage = {
+        userId: new mongoose.Types.ObjectId(userId),
+        ...(name && { name })
+    };
+
+    return [
+        { $match: matchStage },
+        {
+            $lookup: {
+                from: "notes",
+                localField: "_id",
+                foreignField: "collectionId",
+                as: "notes"
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                userId: 1,
+                isGeneral: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                imageUrls: 1,
+                notes: {
+                    _id: 1,
+                    name: 1,
+                    createdAt: 1,
+                    updatedAt: 1
+                }
+            }
+        }
+    ];
+};
+
+
+export const getAllCollections = async (req, res) => {
     const { userId } = req.query;
     if (!userId) {
         return res.status(400).json({ message: "userId not provided" });
     }
 
     try {
-        const collections = await Collection.aggregate([
-            { $match: { userId: new mongoose.Types.ObjectId(userId) } },
-            {
-                $lookup: {
-                    from: "notes",
-                    localField: "_id",
-                    foreignField: "collectionId",
-                    as: "notes",
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    name: 1,
-                    userId: 1,
-                    isGeneral: 1,
-                    createdAt: 1,
-                    updatedAt: 1,
-                    imageUrls: 1,
-                    notes: {
-                        _id: 1,
-                        name: 1,
-                        createdAt: 1,
-                        updatedAt: 1
-                    }
-                }
-            }
-        ])
-
+        const pipeline = getCollectionsAggregatePipeline(userId);
+        const collections = await Collection.aggregate(pipeline);
         res.status(200).json({ collections });
     } catch (error) {
         res.status(500).json({ message: "Internal server error." });
-        console.error("Error in renameCollection controller\n", error);
+        console.error("Error in getAllCollections controller\n", error);
     }
-}
+};
+
+export const getCollection = async (req, res) => {
+    const { userId, name } = req.query;
+    if (!userId || !name) {
+        return res.status(400).json({ message: "userId and name are required" });
+    }
+
+    try {
+        const pipeline = getCollectionsAggregatePipeline(userId, name);
+        const collection = await Collection.aggregate(pipeline);
+
+        if (!collection.length) {
+            return res.status(404).json({ message: "Collection not found" });
+        }
+
+        res.status(200).json({ collection: collection[0] });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error" });
+        console.error("Error in getCollection controller\n", error);
+    }
+};

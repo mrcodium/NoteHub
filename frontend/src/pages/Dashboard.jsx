@@ -148,11 +148,11 @@ const DashboardContent = () => {
                           >
                             {routes.slice(0, -1).map((route, index) => (
                               <Link
+                                key={index}
                                 className="block truncate whitespace-nowrap w-full"
                                 to={route.path}
                               >
                                 <DropdownMenuItem
-                                  key={index}
                                   className="px-2 py-1 min-w-0 "
                                 >
                                   {route.name}
@@ -192,7 +192,7 @@ const DashboardContent = () => {
                     </Button>
                     <Input
                       placeholder="Search users..."
-                      className="w-full"
+                      className="w-full text-sm"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoFocus
