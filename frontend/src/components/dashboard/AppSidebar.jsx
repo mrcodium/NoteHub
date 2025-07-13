@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { FolderPlus, CopyMinus, Search, X } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { CopyMinus, Search, X } from "lucide-react";
 
 import NavMain from "@/components/dashboard/NavMain";
 import NavUser from "@/components/dashboard/NavUser";
@@ -12,35 +12,29 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarOpenTrigger,
   SidebarRail,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { Button } from "../ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { SidebarSearch } from "./SidebarSearch";
 import TooltipWrapper from "../TooltipWrapper";
 import { useLocalStorage } from "@/stores/useLocalStorage";
 import SettingSidebar from "./SettingSidebar";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { ModeToggleMini } from "../mode-toggle";
 
 const AppSidebar = (props) => {
-  const { getHierarchy, createCollection, collections } = useNoteStore();
-  const [collectionName, setCollectionName] = useState("");
+  const { getCollections, collections } = useNoteStore();
+  const { authUser } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const { collapseAll } = useLocalStorage();
 
   useEffect(() => {
-    getHierarchy();
-  }, [getHierarchy]);
+    getCollections({
+      userId: authUser._id,
+    });
+  }, [getCollections]);
 
   const handleCloseSearch = () => {
     setShowSearch(false);
@@ -85,7 +79,7 @@ const AppSidebar = (props) => {
               <div className="flex buttons-container">
                 <TooltipWrapper message="Collapse All">
                   <Button
-                    className="size-7 text-sidebar-accent-foreground/70"
+                    className="size-8 text-sidebar-accent-foreground/70"
                     variant="ghost"
                     onClick={collapseAll}
                   >
@@ -93,9 +87,11 @@ const AppSidebar = (props) => {
                   </Button>
                 </TooltipWrapper>
 
+                <ModeToggleMini className={"text-accent-foreground/70"} />
+                
                 <TooltipWrapper message="Search File">
                   <Button
-                    className="size-7 w-7 h-7 text-sidebar-accent-foreground/70"
+                    className="size-8 text-sidebar-accent-foreground/70"
                     variant="ghost"
                     onClick={() => {
                       setShowSearch(true);

@@ -81,15 +81,15 @@ export const renameCollection = async (req, res) => {
     }
 };
 
-export const getHierarchy = async (req, res) => {
-    const { user } = req;
-    if (!user) {
-        return res.status(401).json({ message: "Unauthorized: user not found" });
+export const getCollections = async (req, res) => {
+    const { userId } = req.query;
+    if (!userId) {
+        return res.status(400).json({ message: "userId not provided" });
     }
 
     try {
         const collections = await Collection.aggregate([
-            { $match: { userId: user._id } },
+            { $match: { userId: new mongoose.Types.ObjectId(userId) } },
             {
                 $lookup: {
                     from: "notes",

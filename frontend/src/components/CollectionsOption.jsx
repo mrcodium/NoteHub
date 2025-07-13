@@ -1,9 +1,9 @@
 import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover'
-import React, { useEffect, useState, useCallback } from 'react'
-import { SidebarMenuAction, useSidebar } from './ui/sidebar'
+import React, { useState, useCallback } from 'react'
+import { useSidebar } from './ui/sidebar'
 import { Button } from './ui/button'
-import { Bookmark, FilePlus2, MoreHorizontal, Pencil, Pin, PinOff, Plus, Trash2 } from 'lucide-react'
-import { DropdownMenuSeparator, Label } from '@radix-ui/react-dropdown-menu'
+import { FilePlus2, Pencil, Pin, PinOff, Plus, Trash2 } from 'lucide-react'
+import { Label } from '@radix-ui/react-dropdown-menu'
 import { Input } from './ui/input'
 import { useNoteStore } from '@/stores/useNoteStore'
 import { Separator } from './ui/separator'
@@ -31,11 +31,7 @@ const CollectionsOption = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 
-  const {
-    deleteCollection,
-    renameCollection,
-    createNote,
-  } = useNoteStore();
+  const { deleteCollection, createNote } = useNoteStore();
   const navigate = useNavigate();
 
   const togglePin = useCallback(() => {
@@ -78,17 +74,13 @@ const CollectionsOption = ({
   }, [collection._id, deleteCollection]);
 
   const handleOpenChange = useCallback((isOpen) => {
-    if (!isOpen && isDeleteDialogOpen) {
-      // Don't close if delete dialog is open
-      return;
-    }
     setOpen(isOpen);
     onOpenChange?.(isOpen);
-  }, [onOpenChange, isDeleteDialogOpen]);
+  }, [onOpenChange]);
 
   return (
     <>
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog - Now outside Popover */}
       <Dialog 
         open={isDeleteDialogOpen} 
         onOpenChange={(open) => {
@@ -98,13 +90,8 @@ const CollectionsOption = ({
           }
         }}
       >
-        <DialogContent
-          onInteractOutside={(e) => {
-            // Prevent closing when clicking outside
-            e.preventDefault();
-          }}
-        >
-          <DialogHeader>
+        <DialogContent>
+          <DialogHeader className={"text-left"}>
             <DialogTitle>Delete Collection</DialogTitle>
             <DialogDescription>
               This action cannot be undone. This will permanently delete the collection and all notes within it.
@@ -119,7 +106,7 @@ const CollectionsOption = ({
               </div>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className={"flex flex-row gap-2 ml-auto"}>
             <Button
               variant="outline"
               onClick={() => {
@@ -142,7 +129,7 @@ const CollectionsOption = ({
 
       {/* Main Popover */}
       <Popover
-        modal={true}
+        // modal={true}
         open={open}
         onOpenChange={handleOpenChange}
       >

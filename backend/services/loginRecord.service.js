@@ -83,7 +83,6 @@ export const getActiveSessions = async (userId) => {
 };
 
 export const logoutAllSessions = async (userId) => {
-  console.log(userId);
   const result = await LoginRecord.updateMany(
     {
       userId,

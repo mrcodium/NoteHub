@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import Note from "../model/note.model.js";
-import { addContribution } from "../services/contribution.service.js";
 
 export const createNote = async (req, res) => {
     const { name, collectionId, content = "" } = req.body;
@@ -90,8 +89,6 @@ export const updateContent = async (req, res) => {
         if(!note) return res.status(404).json({ message: `note not found with id ${noteId}` });
         note.content = content;
         await note.save();
-        const result = await addContribution(user.userName, userLocalDateTime, offsetMinutes);
-        console.log(result);
         res.status(200).json({ message: "Notes updated successfully.", note });
     } catch (error) {
         console.log("Error in updateContent controller.\n", error);

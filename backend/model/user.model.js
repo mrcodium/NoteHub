@@ -47,9 +47,6 @@ const userSchema = new mongoose.Schema({
 
   // Account Status
   hasGoogleAuth:        { type: Boolean, default: false },
-  currentStreak:        { type: Number,  default: 0 },
-  maxStreak:            { type: Number,  default: 0 },
-  lastContributionDate: { type: Date,    default: null }
 }, 
 { 
   timestamps: true,

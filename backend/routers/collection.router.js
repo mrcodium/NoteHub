@@ -4,7 +4,7 @@ import {
     createCollection,
     deleteCollection,
     renameCollection,
-    getHierarchy
+    getCollections,
 } from '../controller/collection.controller.js';
 
 
@@ -13,7 +13,7 @@ router.use(protectRoute);
 
 router.post('/', createCollection);
 router.delete('/:_id', deleteCollection);
-router.get('/hierarchy', getHierarchy);
+router.get('/hierarchy', getCollections);
 router.put('/', renameCollection);
 
 export default router;

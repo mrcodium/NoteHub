@@ -24,7 +24,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
 } from "./ui/dialog";
 
 const NotesOption = ({ trigger, note, setIsRenaming }) => {
@@ -80,14 +79,14 @@ const NotesOption = ({ trigger, note, setIsRenaming }) => {
       {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
-          <DialogHeader>
+          <DialogHeader className={"text-left"}>
             <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
               This action cannot be undone. This will permanently delete the
               note.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className={"flex flex-row gap-2 ml-auto"}>
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}

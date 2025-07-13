@@ -9,7 +9,6 @@ import userRoutes from "./routers/user.router.js";
 import passwordRoutes from "./routers/password.router.js";
 import collectionRoutes from "./routers/collection.router.js";
 import noteRoutes from "./routers/note.router.js";
-import contributionRoutes from "./routers/contribution.router.js";
 import ImageRoutes from "./routers/Image.router.js";
 import searchRoutes from "./routers/search.router.js";
 import { app, server } from "./libs/socketio.js";
@@ -45,7 +44,6 @@ app.use("/api/search",       searchRoutes);
 app.use("/api/password",     passwordRoutes);
 app.use("/api/collection",   collectionRoutes);
 app.use("/api/note",         noteRoutes);
-app.use("/api/contribution", contributionRoutes);
 app.use("/api/images",       ImageRoutes);
 
 if(process.env.NODE_ENV === "production"){

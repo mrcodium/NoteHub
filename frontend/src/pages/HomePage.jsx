@@ -11,10 +11,9 @@ import {
   Table,
 } from "lucide-react";
 
-import { axiosInstance } from "@/lib/axios";
 import { formatTime, formatDate } from "@/lib/utils.js";
 import { Button } from "@/components/ui/button";
-import NotesSkeleton from "@/components/sekeletons/NotesSkeleton";
+import HomePageNotesSkeleton from "@/components/sekeletons/HomePageNotesSkeleton";
 import { useNoteStore } from "@/stores/useNoteStore";
 import NotesOption from "@/components/NotesOption";
 import { Badge } from "@/components/ui/badge";
@@ -221,7 +220,7 @@ const HomePage = () => {
           </span>
         </div>
         {isCollectionsLoading ? (
-          <NotesSkeleton />
+          <HomePageNotesSkeleton />
         ) : totalNotesCount === 0 ? (
           <>
             <EmptyState />

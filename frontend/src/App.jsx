@@ -65,13 +65,16 @@ function App() {
       if (segment === "note") {
         const noteId = segments[++i];
         path += `${noteId}/`;
-        let noteName = getNoteName(noteId);
-        if (noteName === null) {
-          noteName = "Not found";
-        }
+        let noteName = getNoteName(noteId) || "Not found";
         routes.push({ name: noteName, path });
         setselectedNote(noteId);
-      } else {
+      }
+      else if(segment === "user"){
+        const username = segments[++i];
+        path += `${username}/`;
+        routes.push({name: username, path});
+      } 
+      else {
         const name = segment;
         routes.push({ name, path });
       }
@@ -123,7 +126,7 @@ function App() {
               <Route index element={<HomePage />} />
               <Route path="note/:id" element={<NotePage />} />
               <Route path="note/:id/editor" element={<Tiptap />} />
-              <Route path="profile" element={<ProfilePage />} />
+              <Route path="user/:username" element={<ProfilePage />} />
               <Route path="notifications" element={<NotificationPage />} />
 
               <Route path="settings" element={<SettingsPage />}>

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Link } from "react-router-dom";
+import { ModeToggle } from "../mode-toggle";
 
 const NavUser = () => {
   const { isMobile } = useSidebar();
@@ -70,7 +71,7 @@ const NavUser = () => {
             align="end"
             sideOffset={4}
           >
-            <Link to="/profile">
+            <Link to={`/user/${authUser?.userName}`}>
               <DropdownMenuItem>
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
@@ -113,11 +114,7 @@ const NavUser = () => {
               </>
             )}
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <Link to="/settings">
+              <Link to="/settings/personalization">
                 <DropdownMenuItem>
                   <Settings />
                   Settings

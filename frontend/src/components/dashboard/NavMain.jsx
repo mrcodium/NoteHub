@@ -118,7 +118,7 @@ const NoteItem = ({ note }) => {
     );
 };
 
-const FolderCollapsible = ({ collection, pinnedCollections, setPinnedCollections }) => {
+const FolderCollapsible = ({ collection, pinnedCollections, setPinnedCollections, searchQuery}) => {
     const [isCollectionRenaming, setIsCollectionRenaming] = useState(false);
     const inputRef = useRef(null);
     const [isOptionsOpen, setIsOptionsOpen] = useState(false);
@@ -166,7 +166,7 @@ const FolderCollapsible = ({ collection, pinnedCollections, setPinnedCollections
     return (
         <Collapsible
             asChild
-            open={openedCollections[collection._id] || false}
+            open={searchQuery || openedCollections[collection._id] || false}
             className="group/collapsible"
             onOpenChange={(isExpanded)=>toggleCollection(collection._id, isExpanded)}
         >
@@ -175,7 +175,7 @@ const FolderCollapsible = ({ collection, pinnedCollections, setPinnedCollections
                     <CollapsibleTrigger asChild>
                         <SidebarMenuButton tooltip={collection.name}>
                             <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 size-4" />
-                            <Folder className="size-4" />
+                            <Folder className="size-4 text-muted-foreground fill-muted-foreground" />
                             <div className="flex-1 min-w-0">
                                 {isCollectionRenaming ? (
                                     <Input
@@ -276,6 +276,7 @@ const NavMain = ({ collections, searchQuery }) => {
                         collection={collection}
                         pinnedCollections={pinnedCollections}
                         setPinnedCollections={setPinnedCollections}
+                        searchQuery={searchQuery}
                     />
                 ))}
             </SidebarMenu>

@@ -48,7 +48,7 @@ export const useNoteStore = create((set, get) => ({
       set({ isContentLoading: false });
     }
   },
-  
+
   getNoteName: (noteId) => {
     const { collections } = get();
     for (const collection of collections) {
@@ -69,12 +69,12 @@ export const useNoteStore = create((set, get) => ({
       const now = new Date();
       const offsetMinutes = now.getTimezoneOffset();
 
-      const res = await axiosInstance.put('/note/', {
+      const res = await axiosInstance.put("/note/", {
         ...data,
         userLocalDateTime: now.toISOString(),
-        offsetMinutes
+        offsetMinutes,
       });
-      
+
       const { note, message } = res.data;
       set((state) => ({
         notesContent: {
@@ -99,7 +99,7 @@ export const useNoteStore = create((set, get) => ({
 
   insertNoteInCollection: (collectionId, note) => {
     console.log(get().collections);
-    
+
     set((state) => ({
       collections: state.collections.map((collection) =>
         collection._id === collectionId
@@ -165,19 +165,26 @@ export const useNoteStore = create((set, get) => ({
     }
   },
 
-  getHierarchy: async () => {
-    set({ isCollectionsLoading: true });
+  getCollections: async ({ userId, guest = false }) => {
+    if (!guest) set({ isCollectionsLoading: true });
     try {
-      const res = await axiosInstance.get("collection/hierarchy");
+      const res = await axiosInstance.get("collection/hierarchy", {
+        params: { userId },
+      });
       const { collections } = res.data;
-      set({ collections });
-
-      // count no of notes
-      const notesLength = collections.map((c) => c.notes.length);
-      localStorage.setItem("notesLength", JSON.stringify(notesLength));
+      if (!guest) {
+        set({ collections });
+        // count no of notes
+        localStorage.setItem(
+          "collectionLength",
+          JSON.stringify(collections.length)
+        );
+      }
+      return collections;
     } catch (error) {
       console.log(error);
       toast.error(error.response.data.message);
+      return null;
     } finally {
       set({ isCollectionsLoading: false });
     }
@@ -187,7 +194,7 @@ export const useNoteStore = create((set, get) => ({
     try {
       const res = await axiosInstance.put("collection/", data);
       const { collection, message } = res.data;
-      console.log({collection, message});
+      console.log({ collection, message });
       set((state) => ({
         collections: state.collections.map((c) => {
           if (c._id === collection._id) {
@@ -275,5 +282,4 @@ export const useNoteStore = create((set, get) => ({
       toast.error(error.response.data.message);
     }
   },
-
 }));
