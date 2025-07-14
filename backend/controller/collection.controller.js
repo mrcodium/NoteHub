@@ -86,10 +86,10 @@ export const renameCollection = async (req, res) => {
     }
 };
 
-const getCollectionsAggregatePipeline = (userId, name = null) => {
+const getCollectionsAggregatePipeline = (userId, slug = null) => {
     const matchStage = {
         userId: new mongoose.Types.ObjectId(userId),
-        ...(name && { name })
+        ...(slug && { slug })
     };
 
     return [
@@ -106,14 +106,16 @@ const getCollectionsAggregatePipeline = (userId, name = null) => {
             $project: {
                 _id: 1,
                 name: 1,
+                slug: 1,
+                visibility: 1,
                 userId: 1,
-                isGeneral: 1,
                 createdAt: 1,
                 updatedAt: 1,
-                imageUrls: 1,
                 notes: {
                     _id: 1,
                     name: 1,
+                    slug: 1,
+                    visibility: 1,
                     createdAt: 1,
                     updatedAt: 1
                 }
@@ -140,13 +142,14 @@ export const getAllCollections = async (req, res) => {
 };
 
 export const getCollection = async (req, res) => {
-    const { userId, name } = req.query;
-    if (!userId || !name) {
-        return res.status(400).json({ message: "userId and name are required" });
+    const { userId, slug } = req.query;
+    
+    if (!userId || !slug) {
+        return res.status(400).json({ message: "userId and slug are required" });
     }
 
     try {
-        const pipeline = getCollectionsAggregatePipeline(userId, name);
+        const pipeline = getCollectionsAggregatePipeline(userId, slug);
         const collection = await Collection.aggregate(pipeline);
 
         if (!collection.length) {

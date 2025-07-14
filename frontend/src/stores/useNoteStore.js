@@ -98,8 +98,6 @@ export const useNoteStore = create((set, get) => ({
   // ======= Utility methods for collections =======
 
   insertNoteInCollection: (collectionId, note) => {
-    console.log(get().collections);
-
     set((state) => ({
       collections: state.collections.map((collection) =>
         collection._id === collectionId
@@ -165,20 +163,20 @@ export const useNoteStore = create((set, get) => ({
     }
   },
 
-  getCollection: async ({ userId, name }) => {
+  getCollection: async ({ userId, slug }) => {
     try {
       const res = await axiosInstance.get("collection/", {
         params: {
           userId,
-          name,
+          slug,
         },
       });
       const { collection } = res.data;
       return collection;
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "failed to fetch collection"
-      );
+      // toast.error(
+      //   error.response?.data?.message || "failed to fetch collection"
+      // );
       console.log(error);
       return null;
     }
@@ -236,7 +234,8 @@ export const useNoteStore = create((set, get) => ({
 
   createNote: async (data) => {
     //data:{name, collectionId }
-
+    console.log(data);
+    
     set({ isCreatingNote: true });
     const { collectionId } = data;
     try {

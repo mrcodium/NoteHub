@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 import { Input } from "./ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useNoteStore } from "@/stores/useNoteStore";
-import { Button } from "./ui/button";
 
 
 
@@ -75,23 +74,20 @@ export const NoteCard = ({ note, collectionName }) => {
 
           <div className="opacity-1 group-hover/notecard:opacity-100 transition-opacity">
             <NotesOption
-              trigger={
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <EllipsisVertical className="size-4" />
-                </Button>
-              }
+              trigger={<EllipsisVertical className="size-4" />}
               note={note}
               setIsRenaming={setIsRenaming}
             />
           </div>
         </div>
-
-        <Badge
-          variant="secondary"
-          className="mb-2 hover:bg-secondary text-xs font-normal mt-1"
-        >
-          {collectionName}
-        </Badge>
+        {(collectionName) &&
+          (<Badge
+            variant="secondary"
+            className="mb-2 hover:bg-secondary text-xs font-normal mt-1"
+          >
+            {collectionName}
+          </Badge>)
+        }
 
         <div className="flex gap-2 items-center text-muted-foreground text-xs justify-between">
           <p>{formatDate(note.createdAt)}</p>

@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Link, useParams } from "react-router-dom";
 import { axiosInstance } from "@/lib/axios";
+import ProfilePageSkeleton from "@/components/sekeletons/ProfilePageSkeleton";
 
 const ProfilePage = () => {
   const { username } = useParams();
@@ -32,7 +33,7 @@ const ProfilePage = () => {
         setIsLoading(true);
         const response = await axiosInstance.get(`/user/${username}`);
         setUser(response.data);
-        
+
         const collectionsData = await getAllCollections({
           userId: response.data?._id,
           guest: true,
@@ -80,24 +81,7 @@ const ProfilePage = () => {
     return pinnedCollections.includes(collectionId);
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-4 overflow-auto">
-        <Card className="max-w-screen-md mx-auto overflow-hidden shadow-sm animate-pulse">
-          <div className="h-52 w-full bg-muted" />
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <div className="size-48 shrink-0 border-8 border-background -mt-14 rounded-full bg-muted" />
-              <div className="space-y-2">
-                <div className="h-6 w-48 bg-muted rounded" />
-                <div className="h-4 w-32 bg-muted rounded" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (isLoading) return <ProfilePageSkeleton/>
 
   if (!user) {
     return (
@@ -105,7 +89,8 @@ const ProfilePage = () => {
         <Card className="max-w-screen-md w-full mx-auto p-8 text-center">
           <h2 className="text-xl font-semibold">User not found</h2>
           <p className="text-muted-foreground mt-2">
-            The user @{username} doesn't exist or you don't have permission to view this profile.
+            The user @{username} doesn't exist or you don't have permission to
+            view this profile.
           </p>
         </Card>
       </div>
@@ -115,25 +100,29 @@ const ProfilePage = () => {
   return (
     <div className="p-4 overflow-auto">
       {/* Profile Card */}
-      <Card className={cn("max-w-screen-md mx-auto overflow-hidden shadow-sm", isLoading && "animate-pulse")}>
-        <div className="h-52 overflow-hidden bg-gradient-to-r relative">
-          <Avatar>
-            <AvatarImage
-              className="w-full h-full object-cover"
-              src={user?.cover}
-            />
-            <AvatarFallback>
-              <img
-                className="object-cover w-full h-full dark:brightness-[0.2]"
-                src="https://ui.shadcn.com/placeholder.svg"
-                alt="" 
-              />
-            </AvatarFallback>
-          </Avatar>
+      <Card
+        className={cn(
+          "max-w-screen-md mx-auto overflow-hidden shadow-sm",
+          isLoading && "animate-pulse"
+        )}
+      >
+        <div
+          className="relative max-h-48 w-full overflow-hidden bg-gradient-to-r from-transparent to-black/50"
+          style={{ aspectRatio: "3/1" }}
+        >
+          <img
+            src={user?.cover}
+            alt="User cover"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://ui.shadcn.com/placeholder.svg";
+              e.currentTarget.classList.add("dark:brightness-[0.2]");
+            }}
+          />
         </div>
         <CardContent>
           <div className="flex items-center space-x-4">
-            <Avatar className="relative shadow-md size-48 shrink-0 border-8 border-background -mt-14 rounded-full">
+            <Avatar className="relative shadow-md size-28 sm:size-48 shrink-0 border-4 sm:border-8 border-background -mt-14 rounded-full">
               <AvatarImage
                 className="w-full h-full object-cover rounded-full bg-background"
                 src={previewUrl || user?.avatar}
@@ -147,13 +136,19 @@ const ProfilePage = () => {
                 />
               </AvatarFallback>
               {isOwner && (
-                <Button 
-                  variant="secondary" 
-                  size="icon" 
-                  className="p-0 absolute bottom-2 right-2 z-10 pointer"
+                <Button
+                  variant="secondary"
+                  className="p-0 size-7 sm:size-8 absolute bottom-0 right-0 sm:bottom-2 sm:right-2 z-10 pointer"
                 >
-                  <label htmlFor="upload-photo" className="p-4 flex items-center space-x-2 cursor-pointer">
-                    {isUploadingAvatar ? <Loader2 className="animate-spin" /> : <Camera />}
+                  <label
+                    htmlFor="upload-photo"
+                    className="p-4 flex items-center space-x-2 cursor-pointer"
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <Camera />
+                    )}
                     <input
                       type="file"
                       hidden
@@ -167,8 +162,8 @@ const ProfilePage = () => {
               )}
             </Avatar>
             <div>
-              <h2 className="text-xl font-semibold">{user?.fullName}</h2>
-              <p className="text-muted-foreground">@{user?.userName}</p>
+              <h2 className="text-base sm:text-xl font-semibold">{user?.fullName}</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">@{user?.userName}</p>
             </div>
           </div>
         </CardContent>
@@ -179,10 +174,11 @@ const ProfilePage = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Collections</h2>
           <div className="text-sm text-muted-foreground">
-            {collections.length} {collections.length === 1 ? "collection" : "collections"}
+            {collections.length}{" "}
+            {collections.length === 1 ? "collection" : "collections"}
           </div>
         </div>
-        
+
         {collections.length === 0 ? (
           <Card className="py-12 text-center">
             <p className="text-muted-foreground">No collections found</p>
@@ -190,8 +186,8 @@ const ProfilePage = () => {
         ) : (
           <div className="space-y-3">
             {collections.map((collection) => (
-              <Card 
-                key={collection._id} 
+              <Card
+                key={collection._id}
                 className={cn(
                   "group hover:shadow-md transition-all",
                   isPinned(collection._id) && "bg-input/50"
@@ -200,29 +196,40 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-start gap-3">
                     <div className="relative">
-                      <Bookmark className={cn(
-                        "h-5 w-5 mt-1",
-                        isPinned(collection._id) ? "text-foreground fill-foreground" : "text-muted-foreground"
-                      )} />
+                      <Bookmark
+                        className={cn(
+                          "h-5 w-5 mt-1",
+                          isPinned(collection._id)
+                            ? "text-foreground fill-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <Link to={`${collection.name}`} className="hover:underline font-medium">{collection.name}</Link>
+                        <Link
+                          to={`${collection.slug}`}
+                          className="hover:underline font-medium"
+                        >
+                          {collection.name}
+                        </Link>
                         <Badge variant="secondary" className="text-xs">
-                          {collection.notes.length} {collection.notes.length === 1 ? "note" : "notes"}
+                          {collection.notes.length}{" "}
+                          {collection.notes.length === 1 ? "note" : "notes"}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Created {format(new Date(collection.createdAt), "MMM d, yyyy")}
+                        Created{" "}
+                        {format(new Date(collection.createdAt), "MMM d, yyyy")}
                       </p>
                     </div>
                   </div>
-                  
+
                   {isOwner && (
                     <CollectionsOption
                       trigger={
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           className="opacity-0 group-hover:opacity-100 transition-opacity size-8 p-0 text-muted-foreground hover:text-foreground"
                         >

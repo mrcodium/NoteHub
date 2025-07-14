@@ -2,12 +2,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -18,29 +15,50 @@ import {
 } from "@/components/ui/tooltip";
 import { axiosInstance } from "@/lib/axios";
 import { useNoteStore } from "@/stores/useNoteStore";
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { PackageOpen, TriangleAlert } from "lucide-react";
-import { NoteCard } from "@/components/NoteCard";
+import React, { useEffect, useRef, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  EllipsisVertical,
+  FileText,
+  PackageOpen,
+  TriangleAlert,
+  Clock,
+  Calendar,
+  Lock,
+  Eye,
+  File,
+} from "lucide-react";
+import CollectionPageSkeleton from "@/components/sekeletons/CollectionPageSkeleton";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { Input } from "@/components/ui/input";
+import NotesOption from "@/components/NotesOption";
+import { format } from "date-fns";
+import TooltipWrapper from "@/components/TooltipWrapper";
 
 const CollectionPage = () => {
-  const { username, collectionName } = useParams();
+  const { username, collectionSlug } = useParams();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [collection, setCollection] = useState(null);
-  const { getCollection } = useNoteStore();
   const [isLoading, setIsLoading] = useState(true);
   const [notes, setNotes] = useState([]);
+  const { getCollection } = useNoteStore();
+  const { authUser } = useAuthStore();
+
+  const isOwner = authUser?._id === user?._id;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // fetching the user
         setIsLoading(true);
         const response = await axiosInstance.get(`/user/${username}`);
         setUser(response.data);
 
+        // fetching collection
         const collectionsData = await getCollection({
           userId: response.data?._id,
-          name: collectionName,
+          slug: collectionSlug,
         });
         setCollection(collectionsData);
         setNotes(collectionsData?.notes || []);
@@ -53,46 +71,13 @@ const CollectionPage = () => {
       }
     };
     fetchData();
-  }, [username, collectionName, getCollection]);
+  }, [username, collectionSlug, getCollection]);
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col gap-8">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[200px]" />
-              <Skeleton className="h-4 w-[150px]" />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6 mt-2" />
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Skeleton className="h-4 w-[100px]" />
-                  <Skeleton className="h-4 w-[80px]" />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-  console.log(collection);
+  if (isLoading) return <CollectionPageSkeleton />;
 
   if (!user || !collection) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
+      <div className="container mx-auto mt-20 px-4 py-8 text-center">
         <div className="flex flex-col items-center justify-center space-y-4">
           <TriangleAlert className="h-12 w-12 text-yellow-500" />
           <h2 className="text-2xl font-bold">Collection Not Found</h2>
@@ -109,7 +94,7 @@ const CollectionPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container overflow-y-auto mx-auto px-4 py-8 max-w-7xl">
       <div className="flex flex-col gap-8">
         {/* Header Section */}
         <div className="flex flex-col gap-6">
@@ -117,12 +102,17 @@ const CollectionPage = () => {
             <Avatar className="h-16 w-16">
               <AvatarImage src={user?.avatar} />
               <AvatarFallback>
-                <img src="/avatar.png" alt={user?.fullName} />
+                {user?.fullName?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div>
               <h1 className="text-2xl font-bold">{user?.fullName}</h1>
-              <p className="text-muted-foreground">@{user?.userName}</p>
+              <Link
+                to={`/user/${user?.userName}`}
+                className="hover:underline text-muted-foreground"
+              >
+                @{user?.userName}
+              </Link>
             </div>
           </div>
 
@@ -144,14 +134,15 @@ const CollectionPage = () => {
         <Separator />
 
         {/* Notes Grid */}
-        {console.log(notes)}
         {notes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {notes.map((note, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {notes.map((note) => (
               <NoteCard
-                key={`${note._id}-${index}`}
+                key={note._id}
                 note={note}
-                collectionName={note.collectionName}
+                isOwner={isOwner}
+                username={username}
+                collectionSlug={collectionSlug}
               />
             ))}
           </div>
@@ -166,14 +157,116 @@ const CollectionPage = () => {
               This collection doesn't have any notes yet. When notes are added,
               they'll appear here.
             </p>
-            <Button variant="outline" asChild>
-              <Link to="/notes">Browse Notes</Link>
-            </Button>
+            {isOwner && (
+              <Button asChild>
+                <Link to="/notes/new">Create your first note</Link>
+              </Button>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 };
+
+function NoteCard({ note, isOwner, username, collectionSlug }) {
+  const inputRef = useRef(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const { renameNote } = useNoteStore();
+
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      const timeout = setTimeout(() => {
+        inputRef.current.focus();
+        inputRef.current.select();
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [isRenaming]);
+
+  const handleSaveRename = () => {
+    const newName = inputRef.current?.value.trim();
+    if (newName && newName !== note.name) {
+      renameNote({
+        noteId: note._id,
+        newName: newName,
+      });
+    }
+    setIsRenaming(false);
+  };
+
+  const handleKeyDown = (e) => {
+    e.stopPropagation();
+    if (e.key === "Enter") {
+      handleSaveRename();
+    } else if (e.key === "Escape") {
+      if (inputRef.current) {
+        inputRef.current.value = note.name;
+      }
+      setIsRenaming(false);
+    }
+  };
+
+  return (
+    <Card className={"h-full flex flex-col hover:shadow-md transition-shadow"}>
+      <CardHeader className="p-4 pb-2">
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex items-center gap-2">
+            <File className="size-4 text-muted-foreground flex-shrink-0" />
+            {isRenaming ? (
+              <Input
+                ref={inputRef}
+                defaultValue={note.name}
+                className="font-medium h-8 flex-1"
+                onBlur={handleSaveRename}
+                onKeyDown={handleKeyDown}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to={`/user/${username}/${collectionSlug}/${note.slug}`}
+                    className="font-medium text-sm line-clamp-1 hover:underline flex-1"
+                  >
+                    {note.name}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>{note.name}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          {isOwner && (
+            <NotesOption
+              trigger={<EllipsisVertical className="size-4" />}
+              note={note}
+              setIsRenaming={setIsRenaming}
+            />
+          )}
+        </div>
+      </CardHeader>
+
+      <CardFooter className="mt-auto p-4 pt-0 ">
+        <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
+          <Badge
+            variant={
+              note.visibility === "private" ? "destructive" : "secondary"
+            }
+            className="flex items-center gap-1"
+          >
+            {note.visibility}
+          </Badge>
+
+          <TooltipWrapper message={`Created on ${format(new Date(note.createdAt), "MMMM d, yyyy")}`}>
+            <div className="flex gap-1 items-center">
+              <Calendar className="size-3" />
+              <span>{format(new Date(note.createdAt), "MMM d, yyyy")}</span>
+            </div>
+          </TooltipWrapper>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
 
 export default CollectionPage;

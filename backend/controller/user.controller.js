@@ -150,7 +150,7 @@ export const uploadAvatar = async (req, res) => {
     const file = req.file;
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "You are unauthorized" });
     }
     if (!file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -207,7 +207,7 @@ export const uploadCover = async (req, res) => {
     const file = req.file;
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "You are unauthorized" });
     }
     if (!file) {
       return res.status(400).json({ message: "No file uploaded" });

@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import HomePageNotesSkeleton from "@/components/sekeletons/HomePageNotesSkeleton";
 import { useNoteStore } from "@/stores/useNoteStore";
-import AddNoteDialog from "@/components/AddNoteDialog";
+import AddNoteDrawer from "@/components/AddNoteDrawer";
 import { NoteCard } from "@/components/NoteCard";
 
 // Feature card data
@@ -74,7 +74,7 @@ const EmptyState = () => (
     <p className="w-52 text-muted-foreground">
       No notes yet? Start capturing your ideas now.
     </p>
-    <AddNoteDialog
+    <AddNoteDrawer
       trigger={
         <Button size="lg">
           <Plus /> Add Note

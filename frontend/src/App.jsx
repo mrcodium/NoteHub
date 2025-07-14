@@ -36,6 +36,7 @@ import ReportsPage from "./pages/admin/reports";
 import TrashPage from "./pages/admin/trash";
 import NotificationPage from "./pages/NotificationPage";
 import CollectionPage from "./pages/CollectionPage";
+import NotePagePublic from "./pages/NotePagePublic";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
@@ -128,7 +129,8 @@ function App() {
               <Route path="note/:id" element={<NotePage />} />
               <Route path="note/:id/editor" element={<Tiptap />} />
               <Route path="user/:username" element={<ProfilePage />} />
-              <Route path="user/:username/:collectionName" element={<CollectionPage />} />
+              <Route path="user/:username/:collectionSlug" element={<CollectionPage />} />
+              <Route path="user/:username/:collectionSlug/:noteSlug" element={<NotePagePublic />} />
               <Route path="notifications" element={<NotificationPage />} />
 
               <Route path="settings" element={<SettingsPage />}>

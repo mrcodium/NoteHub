@@ -18,7 +18,7 @@ import { useRouteStore } from "@/stores/useRouteStore";
 import React, { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, ArrowLeft } from "lucide-react";
-import AddNoteDialog from "@/components/AddNoteDialog";
+import AddNoteDrawer from "@/components/AddNoteDrawer";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useTheme } from "@/components/theme-provider";
@@ -47,7 +47,7 @@ const DashboardContent = () => {
   const { routes } = useRouteStore();
   const { isSidebarOpen } = useSidebar();
   const { resolvedTheme } = useTheme();
-  const { getAllUsers } = useAuthStore();
+  const { getAllUsers, authUser } = useAuthStore();
   const [githubStarCount, setGithubStarCount] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,7 +81,8 @@ const DashboardContent = () => {
       try {
         setIsSearching(true);
         const response = await getAllUsers(1, 10, query, "all");
-        setSearchResults(response.users || []);
+        const users = response.users?.filter(u=>u._id != authUser._id);
+        setSearchResults(users || []);
       } catch (error) {
         console.error("Failed to search users:", error);
         setSearchResults([]);
@@ -146,7 +147,7 @@ const DashboardContent = () => {
                             className="w-32 max-w-52 transition-all"
                             align="start"
                           >
-                            {routes.slice(0, -1).map((route, index) => (
+                            {routes.slice(0, -1).reverse().map((route, index) => (
                               <Link
                                 key={index}
                                 className="block truncate whitespace-nowrap w-full"
@@ -258,7 +259,7 @@ const DashboardContent = () => {
                     <Search className="h-4 w-4" />
                   </Button>
                 </TooltipWrapper>
-                <AddNoteDialog
+                <AddNoteDrawer
                   trigger={
                     <Button className={`size-8 sm:w-auto`}>
                       <Plus className="h-4 w-4" />

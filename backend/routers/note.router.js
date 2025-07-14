@@ -7,7 +7,8 @@ import {
     getNotes,
     updateContent,
     renameNote,
-    moveTo
+    moveTo,
+    getNoteBySlug
 } from "../controller/note.controller.js";
 
 const router = express.Router();
@@ -15,6 +16,7 @@ const router = express.Router();
 router.use(protectRoute);
 
 router.get('/', protectRoute, getNotes);
+router.get('/:username/:collectionSlug/:noteSlug', protectRoute, getNoteBySlug);
 router.get('/:_id', protectRoute, getNote);
 router.post('/', protectRoute, createNote);
 router.delete('/:_id', protectRoute, deleteNote);
