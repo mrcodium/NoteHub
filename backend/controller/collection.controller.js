@@ -149,7 +149,7 @@ export const getCollection = async (req, res) => {
     }
 
     try {
-        const pipeline = getCollectionsAggregatePipeline(userId, slug);
+        const pipeline = getCollectionsAggregatePipeline(userId, slug?.toLowerCase());
         const collection = await Collection.aggregate(pipeline);
 
         if (!collection.length) {

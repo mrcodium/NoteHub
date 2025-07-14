@@ -17,7 +17,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useRouteStore } from "@/stores/useRouteStore";
 import React, { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, ArrowLeft } from "lucide-react";
+import { Plus, Search, ArrowLeft, Telescope, X, Clock, Trash2 } from "lucide-react";
 import AddNoteDrawer from "@/components/AddNoteDrawer";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -34,6 +34,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Loader2 } from "lucide-react";
 import { debounce } from "lodash";
+
+const SEARCH_HISTORY_KEY = "notehub_search_history";
 
 const Dashboard = () => {
   return (
@@ -53,7 +55,40 @@ const DashboardContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
   const navigate = useNavigate();
+
+  // Load search history from localStorage
+  useEffect(() => {
+    const history = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
+    setSearchHistory(history);
+  }, []);
+
+  // Save search history to localStorage
+  const saveSearchHistory = (history) => {
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+    setSearchHistory(history);
+  };
+
+  // Add user to search history
+  const addToSearchHistory = (user) => {
+    const newHistory = [
+      user,
+      ...searchHistory.filter((item) => item._id !== user._id),
+    ].slice(0, 10); // Keep only last 10 items
+    saveSearchHistory(newHistory);
+  };
+
+  // Remove user from search history
+  const removeFromSearchHistory = (userId) => {
+    const newHistory = searchHistory.filter((item) => item._id !== userId);
+    saveSearchHistory(newHistory);
+  };
+
+  // Clear all search history
+  const clearSearchHistory = () => {
+    saveSearchHistory([]);
+  };
 
   useEffect(() => {
     const fetchStars = async () => {
@@ -81,7 +116,7 @@ const DashboardContent = () => {
       try {
         setIsSearching(true);
         const response = await getAllUsers(1, 10, query, "all");
-        const users = response.users?.filter(u=>u._id != authUser._id);
+        const users = response.users?.filter((u) => u._id != authUser._id);
         setSearchResults(users || []);
       } catch (error) {
         console.error("Failed to search users:", error);
@@ -106,8 +141,9 @@ const DashboardContent = () => {
     }
   };
 
-  const handleUserClick = (username) => {
-    navigate(`/user/${username}`);
+  const handleUserClick = (user) => {
+    addToSearchHistory(user);
+    navigate(`/user/${user.userName}`);
     setSearchOpen(false);
     setSearchQuery("");
     setSearchResults([]);
@@ -147,19 +183,20 @@ const DashboardContent = () => {
                             className="w-32 max-w-52 transition-all"
                             align="start"
                           >
-                            {routes.slice(0, -1).reverse().map((route, index) => (
-                              <Link
-                                key={index}
-                                className="block truncate whitespace-nowrap w-full"
-                                to={route.path}
-                              >
-                                <DropdownMenuItem
-                                  className="px-2 py-1 min-w-0 "
+                            {routes
+                              .slice(0, -1)
+                              .reverse()
+                              .map((route, index) => (
+                                <Link
+                                  key={index}
+                                  className="block truncate whitespace-nowrap w-full"
+                                  to={route.path}
                                 >
-                                  {route.name}
-                                </DropdownMenuItem>
-                              </Link>
-                            ))}
+                                  <DropdownMenuItem className="px-2 py-1 min-w-0 ">
+                                    {route.name}
+                                  </DropdownMenuItem>
+                                </Link>
+                              ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </BreadcrumbItem>
@@ -183,24 +220,26 @@ const DashboardContent = () => {
               <div className="absolute inset-0 flex items-center px-4">
                 <div className="relative w-full">
                   <div className="flex items-center gap-2 w-full">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleSearchToggle}
-                      className="shrink-0"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      placeholder="Search users..."
-                      className="w-full text-sm"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoFocus
-                    />
+                    <div className="relative w-full overflow-hidden rounded-md">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleSearchToggle}
+                        className="shrink-0 absolute rounded-none text-muted-foreground hover:text-primary hover:bg-transparent"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <Input
+                        placeholder="Search users..."
+                        className="w-full text-sm pl-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
                   </div>
 
-                  {searchQuery && (
+                  {searchOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-96 overflow-auto">
                       {isSearching ? (
                         <div className="p-4 flex justify-center">
@@ -211,8 +250,8 @@ const DashboardContent = () => {
                           {searchResults.map((user) => (
                             <li
                               key={user._id}
-                              className="hover:bg-accent cursor-pointer"
-                              onClick={() => handleUserClick(user.userName)}
+                              className="hover:bg-input/30 cursor-pointer"
+                              onClick={() => handleUserClick(user)}
                             >
                               <div className="flex items-center gap-3 p-3">
                                 <Avatar className="h-10 w-10">
@@ -225,9 +264,9 @@ const DashboardContent = () => {
                                     <img src="/avatar.png" />
                                   </AvatarFallback>
                                 </Avatar>
-                                <div>
-                                  <p className="font-medium">{user.fullName}</p>
-                                  <p className="text-sm text-muted-foreground">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">{user.fullName}</p>
+                                  <p className="text-sm text-muted-foreground truncate">
                                     @{user.userName}
                                   </p>
                                 </div>
@@ -235,9 +274,87 @@ const DashboardContent = () => {
                             </li>
                           ))}
                         </ul>
-                      ) : (
+                      ) : searchQuery ? (
                         <div className="p-4 text-center text-muted-foreground">
                           No users found
+                        </div>
+                      ) : (
+                        <div className="animate-fade-in">
+                          {searchHistory.length > 0 && (
+                            <div className="border-b p-3 flex items-center justify-between">
+                              <h4 className="text-sm font-medium flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                Recent searches
+                              </h4>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground hover:text-destructive hover:bg-destructive/20 h-8"
+                                onClick={clearSearchHistory}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                Clear all
+                              </Button>
+                            </div>
+                          )}
+                          <ul>
+                            {searchHistory.map((user) => (
+                              <li
+                                key={user._id}
+                                className="hover:bg-input/30 cursor-pointer group"
+                              >
+                                <div className="flex items-center gap-3 p-3">
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage
+                                      src={user.avatar}
+                                      alt={user.fullName}
+                                      className="rounded-full"
+                                    />
+                                    <AvatarFallback>
+                                      <img src="/avatar.png" />
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div 
+                                    className="flex-1 min-w-0"
+                                    onClick={() => handleUserClick(user)}
+                                  >
+                                    <p className="font-medium truncate">{user.fullName}</p>
+                                    <p className="text-sm text-muted-foreground truncate">
+                                      @{user.userName}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="opacity-0 p-0 group-hover:opacity-100 size-6"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeFromSearchHistory(user._id);
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                          {searchHistory.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-12 gap-4">
+                              <div className="relative">
+                                <Telescope className="h-16 w-16 stroke-1 text-muted-foreground/80" />
+                                <div className="absolute -inset-4 bg-muted/10 rounded-full animate-pulse-slow" />
+                              </div>
+                              <div className="text-center space-y-1">
+                                <h3 className="text-xl font-medium tracking-tight">
+                                  No search history yet
+                                </h3>
+                                <p className="text-muted-foreground max-w-md px-4">
+                                  Your recent searches will appear here. Start
+                                  typing to discover users.
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

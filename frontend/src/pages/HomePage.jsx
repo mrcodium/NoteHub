@@ -14,6 +14,7 @@ import HomePageNotesSkeleton from "@/components/sekeletons/HomePageNotesSkeleton
 import { useNoteStore } from "@/stores/useNoteStore";
 import AddNoteDrawer from "@/components/AddNoteDrawer";
 import { NoteCard } from "@/components/NoteCard";
+import { Link } from "react-router-dom";
 
 // Feature card data
 const featureCards = [
@@ -118,9 +119,9 @@ const HomePage = () => {
       <div className="space-y-8 max-w-screen-lg mx-auto">
         <div className="mb-8 text-2xl font-bold">
           <span>Welcome </span>
-          <span>
+          <Link to={`/user/${authUser.userName}`} className="hover:underline">
             {authUser?.fullName?.trim()?.split(/\s+/)[0] || "To Notehub"}
-          </span>
+          </Link>
         </div>
         {isCollectionsLoading ? (
           <HomePageNotesSkeleton />

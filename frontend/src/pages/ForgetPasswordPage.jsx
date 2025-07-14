@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Skeleton } from "@/components/ui/skeleton";
+import BaseHeader from "@/components/BaseHeader";
 
 const ForgotPasswordPage = () => {
   const {
@@ -144,6 +145,7 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="flex pt-8 items-center justify-center h-svh bg-background">
+      <BaseHeader/>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password</CardTitle>

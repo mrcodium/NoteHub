@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import validator from "validator";
+import BaseHeader from "@/components/BaseHeader";
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -220,6 +221,7 @@ const SignupPage = () => {
 
   return (
     <div className="flex pt-8 items-center justify-center h-svh bg-background">
+      <BaseHeader/>
       <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
         <Card>
           <CardHeader>

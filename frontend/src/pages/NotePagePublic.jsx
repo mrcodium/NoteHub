@@ -24,6 +24,7 @@ const NotePagePublic = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [noteId, setNoteId] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,6 +36,7 @@ const NotePagePublic = () => {
         
         const { note } = response.data;
         setContent(note.content || "");
+        setNoteId(note._id);
         setIsOwner(authUser?._id === note.userId);
       } catch (error) {
         if (error.response?.status === 403) {
@@ -168,7 +170,7 @@ const NotePagePublic = () => {
       <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
         {isOwner && (
           <Button
-            onClick={() => navigate(`/user/${username}/${collectionSlug}/${noteSlug}/editor`)}
+            onClick={() => navigate(`/note/${note._id}/editor`)}
             variant="secondary"
             size="lg"
             className="shadow-md bottom-2 right-4 font-bold"
@@ -213,7 +215,7 @@ const NotePagePublic = () => {
         {isOwner && (
           <TooltipWrapper message="Edit Content">
             <Button
-              onClick={() => navigate(`editor`)}
+              onClick={() => navigate(`/note/${noteId}/editor`)}
               variant="secondary"
               className="fixed right-2 bottom-2 shadow-md z-10 font-bold flex items-center justify-center md:space-x-2 size-8 md:w-auto md:h-auto"
             >

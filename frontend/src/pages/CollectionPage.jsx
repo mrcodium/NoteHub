@@ -34,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import NotesOption from "@/components/NotesOption";
 import { format } from "date-fns";
 import TooltipWrapper from "@/components/TooltipWrapper";
+import AddNoteDrawer from "@/components/AddNoteDrawer";
 
 const CollectionPage = () => {
   const { username, collectionSlug } = useParams();
@@ -149,8 +150,7 @@ const CollectionPage = () => {
         ) : (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <PackageOpen
-              strokeWidth={1}
-              className="h-16 w-16 text-muted-foreground"
+              className="h-16 w-16 stroke-1 text-muted-foreground"
             />
             <h3 className="text-xl font-medium">No notes in this collection</h3>
             <p className="text-muted-foreground text-center max-w-md">
@@ -158,9 +158,13 @@ const CollectionPage = () => {
               they'll appear here.
             </p>
             {isOwner && (
-              <Button asChild>
-                <Link to="/notes/new">Create your first note</Link>
-              </Button>
+              <AddNoteDrawer
+                trigger={
+                  <Button>
+                    Create your first note
+                  </Button>
+                }
+              />
             )}
           </div>
         )}
@@ -257,7 +261,12 @@ function NoteCard({ note, isOwner, username, collectionSlug }) {
             {note.visibility}
           </Badge>
 
-          <TooltipWrapper message={`Created on ${format(new Date(note.createdAt), "MMMM d, yyyy")}`}>
+          <TooltipWrapper
+            message={`Created on ${format(
+              new Date(note.createdAt),
+              "MMMM d, yyyy"
+            )}`}
+          >
             <div className="flex gap-1 items-center">
               <Calendar className="size-3" />
               <span>{format(new Date(note.createdAt), "MMM d, yyyy")}</span>

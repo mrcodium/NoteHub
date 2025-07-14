@@ -119,7 +119,6 @@ export const getNote = async (req, res) => {
 export const getNoteBySlug = async (req, res) => {
   const { username, collectionSlug, noteSlug } = req.params;
   const requester = req.user || null;
-    console.log({ username, collectionSlug, noteSlug });
   try {
     // 1. Find user by username
     const user = await User.findOne({ 

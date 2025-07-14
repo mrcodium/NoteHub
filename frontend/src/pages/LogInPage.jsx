@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import { z } from "zod";
+import BaseHeader from "@/components/BaseHeader";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Username or Email is required"),
@@ -53,6 +54,7 @@ const LogInPage = () => {
 
   return (
     <div className="flex pt-8 items-center justify-center h-svh bg-background">
+      <BaseHeader/>
       <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
         <Card>
           <CardHeader>
