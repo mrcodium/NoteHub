@@ -21,7 +21,7 @@ const PhotoAndCover = () => {
   } = useAuthStore();
 
   const [previewavatar, setPreviewavatar] = useState(null);
-  const [previewCoverUrl, setPreviewCoverUrl] = useState(null);
+  const [previewCover, setPreviewCover] = useState(null);
 
   const handleUploadImage = async (e, setPreview, onUpload) => {
     const file = e.target.files[0];
@@ -51,7 +51,7 @@ const PhotoAndCover = () => {
     }
   };
 
-  const handleRemoveAvatar = async (setPreview, onRemove) => {
+  const handleRemoveImage = async (setPreview, onRemove) => {
     const result = await onRemove();
     if (result) {
       setPreview(null);
@@ -64,9 +64,10 @@ const PhotoAndCover = () => {
         <CardTitle></CardTitle>
       </CardHeader>
       <CardContent className="space-y-10">
+        {/* AVATAR SECTION  */}
         <div className="space-y-4">
           <Label className="text-base">Your Photo</Label>
-          <div className="flex gap-8 items-center">
+          <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center">
             <Avatar className="relative aspect-square shadow-md size-44 shrink-0 border-background rounded-full">
               <AvatarImage
                 className="w-full h-full object-cover rounded-full bg-background"
@@ -76,8 +77,8 @@ const PhotoAndCover = () => {
               <AvatarFallback className="text-4xl">
                 <img
                   className="w-full h-full object-cover dark:brightness-[0.2]"
-                  src="/avatar.png"
-                  alt="shadcn"
+                  src="/avatar.svg"
+                  alt="user-profile"
                 />
               </AvatarFallback>
             </Avatar>
@@ -101,11 +102,7 @@ const PhotoAndCover = () => {
                     className="hidden"
                     disabled={isUploadingAvatar}
                     onChange={(e) =>
-                      handleUploadImage(
-                        e,
-                        setPreviewavatar,
-                        uploadUserAvatar
-                      )
+                      handleUploadImage(e, setPreviewavatar, uploadUserAvatar)
                     }
                   />
                   <div
@@ -125,10 +122,7 @@ const PhotoAndCover = () => {
 
                 <Button
                   onClick={() =>
-                    handleRemoveAvatar(
-                      setPreviewavatar,
-                      removeUserAvatar
-                    )
+                    handleRemoveImage(setPreviewavatar, removeUserAvatar)
                   }
                   size="icon"
                   disabled={isRemovingAvatar || !authUser?.avatar}
@@ -146,23 +140,21 @@ const PhotoAndCover = () => {
           </div>
         </div>
 
+        {/* COVER SECTION  */}
         <div className="space-y-4">
           <Label className="text-base">Profile Page Cover</Label>
-          <div className="flex gap-8 items-center">
-            <Avatar className="relative aspect-square shadow-md size-44 shrink-0 rounded-xl overflow-hidden border-background">
-              <AvatarImage
+          <div className="flex flex-col sm:flex-row gap-8 items-start">
+            <div className="relative aspect-video shadow-md h-44 sm:h-auto sm:w-44 shrink-0 rounded-xl overflow-hidden border-background">
+              <img
                 className="w-full h-full object-cover bg-background"
-                src={previewCoverUrl || authUser?.cover}
-                alt={"background-cover-image"}
+                src={previewCover || authUser?.cover}
+                alt="background-cover-image"
+                onError={(e) => {
+                  e.currentTarget.src = "/profile-cover.svg";
+                  e.currentTarget.classList.add("dark:brightness-[0.2]");
+                }}
               />
-              <AvatarFallback className="text-4xl">
-                <img
-                  className="w-full h-full object-cover dark:brightness-[0.2]"
-                  src="/profile-cover.svg"
-                  alt="profile-cover-fallback"
-                />
-              </AvatarFallback>
-            </Avatar>
+            </div>
             <div className="space-y-6">
               <div className="space-y-1">
                 <p className="font-semibold text-sm">
@@ -183,7 +175,7 @@ const PhotoAndCover = () => {
                     className="hidden"
                     disabled={isUploadingCover}
                     onChange={(e) =>
-                      handleUploadImage(e, setPreviewCoverUrl, uploadUserCover)
+                      handleUploadImage(e, setPreviewCover, uploadUserCover)
                     }
                   />
                   <div
@@ -203,7 +195,7 @@ const PhotoAndCover = () => {
 
                 <Button
                   onClick={() =>
-                    handleRemoveAvatar(setPreviewCoverUrl, removeUserCover)
+                    handleRemoveImage(setPreviewCover, removeUserCover)
                   }
                   size="icon"
                   disabled={isRemovingCover || !authUser?.cover}

@@ -192,7 +192,7 @@ const NotePagePublic = () => {
     <div className={`tiptap ${!content.trim() ? "empty" : ""}`}>
       <div className="max-w-screen-md m-auto">
         <Dialog
-          open={!!selectedImage}
+          open={selectedImage}
           onOpenChange={(open) => !open && setSelectedImage(null)}
         >
           <DialogContent

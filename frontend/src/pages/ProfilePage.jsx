@@ -1,7 +1,14 @@
 import { cn } from "@/lib/utils";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Bookmark, MoreVertical } from "lucide-react";
+import {
+  Camera,
+  Loader2,
+  Bookmark,
+  MoreVertical,
+  Trash2,
+  ImageOff,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -13,17 +20,40 @@ import { Badge } from "@/components/ui/badge";
 import { Link, useParams } from "react-router-dom";
 import { axiosInstance } from "@/lib/axios";
 import ProfilePageSkeleton from "@/components/sekeletons/ProfilePageSkeleton";
+import { Input } from "@/components/ui/input";
+import { useLocalStorage } from "@/stores/useLocalStorage";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const ProfilePage = () => {
   const { username } = useParams();
-  const { authUser, uploadUserAvatar, isUploadingAvatar } = useAuthStore();
+  const {
+    authUser,
+    uploadUserAvatar,
+    removeUserAvatar,
+    isUploadingAvatar,
+    isRemovingAvatar,
+    isUploadingCover,
+    isRemovingCover,
+    uploadUserCover,
+    removeUserCover,
+  } = useAuthStore();
   const [previewUrl, setPreviewUrl] = useState(null);
   const { getAllCollections } = useNoteStore();
-  const [pinnedCollections, setPinnedCollections] = useState([]);
-  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [collections, setCollections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { pinnedCollections } = useLocalStorage();
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [currentImageType, setCurrentImageType] = useState(null); // 'avatar' or 'cover'
+  const [previewavatar, setPreviewavatar] = useState(null);
+  const [previewCover, setPreviewCover] = useState(null);
 
   const isOwner = authUser?._id === user?._id;
 
@@ -49,39 +79,54 @@ const ProfilePage = () => {
     };
 
     fetchData();
-  }, [username, getAllCollections]);
+  }, [username, getAllCollections, ]);
 
-  const handleUploadAvatar = async (e) => {
+  const handleUploadImage = async (e, setPreview, onUpload) => {
     const file = e.target.files[0];
     if (!file) return;
-    const option = {
-      maxSizeMB: 0.2,
-      maxWidthOrHeight: 1920,
-      useWebWorker: true,
-    };
+
     try {
-      const previewUrl = URL.createObjectURL(file);
-      setPreviewUrl(previewUrl);
-      const compressedFile = await imageCompression(file, option);
-      await uploadUserAvatar(compressedFile);
-      setPreviewUrl(null);
-      URL.revokeObjectURL(previewUrl);
+      // Set image preview (optional)
+      const previewURL = URL.createObjectURL(file);
+      setPreview(previewURL);
+
+      let finalFile = file;
+
+      // 🗜️ Compress only if size > 1MB
+      if (file.size > 1024 * 1024) {
+        const options = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        finalFile = await imageCompression(file, options);
+      }
+      const user = await onUpload(finalFile);
+      setUser(user);
     } catch (error) {
-      console.error("Error compressing or uploading avatar:\n", error);
+      console.error("Error compressing or uploading:\n", error);
     } finally {
-      e.target.value = null;
+      e.target.value = null; // Reset file input
     }
   };
 
-  const handleRenameStart = (collectionId) => {
-    console.log("Rename collection:", collectionId);
+  const handleRemoveImage = async (setPreview, onRemove) => {
+    const result = await onRemove();
+    if (result) {
+      setPreview(null);
+    }
   };
 
-  const isPinned = (collectionId) => {
-    return pinnedCollections.includes(collectionId);
-  };
+  const filteredCollections = collections.sort((a, b) => {
+    const aPinned = pinnedCollections.includes(a._id);
+    const bPinned = pinnedCollections.includes(b._id);
 
-  if (isLoading) return <ProfilePageSkeleton/>
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    return 0;
+  });
+
+  if (isLoading) return <ProfilePageSkeleton />;
 
   if (!user) {
     return (
@@ -96,9 +141,121 @@ const ProfilePage = () => {
       </div>
     );
   }
+  const disableImageRemove =
+    currentImageType === "avatar"
+      ? isRemovingAvatar || !authUser?.avatar // disable for avatar
+      : isRemovingCover || !authUser?.cover; // disable for cover
+
+  const disableImageUpload =
+    currentImageType === "avatar" ? isUploadingAvatar : isUploadingCover;
+
+  const noPhoto =
+    currentImageType === "avatar"
+      ? !Boolean(user?.avatar) && !previewCover
+      : !Boolean(user?.cover) && !previewavatar;
 
   return (
     <div className="p-4 overflow-auto">
+      {/* Image Dialog */}
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+  <DialogContent className="p-0 overflow-hidden max-w-[100vw] sm:max-w-none w-auto">
+    <DialogHeader className="p-0 hidden">
+      <DialogTitle>
+        {currentImageType === "avatar" ? "Profile Photo" : "Cover Photo"}
+      </DialogTitle>
+    </DialogHeader>
+
+    <div className="flex flex-col p-0">
+      {noPhoto ? (
+        <div className="relative w-[300px] h-[300px] p-4">
+          <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground h-full">
+            <div className="p-8 rounded-full bg-input/30">
+              <ImageOff className="size-16 stroke-1" />
+            </div>
+            <p className="text-center text-sm">No {currentImageType}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-accent flex justify-center items-center">
+          <img
+            src={currentImageType === "avatar" ? user?.avatar : user?.cover}
+            alt={`user ${currentImageType}`}
+            className="max-w-[100vw] max-h-[80vh] object-contain"
+            style={{
+              width: currentImageType === "avatar" ? "min(400px, 100vw)" : "min(800px, 100vw)",
+              height: "auto"
+            }}
+          />
+        </div>
+      )}
+
+      {isOwner && (
+        <DialogFooter className="p-4 border-t sticky bottom-0 bg-background">
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <Label htmlFor={currentImageType} className="contents">
+              <input
+                type="file"
+                id={currentImageType}
+                accept="image/*"
+                className="hidden"
+                disabled={disableImageUpload}
+                onChange={(e) =>
+                  handleUploadImage(
+                    e,
+                    currentImageType === "avatar"
+                      ? setPreviewavatar
+                      : setPreviewCover,
+                    currentImageType === "avatar"
+                      ? uploadUserAvatar
+                      : uploadUserCover
+                  )
+                }
+              />
+              <div
+                className={cn(
+                  "button cursor-pointer w-full",
+                  disableImageUpload && "disabled"
+                )}
+              >
+                {disableImageUpload ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading
+                  </>
+                ) : (
+                  "Upload"
+                )}
+              </div>
+            </Label>
+
+            <Button
+              onClick={() =>
+                handleRemoveImage(
+                  currentImageType === "avatar"
+                    ? setPreviewavatar
+                    : setPreviewCover,
+                  currentImageType === "avatar"
+                    ? removeUserAvatar
+                    : removeUserCover
+                )
+              }
+              disabled={disableImageRemove}
+              variant="secondary"
+              className="w-full"
+            >
+              {isRemovingAvatar || isRemovingCover ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Remove"
+              )}
+            </Button>
+          </div>
+        </DialogFooter>
+      )}
+    </div>
+  </DialogContent>
+</Dialog>
+
       {/* Profile Card */}
       <Card
         className={cn(
@@ -106,23 +263,38 @@ const ProfilePage = () => {
           isLoading && "animate-pulse"
         )}
       >
-        <div
-          className="relative max-h-48 w-full overflow-hidden bg-gradient-to-r from-transparent to-black/50"
+        <Avatar
+          className="relative max-h-48 h-full w-full overflow-hidden cursor-pointer"
           style={{ aspectRatio: "3/1" }}
+          onClick={() => {
+            setCurrentImageType("cover");
+            setIsImageDialogOpen(true);
+          }}
         >
-          <img
+          <AvatarImage
             src={user?.cover}
             alt="User cover"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src = "https://ui.shadcn.com/placeholder.svg";
-              e.currentTarget.classList.add("dark:brightness-[0.2]");
-            }}
+            className="w-full h-full max-h-48 object-cover"
+            style={{ aspectRatio: "3/1" }}
           />
-        </div>
+          <AvatarFallback className="brightness-[0.2]">
+            <img
+              src="/placeholder.svg"
+              alt="placeholder"
+              className="w-full h-full object-cover"
+              style={{ aspectRatio: "3/1" }}
+            />
+          </AvatarFallback>
+        </Avatar>
         <CardContent>
           <div className="flex items-center space-x-4">
-            <Avatar className="relative shadow-md size-28 sm:size-48 shrink-0 border-4 sm:border-8 border-background -mt-14 rounded-full">
+            <Avatar
+              className="relative shadow-md size-28 sm:size-48 shrink-0 border-4 sm:border-8 border-background -mt-14 rounded-full cursor-pointer"
+              onClick={() => {
+                setCurrentImageType("avatar");
+                setIsImageDialogOpen(true);
+              }}
+            >
               <AvatarImage
                 className="w-full h-full object-cover rounded-full bg-background"
                 src={previewUrl || user?.avatar}
@@ -131,39 +303,18 @@ const ProfilePage = () => {
               <AvatarFallback className="text-4xl">
                 <img
                   className="w-full h-full object-cover dark:brightness-[0.2]"
-                  src="/avatar.png"
-                  alt="shadcn"
+                  src="/avatar.svg"
+                  alt="user-profile"
                 />
               </AvatarFallback>
-              {isOwner && (
-                <Button
-                  variant="secondary"
-                  className="p-0 size-7 sm:size-8 absolute bottom-0 right-0 sm:bottom-2 sm:right-2 z-10 pointer"
-                >
-                  <label
-                    htmlFor="upload-photo"
-                    className="p-4 flex items-center space-x-2 cursor-pointer"
-                  >
-                    {isUploadingAvatar ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      <Camera />
-                    )}
-                    <input
-                      type="file"
-                      hidden
-                      id="upload-photo"
-                      accept="image/*"
-                      disabled={isUploadingAvatar}
-                      onChange={handleUploadAvatar}
-                    />
-                  </label>
-                </Button>
-              )}
             </Avatar>
             <div>
-              <h2 className="text-base sm:text-xl font-semibold">{user?.fullName}</h2>
-              <p className="text-sm sm:text-base text-muted-foreground">@{user?.userName}</p>
+              <h2 className="text-base sm:text-xl font-semibold">
+                {user?.fullName}
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                @{user?.userName}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -185,67 +336,13 @@ const ProfilePage = () => {
           </Card>
         ) : (
           <div className="space-y-3">
-            {collections.map((collection) => (
-              <Card
+            {filteredCollections.map((collection) => (
+              <CollectionCard
                 key={collection._id}
-                className={cn(
-                  "group hover:shadow-md transition-all",
-                  isPinned(collection._id) && "bg-input/50"
-                )}
-              >
-                <div className="flex items-center justify-between p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="relative">
-                      <Bookmark
-                        className={cn(
-                          "h-5 w-5 mt-1",
-                          isPinned(collection._id)
-                            ? "text-foreground fill-foreground"
-                            : "text-muted-foreground"
-                        )}
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Link
-                          to={`${collection.slug}`}
-                          className="hover:underline font-medium"
-                        >
-                          {collection.name}
-                        </Link>
-                        <Badge variant="secondary" className="text-xs">
-                          {collection.notes.length}{" "}
-                          {collection.notes.length === 1 ? "note" : "notes"}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Created{" "}
-                        {format(new Date(collection.createdAt), "MMM d, yyyy")}
-                      </p>
-                    </div>
-                  </div>
-
-                  {isOwner && (
-                    <CollectionsOption
-                      trigger={
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity size-8 p-0 text-muted-foreground hover:text-foreground"
-                        >
-                          <MoreVertical className="size-4" />
-                          <span className="sr-only">More</span>
-                        </Button>
-                      }
-                      onOpenChange={setIsOptionsOpen}
-                      collection={collection}
-                      onRenameStart={handleRenameStart}
-                      setPinnedCollections={setPinnedCollections}
-                      pinnedCollections={pinnedCollections}
-                    />
-                  )}
-                </div>
-              </Card>
+                collection={collection}
+                isOwner={isOwner}
+                pinnedCollections={pinnedCollections}
+              />
             ))}
           </div>
         )}
@@ -254,4 +351,117 @@ const ProfilePage = () => {
   );
 };
 
+function CollectionCard({ collection, isOwner, pinnedCollections }) {
+  const [isCollectionRenaming, setIsCollectionRenaming] = useState(false);
+  const inputRef = useRef(null);
+
+  const handleRenameStart = () => {
+    setIsCollectionRenaming(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 0);
+  };
+
+  const handleRenameSave = () => {
+    const newName = inputRef.current?.value.trim();
+    if (newName && newName !== collection.name) {
+      renameCollection({
+        _id: collection._id,
+        newName: newName,
+      });
+    }
+    setIsCollectionRenaming(false);
+  };
+
+  const handleInputKeyDown = (e) => {
+    // Stop propagation to prevent collapsible toggle
+    e.stopPropagation();
+    if (e.key === "Enter") {
+      handleRenameSave();
+    }
+  };
+
+  const handleInputBlur = () => {
+    handleRenameSave();
+  };
+
+  const handleInputClick = (e) => {
+    // Stop propagation to prevent collapsible toggle
+    e.stopPropagation();
+  };
+
+  const isPinned = (collectionId) => {
+    return pinnedCollections.includes(collectionId);
+  };
+
+  return (
+    <Card
+      key={collection._id}
+      className={cn("group hover:shadow-md transition-all")}
+    >
+      <div className="flex items-center gap-2 justify-between p-4">
+        <div className="flex items-start gap-3 flex-1">
+          <div className="relative">
+            <Bookmark
+              className={cn(
+                "h-5 w-5 mt-1",
+                isPinned(collection._id)
+                  ? "text-foreground fill-foreground"
+                  : "text-muted-foreground"
+              )}
+            />
+          </div>
+          <div className="w-full">
+            <div className="flex items-center gap-2 w-full">
+              {isCollectionRenaming ? (
+                <Input
+                  className="font-semibold bg-input/30"
+                  defaultValue={collection.name}
+                  ref={inputRef}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleInputKeyDown}
+                  onClick={handleInputClick}
+                />
+              ) : (
+                <Link
+                  to={`${collection.slug}`}
+                  className="hover:underline font-medium"
+                >
+                  {collection.name}
+                </Link>
+              )}
+              {!isCollectionRenaming && (
+                <Badge variant="secondary" className="text-xs flex-shrink-0">
+                  {collection.notes.length}{" "}
+                  {collection.notes.length === 1 ? "note" : "notes"}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Created {format(new Date(collection.createdAt), "MMM d, yyyy")}
+            </p>
+          </div>
+        </div>
+
+        {isOwner && (
+          <CollectionsOption
+            trigger={
+              <Button
+                variant="ghost"
+                size="sm"
+                className="opacity-0 group-hover:opacity-100 transition-opacity size-8 p-0 text-muted-foreground hover:text-foreground"
+              >
+                <MoreVertical className="size-4" />
+                <span className="sr-only">More</span>
+              </Button>
+            }
+            collection={collection}
+            onRenameStart={handleRenameStart}
+          />
+        )}
+      </div>
+    </Card>
+  );
+}
 export default ProfilePage;

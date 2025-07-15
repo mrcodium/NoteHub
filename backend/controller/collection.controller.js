@@ -162,3 +162,38 @@ export const getCollection = async (req, res) => {
         console.error("Error in getCollection controller\n", error);
     }
 };
+
+export const updateVisibility = async(req, res) => {
+    const {visibility, collectionId} = req.body();
+    const {user} = req;
+
+    if(!user) return res.status(401).json({message: "You are unauthorized"});
+    if(!visibility || !collectionId) {
+        return res.status(400).json({
+            message: "all fields required [`visibility`, `collectionId`]"
+        });
+    }
+
+    try {
+        const collection = await Collection.findOneAndUpdate(
+            { _id: collectionId, userId: user._id },
+            { visibility },
+            { new: true }
+        );
+        if (!collection) {
+            return res.status(404).json({ 
+                message: "collection not found or you don't have permission to update it" 
+            });
+        }
+        return res.status(200).json({ 
+            message: "visiblity updated successfully",
+            collection
+        });
+    } catch (error) {
+        console.error("Error in updateVisibility controller:", error);
+        return res.status(500).json({ 
+            message: "Failed to update visibility",
+            error: error.message 
+        });
+    }
+}

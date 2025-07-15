@@ -30,8 +30,8 @@ const ProfilePageSkeleton = () => {
           <div className="space-y-2">
             {Array(5)
               .fill(null)
-              .map(() => (
-                <Card className="h-20 mx-auto overflow-hidden shadow-sm animate-pulse" />
+              .map((_, index) => (
+                <Card key={index} className="h-20 mx-auto overflow-hidden shadow-sm animate-pulse" />
               ))}
           </div>
         </div>

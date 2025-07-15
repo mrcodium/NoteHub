@@ -13,7 +13,6 @@ export const useNoteStore = create((set, get) => ({
   isContentUploading: false,
   noteNotFound: false,
   setNoteNotFound: false,
-
   collections: [],
   notesContent: {
     //noteId : 'content'
@@ -235,7 +234,7 @@ export const useNoteStore = create((set, get) => ({
   createNote: async (data) => {
     //data:{name, collectionId }
     console.log(data);
-    
+
     set({ isCreatingNote: true });
     const { collectionId } = data;
     try {

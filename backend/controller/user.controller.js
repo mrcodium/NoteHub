@@ -80,7 +80,7 @@ export const getAllUsers = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || '';
     const filter = req.query.filter || 'all';
-    
+
     // Build the base query
     let query = {};
     

@@ -75,33 +75,34 @@ const AppSidebar = (props) => {
               </Link>
             </div>
 
-            {!location.pathname.startsWith("/settings") && (
-              <div className="flex buttons-container">
-                <TooltipWrapper message="Collapse All">
-                  <Button
-                    className="size-8 text-sidebar-accent-foreground/70"
-                    variant="ghost"
-                    onClick={collapseAll}
-                  >
-                    <CopyMinus />
-                  </Button>
-                </TooltipWrapper>
+            <div className="flex buttons-container">
+              {!location.pathname.startsWith("/settings") && (
+                <>
+                  <TooltipWrapper message="Collapse All">
+                    <Button
+                      className="size-8 text-sidebar-accent-foreground/70"
+                      variant="ghost"
+                      onClick={collapseAll}
+                    >
+                      <CopyMinus />
+                    </Button>
+                  </TooltipWrapper>
 
-                <ModeToggleMini className={"text-accent-foreground/70"} />
-                
-                <TooltipWrapper message="Search File">
-                  <Button
-                    className="size-8 text-sidebar-accent-foreground/70"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowSearch(true);
-                    }}
-                  >
-                    <Search />
-                  </Button>
-                </TooltipWrapper>
-              </div>
-            )}
+                  <TooltipWrapper message="Search File">
+                    <Button
+                      className="size-8 text-sidebar-accent-foreground/70"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowSearch(true);
+                      }}
+                    >
+                      <Search />
+                    </Button>
+                  </TooltipWrapper>
+                </>
+              )}
+              <ModeToggleMini className={"text-accent-foreground/70"} />
+            </div>
           </div>
         )}
       </SidebarHeader>

@@ -58,12 +58,12 @@ export function UserManagement() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const data = await getAllUsers(
-        currentPage,
-        itemsPerPage,
-        searchQuery,
-        activeTab
-      );
+      const data = await getAllUsers({
+        page: currentPage,
+        limit: itemsPerPage,
+        filter: activeTab,
+        search: searchQuery,
+      });
       setUsersData(data);
     } catch (error) {
       console.error("Failed to fetch users:", error);

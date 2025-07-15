@@ -133,7 +133,6 @@ const NoteItem = ({ note }) => {
 const FolderCollapsible = ({
   collection,
   pinnedCollections,
-  setPinnedCollections,
   searchQuery,
 }) => {
   const [isCollectionRenaming, setIsCollectionRenaming] = useState(false);
@@ -194,10 +193,11 @@ const FolderCollapsible = ({
           <CollapsibleTrigger asChild>
             <SidebarMenuButton tooltip={collection.name}>
               <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 size-4" />
-              {searchQuery || openedCollections[collection._id] || false 
-                ? ( <FolderOpen className="size-4"/> ) 
-                : ( <Folder className="size-4" /> )
-              }
+              {searchQuery || openedCollections[collection._id] || false ? (
+                <FolderOpen className="size-4" />
+              ) : (
+                <Folder className="size-4" />
+              )}
               <div className="flex-1 min-w-0">
                 {isCollectionRenaming ? (
                   <Input
@@ -230,8 +230,6 @@ const FolderCollapsible = ({
             onOpenChange={setIsOptionsOpen}
             collection={collection}
             onRenameStart={handleRenameStart}
-            setPinnedCollections={setPinnedCollections}
-            pinnedCollections={pinnedCollections}
           />
         </div>
 
@@ -249,13 +247,7 @@ const FolderCollapsible = ({
 
 const NavMain = ({ collections, searchQuery }) => {
   const { isCollectionsLoading } = useNoteStore();
-  const [pinnedCollections, setPinnedCollections] = useState([]);
-
-  useEffect(() => {
-    const storedPinned =
-      JSON.parse(localStorage.getItem("pinnedCollections")) || [];
-    setPinnedCollections(storedPinned);
-  }, []);
+  const { pinnedCollections } = useLocalStorage();
 
   const filteredCollections = collections
     .map((collection) => {
@@ -300,7 +292,6 @@ const NavMain = ({ collections, searchQuery }) => {
             key={collection._id}
             collection={collection}
             pinnedCollections={pinnedCollections}
-            setPinnedCollections={setPinnedCollections}
             searchQuery={searchQuery}
           />
         ))}

@@ -29,7 +29,6 @@ export const UserTable = ({
   handleDeleteClick,
 }) => {
   const { onlineUsers } = useAuthStore();
-  console.log(onlineUsers);
 
   return (
     <Table className="whitespace-nowrap">

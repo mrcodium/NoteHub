@@ -166,7 +166,7 @@ const ForgotPasswordPage = () => {
                     referrerPolicy="no-referrer"
                   />
                   <AvatarFallback className="bg-transparent">
-                    <img src="./avatar.png" alt="" />
+                    <img src="./avatar.svg" alt="" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-sm">

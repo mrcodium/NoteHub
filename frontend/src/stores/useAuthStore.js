@@ -95,7 +95,7 @@ export const useAuthStore = create((set, get) => ({
       return null;
     }
   },
-  getAllUsers: async (page = 1, limit = 10, search = "", filter = "all") => {
+  getAllUsers: async ({page = 1, limit = 10, search = "", filter = "all"}) => {    
     try {
       const response = await axiosInstance.get("/user", {
         params: { page, limit, search, filter },
@@ -303,11 +303,11 @@ export const useAuthStore = create((set, get) => ({
       });
       set({ authUser: res.data.user });
       toast.success(res.data.message);
-      return true;
+      return res.data.user;
     } catch (error) {
       toast.error(error.response.data.message);
       console.log(error);
-      return false;
+      return null;
     } finally {
       set({ isUploadingAvatar: false });
     }
@@ -319,11 +319,11 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.delete("/user/remove-avatar");
       set({ authUser: res.data.user });
       toast.success(res.data.message);
-      return true;
+      return res.data.user;
     } catch (error) {
       toast.error(error.response.data.message);
       console.log(error);
-      return false;
+      return null;
     } finally {
       set({ isRemovingAvatar: false });
     }
@@ -342,11 +342,11 @@ export const useAuthStore = create((set, get) => ({
       console.log(res.data.user);
       set({ authUser: res.data.user });
       toast.success(res.data.message);
-      return true;
+      return res.data.user;
     } catch (error) {
       toast.error(error.response.data.message);
       console.log(error);
-      return false;
+      return null;
     } finally {
       set({ isUploadingCover: false });
     }
@@ -358,11 +358,11 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.delete("/user/remove-cover");
       set({ authUser: res.data.user });
       toast.success(res.data.message);
-      return true;
+      return res.data.user;
     } catch (error) {
       toast.error(error.response.data.message);
       console.log(error);
-      return false;
+      return null;
     } finally {
       set({ isRemovingCover: false });
     }

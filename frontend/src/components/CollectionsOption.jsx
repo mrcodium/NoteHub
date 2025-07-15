@@ -16,37 +16,30 @@ import {
   DialogDescription,
   DialogFooter,
 } from './ui/dialog'
+import { useLocalStorage } from '@/stores/useLocalStorage'
 
 const CollectionsOption = ({
   trigger,
   collection,
   onOpenChange,
-  pinnedCollections,
-  setPinnedCollections,
-  onRenameStart
+  onRenameStart,
 }) => {
   const { isMobile } = useSidebar();
-  const [noteName, setNoteName] = useState('');
+  const [noteName, setNoteName] = useState("");
   const [open, setOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
 
-  const { deleteCollection, createNote } = useNoteStore();
+  const {pinnedCollections, togglePinnedCollection} = useLocalStorage();
+  const {deleteCollection, createNote} = useNoteStore();
   const navigate = useNavigate();
 
+  const isPinned = pinnedCollections.includes(collection._id);
+
   const togglePin = useCallback(() => {
-    const maxPinned = 3;
-    if (pinnedCollections.includes(collection._id)) {
-      const newPinnedCollections = pinnedCollections.filter(id => id !== collection._id);
-      setPinnedCollections(newPinnedCollections);
-      localStorage.setItem('pinnedCollections', JSON.stringify(newPinnedCollections));
-    } else {
-      const newPinnedCollections = [collection._id, ...pinnedCollections.slice(0, maxPinned - 1)];
-      setPinnedCollections(newPinnedCollections);
-      localStorage.setItem('pinnedCollections', JSON.stringify(newPinnedCollections));
-    }
+    togglePinnedCollection(collection._id);
     setOpen(false);
-  }, [collection._id, pinnedCollections, setPinnedCollections]);
+  }, [collection._id, togglePinnedCollection]);
 
   const insertNote = useCallback(async () => {
     if (!noteName.trim()) return;
@@ -54,9 +47,9 @@ const CollectionsOption = ({
     const noteId = await createNote({
       name: noteName,
       collectionId: collection._id,
-      content: `<h1>${noteName}</h1>`
+      content: `<h1>${noteName}</h1>`,
     });
-    setNoteName('');
+    setNoteName("");
     navigate(`/note/${noteId}/editor`);
     setOpen(false);
   }, [noteName, collection._id, createNote, navigate]);
@@ -70,23 +63,25 @@ const CollectionsOption = ({
     deleteCollection(collection._id);
     setIsDeleteDialogOpen(false);
     setOpen(false);
-    setDeleteConfirmationText('');
+    setDeleteConfirmationText("");
   }, [collection._id, deleteCollection]);
 
-  const handleOpenChange = useCallback((isOpen) => {
-    setOpen(isOpen);
-    onOpenChange?.(isOpen);
-  }, [onOpenChange]);
+  const handleOpenChange = useCallback(
+    (isOpen) => {
+      setOpen(isOpen);
+      onOpenChange?.(isOpen);
+    },
+    [onOpenChange]
+  );
 
   return (
     <>
-      {/* Delete Confirmation Dialog - Now outside Popover */}
-      <Dialog 
-        open={isDeleteDialogOpen} 
+      <Dialog
+        open={isDeleteDialogOpen}
         onOpenChange={(open) => {
           setIsDeleteDialogOpen(open);
           if (!open) {
-            setDeleteConfirmationText('');
+            setDeleteConfirmationText("");
           }
         }}
       >
@@ -94,7 +89,8 @@ const CollectionsOption = ({
           <DialogHeader className={"text-left"}>
             <DialogTitle>Delete Collection</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the collection and all notes within it.
+              This action cannot be undone. This will permanently delete the
+              collection and all notes within it.
               <div className="mt-4 space-y-2">
                 <Label>Type the collection name to confirm:</Label>
                 <Input
@@ -111,7 +107,7 @@ const CollectionsOption = ({
               variant="outline"
               onClick={() => {
                 setIsDeleteDialogOpen(false);
-                setDeleteConfirmationText('');
+                setDeleteConfirmationText("");
               }}
             >
               Cancel
@@ -127,15 +123,8 @@ const CollectionsOption = ({
         </DialogContent>
       </Dialog>
 
-      {/* Main Popover */}
-      <Popover
-        // modal={true}
-        open={open}
-        onOpenChange={handleOpenChange}
-      >
-        <PopoverTrigger asChild>
-          {trigger}
-        </PopoverTrigger>
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         <PopoverContent
           className="w-48 rounded-lg p-1 bg-popover border"
           side="bottom"
@@ -148,7 +137,7 @@ const CollectionsOption = ({
             className="font-normal p-2 h-auto w-full justify-start gap-2"
             onClick={togglePin}
           >
-            {!pinnedCollections.includes(collection._id) ? (
+            {!isPinned ? (
               <>
                 <Pin className="size-4 text-muted-foreground" />
                 <span>Pin Top</span>
@@ -192,7 +181,7 @@ const CollectionsOption = ({
                       value={noteName}
                       onChange={(e) => setNoteName(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                           insertNote();
                         }
                       }}
@@ -235,7 +224,7 @@ const CollectionsOption = ({
         </PopoverContent>
       </Popover>
     </>
-  )
-}
+  );
+};
 
-export default CollectionsOption
+export default CollectionsOption;

@@ -64,7 +64,12 @@ const AddNoteDrawer = ({ trigger }) => {
 
       try {
         setIsSearching(true);
-        const response = await getAllUsers(1, 10, query, "all");
+        const response = await getAllUsers({
+          page: 1,
+          limit: 10,
+          filter: "all",
+          query,
+        });
         const users = response.users?.filter((u) => u._id != authUser._id);
         setSearchResults(users || []);
       } catch (error) {
@@ -257,7 +262,7 @@ const AddNoteDrawer = ({ trigger }) => {
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={user?.avatar} />
                               <AvatarFallback>
-                                <img src="/avatar.png" alt={user?.fullName} />
+                                <img src="/avatar.svg" alt={user?.fullName} />
                               </AvatarFallback>
                             </Avatar>
                             <div className="text-sm">
@@ -288,7 +293,7 @@ const AddNoteDrawer = ({ trigger }) => {
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={user.avatar} />
                               <AvatarFallback>
-                                <img src="/avatar.png" alt={user?.fullName} />
+                                <img src="/avatar.svg" alt={user?.fullName} />
                               </AvatarFallback>
                             </Avatar>
                             <span>{user.username}</span>
@@ -346,7 +351,7 @@ const AddNoteDrawer = ({ trigger }) => {
                   <label className="text-sm font-medium mb-1 block">
                     Visibility
                   </label>
-                  
+
                   <Select value={visibility} onValueChange={setVisibility}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select visibility" />
@@ -400,7 +405,7 @@ const AddNoteDrawer = ({ trigger }) => {
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={user?.avatar} />
                               <AvatarFallback>
-                                <img src="/avatar.png" alt={user?.fullName} />
+                                <img src="/avatar.svg" alt={user?.fullName} />
                               </AvatarFallback>
                             </Avatar>
                             <div className="text-sm">
@@ -431,7 +436,7 @@ const AddNoteDrawer = ({ trigger }) => {
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={user.avatar} />
                               <AvatarFallback>
-                                <img src="/avatar.png" alt={user?.fullName} />
+                                <img src="/avatar.svg" alt={user?.fullName} />
                               </AvatarFallback>
                             </Avatar>
                             <span>{user.username}</span>
