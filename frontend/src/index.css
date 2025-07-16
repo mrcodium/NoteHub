@@ -812,6 +812,17 @@
   }
 }
 
+.katex-display::-webkit-scrollbar{
+  width: 3px;
+  height: 3px;
+}
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding: 0.5rem;
+}
+
 div[role="menu"] {
   @apply bg-popover text-popover-foreground rounded-md p-1 shadow-md overflow-y-auto overflow-x-hidden border min-w-[8rem] z-50;
 }
@@ -1025,7 +1036,7 @@ div:has(> .tiptap.ProseMirror) {
   p code {
     @apply bg-accent;
   }
-  
+
   code {
     @apply text-sm py-[2.4px] px-[4.8px] rounded whitespace-pre-wrap;
   }

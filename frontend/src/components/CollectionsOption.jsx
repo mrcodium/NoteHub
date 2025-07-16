@@ -1,13 +1,26 @@
-import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover'
-import React, { useState, useCallback } from 'react'
-import { useSidebar } from './ui/sidebar'
-import { Button } from './ui/button'
-import { FilePlus2, Pencil, Pin, PinOff, Plus, Trash2 } from 'lucide-react'
-import { Label } from '@radix-ui/react-dropdown-menu'
-import { Input } from './ui/input'
-import { useNoteStore } from '@/stores/useNoteStore'
-import { Separator } from './ui/separator'
-import { useNavigate } from 'react-router-dom'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@radix-ui/react-popover";
+import React, { useState, useCallback } from "react";
+import { useSidebar } from "./ui/sidebar";
+import { Button } from "./ui/button";
+import {
+  FilePlus2,
+  Lock,
+  LockOpen,
+  Pencil,
+  Pin,
+  PinOff,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { Label } from "@radix-ui/react-dropdown-menu";
+import { Input } from "./ui/input";
+import { useNoteStore } from "@/stores/useNoteStore";
+import { Separator } from "./ui/separator";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +28,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from './ui/dialog'
-import { useLocalStorage } from '@/stores/useLocalStorage'
+} from "./ui/dialog";
+import { useLocalStorage } from "@/stores/useLocalStorage";
 
 const CollectionsOption = ({
   trigger,
@@ -30,8 +43,9 @@ const CollectionsOption = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
 
-  const {pinnedCollections, togglePinnedCollection} = useLocalStorage();
-  const {deleteCollection, createNote} = useNoteStore();
+  const { pinnedCollections, togglePinnedCollection } = useLocalStorage();
+  const { deleteCollection, createNote, updateCollectionVisibility } =
+    useNoteStore();
   const navigate = useNavigate();
 
   const isPinned = pinnedCollections.includes(collection._id);
@@ -73,6 +87,16 @@ const CollectionsOption = ({
     },
     [onOpenChange]
   );
+
+  const toggleVisibility = useCallback(() => {
+    const newVisibility =
+      collection.visibility === "public" ? "private" : "public";
+    updateCollectionVisibility({
+      collectionId: collection._id,
+      visibility: newVisibility,
+    });
+    setOpen(false);
+  }, [collection._id, collection.visibility, updateCollectionVisibility]);
 
   return (
     <>
@@ -209,6 +233,24 @@ const CollectionsOption = ({
           >
             <Pencil className="size-4 text-muted-foreground" />
             <span>Rename</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            className="font-normal p-2 h-auto w-full justify-start gap-2"
+            onClick={toggleVisibility}
+          >
+            {collection.visibility === "public" ? (
+              <>
+                <Lock className="size-4 text-muted-foreground" />
+                <span>Make Private</span>
+              </>
+            ) : (
+              <>
+                <LockOpen className="size-4 text-muted-foreground" />
+                <span>Make Public</span>
+              </>
+            )}
           </Button>
 
           <Separator orientation="horizontal" className="my-1" />

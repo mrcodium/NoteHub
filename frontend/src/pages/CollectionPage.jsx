@@ -15,7 +15,13 @@ import {
 } from "@/components/ui/tooltip";
 import { axiosInstance } from "@/lib/axios";
 import { useNoteStore } from "@/stores/useNoteStore";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   EllipsisVertical,
@@ -27,6 +33,7 @@ import {
   Lock,
   Eye,
   File,
+  LockOpen,
 } from "lucide-react";
 import CollectionPageSkeleton from "@/components/sekeletons/CollectionPageSkeleton";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -40,43 +47,56 @@ const CollectionPage = () => {
   const { username, collectionSlug } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [collection, setCollection] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [notes, setNotes] = useState([]);
-  const { getCollection } = useNoteStore();
+  const { getCollection, collections: ownerCollections } = useNoteStore();
   const { authUser } = useAuthStore();
 
-  const isOwner = authUser?._id === user?._id;
+  // Memoize the collection data based on whether user is owner or not
+  const isOwner = authUser?.userName.toLowerCase() === username.toLowerCase();
+
+  const collection = useMemo(() => {
+    if (isOwner) {
+      return ownerCollections.find((c) => c.slug === collectionSlug);
+    }
+    return null;
+  }, [isOwner, ownerCollections, collectionSlug]);
+
+  // Memoize notes from the collection
+  const notes = useMemo(() => collection?.notes || [], [collection]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // fetching the user
         setIsLoading(true);
-        const response = await axiosInstance.get(`/user/${username}`);
-        setUser(response.data);
 
-        // fetching collection
-        const collectionsData = await getCollection({
-          userId: response.data?._id,
-          slug: collectionSlug,
-        });
-        setCollection(collectionsData);
-        setNotes(collectionsData?.notes || []);
+        if (!isOwner) {
+          // Only fetch for non-owner users
+          const response = await axiosInstance.get(`/user/${username}`);
+          setUser(response.data);
+
+          const collectionsData = await getCollection({
+            userId: response.data?._id,
+            slug: collectionSlug,
+          });
+          setUser(response.data);
+        } else {
+          // Use authUser for owner
+          setUser(authUser);
+        }
       } catch (error) {
         console.error("Error fetching profile data:", error);
         setUser(null);
-        setCollection(null);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchData();
-  }, [username, collectionSlug, getCollection]);
+  }, [username, collectionSlug, getCollection, isOwner, authUser]);
 
   if (isLoading) return <CollectionPageSkeleton />;
 
-  if (!user || !collection) {
+  if (!user || (!collection && isOwner)) {
     return (
       <div className="container mx-auto mt-20 px-4 py-8 text-center">
         <div className="flex flex-col items-center justify-center space-y-4">
@@ -107,10 +127,10 @@ const CollectionPage = () => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-2xl font-bold">{user?.fullName}</h1>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold">{user?.fullName}</h1>
               <Link
                 to={`/user/${user?.userName}`}
-                className="hover:underline text-muted-foreground"
+                className="hover:underline text-sm sm:text-base text-muted-foreground"
               >
                 @{user?.userName}
               </Link>
@@ -119,12 +139,12 @@ const CollectionPage = () => {
 
           <div className="space-y-2">
             <div className="flex items-center gap-4">
-              <h2 className="text-3xl font-bold">{collection.name}</h2>
+              <h2 className="text-3xl font-bold">{collection?.name}</h2>
               <Badge variant="secondary" className="px-3 py-1">
                 {notes.length} {notes.length === 1 ? "Note" : "Notes"}
               </Badge>
             </div>
-            {collection.description && (
+            {collection?.description && (
               <p className="text-muted-foreground max-w-3xl">
                 {collection.description}
               </p>
@@ -149,9 +169,7 @@ const CollectionPage = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <PackageOpen
-              className="h-16 w-16 stroke-1 text-muted-foreground"
-            />
+            <PackageOpen className="h-16 w-16 stroke-1 text-muted-foreground" />
             <h3 className="text-xl font-medium">No notes in this collection</h3>
             <p className="text-muted-foreground text-center max-w-md">
               This collection doesn't have any notes yet. When notes are added,
@@ -159,11 +177,7 @@ const CollectionPage = () => {
             </p>
             {isOwner && (
               <AddNoteDrawer
-                trigger={
-                  <Button>
-                    Create your first note
-                  </Button>
-                }
+                trigger={<Button>Create your first note</Button>}
               />
             )}
           </div>
@@ -173,7 +187,7 @@ const CollectionPage = () => {
   );
 };
 
-function NoteCard({ note, isOwner, username, collectionSlug }) {
+const NoteCard = React.memo(({ note, isOwner, username, collectionSlug }) => {
   const inputRef = useRef(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const { renameNote } = useNoteStore();
@@ -188,7 +202,7 @@ function NoteCard({ note, isOwner, username, collectionSlug }) {
     }
   }, [isRenaming]);
 
-  const handleSaveRename = () => {
+  const handleSaveRename = useCallback(() => {
     const newName = inputRef.current?.value.trim();
     if (newName && newName !== note.name) {
       renameNote({
@@ -197,19 +211,22 @@ function NoteCard({ note, isOwner, username, collectionSlug }) {
       });
     }
     setIsRenaming(false);
-  };
+  }, [note.name, note._id, renameNote]);
 
-  const handleKeyDown = (e) => {
-    e.stopPropagation();
-    if (e.key === "Enter") {
-      handleSaveRename();
-    } else if (e.key === "Escape") {
-      if (inputRef.current) {
-        inputRef.current.value = note.name;
+  const handleKeyDown = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (e.key === "Enter") {
+        handleSaveRename();
+      } else if (e.key === "Escape") {
+        if (inputRef.current) {
+          inputRef.current.value = note.name;
+        }
+        setIsRenaming(false);
       }
-      setIsRenaming(false);
-    }
-  };
+    },
+    [handleSaveRename, note.name]
+  );
 
   return (
     <Card className={"h-full flex flex-col hover:shadow-md transition-shadow"}>
@@ -251,13 +268,9 @@ function NoteCard({ note, isOwner, username, collectionSlug }) {
       </CardHeader>
 
       <CardFooter className="mt-auto p-4 pt-0 ">
-        <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
-          <Badge
-            variant={
-              note.visibility === "private" ? "destructive" : "secondary"
-            }
-            className="flex items-center gap-1"
-          >
+        <div className="flex items-center justify-between w-full text-xs">
+          <Badge variant={note.visibility === "public" ? "secondary" : "destructive"} className="flex items-center gap-1 h-auto">
+            {note.visibility === "public" ? <Eye className="size-3.5" /> : <Lock className="size-3.5" />}
             {note.visibility}
           </Badge>
 
@@ -267,7 +280,7 @@ function NoteCard({ note, isOwner, username, collectionSlug }) {
               "MMMM d, yyyy"
             )}`}
           >
-            <div className="flex gap-1 items-center">
+            <div className="flex gap-1 items-center text-muted-foreground">
               <Calendar className="size-3" />
               <span>{format(new Date(note.createdAt), "MMM d, yyyy")}</span>
             </div>
@@ -276,6 +289,6 @@ function NoteCard({ note, isOwner, username, collectionSlug }) {
       </CardFooter>
     </Card>
   );
-}
+});
 
 export default CollectionPage;

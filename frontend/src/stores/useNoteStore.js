@@ -210,7 +210,6 @@ export const useNoteStore = create((set, get) => ({
     try {
       const res = await axiosInstance.put("collection/", data);
       const { collection, message } = res.data;
-      console.log({ collection, message });
       set((state) => ({
         collections: state.collections.map((c) => {
           if (c._id === collection._id) {
@@ -223,7 +222,6 @@ export const useNoteStore = create((set, get) => ({
           return c;
         }),
       }));
-      console.log(get().collections);
       toast.success(message);
     } catch (error) {
       console.log(error);
@@ -292,6 +290,46 @@ export const useNoteStore = create((set, get) => ({
       // Remove the note from the old collection and add it to the new collection
       get().deleteNoteFromCollection(updatedNote._id);
       get().insertNoteInCollection(updatedNote.collectionId, updatedNote);
+
+      toast.success(message);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data.message);
+    }
+  },
+  updateCollectionVisibility: async ({visibility, collectionId}) => {
+    try {
+      const res = await axiosInstance.put("collection/update-visibility", {
+        visibility, 
+        collectionId
+      });
+      const { collection, message } = res.data;
+      set((state) => ({
+        collections: state.collections.map((c) => {
+          if (c._id === collection._id) {
+            return {
+              ...c,
+              visibility: collection.visibility,
+              updatedAt: collection.updatedAt,
+            };
+          }
+          return c;
+        }),
+      }));
+      toast.success(message);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data.message || "Failed to update visibility");
+    }
+  },
+
+  updateNoteVisibility: async ({noteId, visibility}) => {
+    try {
+      const res = await axiosInstance.put("note/update-visibility", {noteId, visibility});
+      const { note: updatedNote, message } = res.data;
+
+      // Replace note with updated note
+      get().replaceNoteFromCollection(updatedNote);
 
       toast.success(message);
     } catch (error) {

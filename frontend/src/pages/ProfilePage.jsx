@@ -45,7 +45,7 @@ const ProfilePage = () => {
     removeUserCover,
   } = useAuthStore();
   const [previewUrl, setPreviewUrl] = useState(null);
-  const { getAllCollections } = useNoteStore();
+  const { getAllCollections, collections: ownerCollections } = useNoteStore();
   const [user, setUser] = useState(null);
   const [collections, setCollections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,20 +55,28 @@ const ProfilePage = () => {
   const [previewavatar, setPreviewavatar] = useState(null);
   const [previewCover, setPreviewCover] = useState(null);
 
-  const isOwner = authUser?._id === user?._id;
+  const isOwner = authUser?.userName === username;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await axiosInstance.get(`/user/${username}`);
-        setUser(response.data);
+        
+        if (isOwner) {
+          // Use store data for owner
+          setUser(authUser);
+          setCollections(ownerCollections || []);
+        } else {
+          // Fetch data for other users
+          const response = await axiosInstance.get(`/user/${username}`);
+          setUser(response.data);
 
-        const collectionsData = await getAllCollections({
-          userId: response.data?._id,
-          guest: true,
-        });
-        setCollections(collectionsData || []);
+          const collectionsData = await getAllCollections({
+            userId: response.data?._id,
+            guest: true,
+          });
+          setCollections(collectionsData || []);
+        }
       } catch (error) {
         console.error("Error fetching profile data:", error);
         setUser(null);
@@ -79,7 +87,7 @@ const ProfilePage = () => {
     };
 
     fetchData();
-  }, [username, getAllCollections, ]);
+  }, [username, authUser, ownerCollections, isOwner, getAllCollections]);
 
   const handleUploadImage = async (e, setPreview, onUpload) => {
     const file = e.target.files[0];
@@ -101,8 +109,8 @@ const ProfilePage = () => {
         };
         finalFile = await imageCompression(file, options);
       }
-      const user = await onUpload(finalFile);
-      setUser(user);
+      await onUpload(finalFile);
+      setPreview(null);
     } catch (error) {
       console.error("Error compressing or uploading:\n", error);
     } finally {
@@ -141,10 +149,11 @@ const ProfilePage = () => {
       </div>
     );
   }
+
   const disableImageRemove =
     currentImageType === "avatar"
-      ? isRemovingAvatar || !authUser?.avatar // disable for avatar
-      : isRemovingCover || !authUser?.cover; // disable for cover
+      ? isRemovingAvatar || !user?.avatar // disable for avatar
+      : isRemovingCover || !user?.cover; // disable for cover
 
   const disableImageUpload =
     currentImageType === "avatar" ? isUploadingAvatar : isUploadingCover;
@@ -153,108 +162,115 @@ const ProfilePage = () => {
     currentImageType === "avatar"
       ? !Boolean(user?.avatar) && !previewCover
       : !Boolean(user?.cover) && !previewavatar;
-
+  
   return (
     <div className="p-4 overflow-auto">
       {/* Image Dialog */}
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-  <DialogContent className="p-0 overflow-hidden max-w-[100vw] sm:max-w-none w-auto">
-    <DialogHeader className="p-0 hidden">
-      <DialogTitle>
-        {currentImageType === "avatar" ? "Profile Photo" : "Cover Photo"}
-      </DialogTitle>
-    </DialogHeader>
+        <DialogContent className="p-0 overflow-hidden max-w-[100vw] sm:max-w-none w-auto">
+          <DialogHeader className="p-0 hidden">
+            <DialogTitle>
+              {currentImageType === "avatar" ? "Profile Photo" : "Cover Photo"}
+            </DialogTitle>
+          </DialogHeader>
 
-    <div className="flex flex-col p-0">
-      {noPhoto ? (
-        <div className="relative w-[300px] h-[300px] p-4">
-          <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground h-full">
-            <div className="p-8 rounded-full bg-input/30">
-              <ImageOff className="size-16 stroke-1" />
-            </div>
-            <p className="text-center text-sm">No {currentImageType}</p>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-accent flex justify-center items-center">
-          <img
-            src={currentImageType === "avatar" ? user?.avatar : user?.cover}
-            alt={`user ${currentImageType}`}
-            className="max-w-[100vw] max-h-[80vh] object-contain"
-            style={{
-              width: currentImageType === "avatar" ? "min(400px, 100vw)" : "min(800px, 100vw)",
-              height: "auto"
-            }}
-          />
-        </div>
-      )}
-
-      {isOwner && (
-        <DialogFooter className="p-4 border-t sticky bottom-0 bg-background">
-          <div className="grid grid-cols-2 gap-2 w-full">
-            <Label htmlFor={currentImageType} className="contents">
-              <input
-                type="file"
-                id={currentImageType}
-                accept="image/*"
-                className="hidden"
-                disabled={disableImageUpload}
-                onChange={(e) =>
-                  handleUploadImage(
-                    e,
-                    currentImageType === "avatar"
-                      ? setPreviewavatar
-                      : setPreviewCover,
-                    currentImageType === "avatar"
-                      ? uploadUserAvatar
-                      : uploadUserCover
-                  )
-                }
-              />
-              <div
-                className={cn(
-                  "button cursor-pointer w-full",
-                  disableImageUpload && "disabled"
-                )}
-              >
-                {disableImageUpload ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading
-                  </>
-                ) : (
-                  "Upload"
-                )}
+          <div className="flex flex-col p-0">
+            {noPhoto ? (
+              <div className="relative w-[300px] h-[300px] p-4">
+                <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground h-full">
+                  <div className="p-8 rounded-full bg-input/30">
+                    <ImageOff className="size-16 stroke-1" />
+                  </div>
+                  <p className="text-center text-sm">No {currentImageType}</p>
+                </div>
               </div>
-            </Label>
+            ) : (
+              <div className="bg-accent flex justify-center items-center">
+                <img
+                  src={
+                    (currentImageType === "avatar"
+                      ? user?.avatar
+                      : user?.cover) || "/avatar.svg"
+                  }
+                  alt={`user ${currentImageType}`}
+                  className="max-w-[100vw] max-h-[80vh] object-contain"
+                  style={{
+                    width:
+                      currentImageType === "avatar"
+                        ? "min(400px, 100vw)"
+                        : "min(800px, 100vw)",
+                    height: "auto",
+                  }}
+                />
+              </div>
+            )}
 
-            <Button
-              onClick={() =>
-                handleRemoveImage(
-                  currentImageType === "avatar"
-                    ? setPreviewavatar
-                    : setPreviewCover,
-                  currentImageType === "avatar"
-                    ? removeUserAvatar
-                    : removeUserCover
-                )
-              }
-              disabled={disableImageRemove}
-              variant="secondary"
-              className="w-full"
-            >
-              {isRemovingAvatar || isRemovingCover ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Remove"
-              )}
-            </Button>
+            {isOwner && (
+              <DialogFooter className="p-4 border-t sticky bottom-0 bg-background">
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  <Label htmlFor={currentImageType} className="contents">
+                    <input
+                      type="file"
+                      id={currentImageType}
+                      accept="image/*"
+                      className="hidden"
+                      disabled={disableImageUpload}
+                      onChange={(e) =>
+                        handleUploadImage(
+                          e,
+                          currentImageType === "avatar"
+                            ? setPreviewavatar
+                            : setPreviewCover,
+                          currentImageType === "avatar"
+                            ? uploadUserAvatar
+                            : uploadUserCover
+                        )
+                      }
+                    />
+                    <div
+                      className={cn(
+                        "button cursor-pointer w-full",
+                        disableImageUpload && "disabled"
+                      )}
+                    >
+                      {disableImageUpload ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading
+                        </>
+                      ) : (
+                        "Upload"
+                      )}
+                    </div>
+                  </Label>
+
+                  <Button
+                    onClick={() =>
+                      handleRemoveImage(
+                        currentImageType === "avatar"
+                          ? setPreviewavatar
+                          : setPreviewCover,
+                        currentImageType === "avatar"
+                          ? removeUserAvatar
+                          : removeUserCover
+                      )
+                    }
+                    disabled={disableImageRemove}
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    {isRemovingAvatar || isRemovingCover ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Remove"
+                    )}
+                  </Button>
+                </div>
+              </DialogFooter>
+            )}
           </div>
-        </DialogFooter>
-      )}
-    </div>
-  </DialogContent>
-</Dialog>
+        </DialogContent>
+      </Dialog>
 
       {/* Profile Card */}
       <Card
@@ -354,6 +370,7 @@ const ProfilePage = () => {
 function CollectionCard({ collection, isOwner, pinnedCollections }) {
   const [isCollectionRenaming, setIsCollectionRenaming] = useState(false);
   const inputRef = useRef(null);
+  const { renameCollection } = useNoteStore();
 
   const handleRenameStart = () => {
     setIsCollectionRenaming(true);
@@ -432,15 +449,19 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                 </Link>
               )}
               {!isCollectionRenaming && (
-                <Badge variant="secondary" className="text-xs flex-shrink-0">
-                  {collection.notes.length}{" "}
-                  {collection.notes.length === 1 ? "note" : "notes"}
+                <Badge variant={collection.visibility === "public" ? "secondary" : "destructive"} className="text-xs flex-shrink-0">
+                  {collection.visibility}
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Created {format(new Date(collection.createdAt), "MMM d, yyyy")}
-            </p>
+            <div className="flex gap-2 items-center">
+              <Badge variant="secondary" className="px-1">
+                {collection.notes.length}
+              </Badge>
+              <p className="text-xs text-muted-foreground mt-1">
+                Created {format(new Date(collection.createdAt), "MMM d, yyyy")}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -450,7 +471,7 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity size-8 p-0 text-muted-foreground hover:text-foreground"
+                className="size-8 p-0 text-muted-foreground hover:text-foreground"
               >
                 <MoreVertical className="size-4" />
                 <span className="sr-only">More</span>
@@ -464,4 +485,5 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
     </Card>
   );
 }
+
 export default ProfilePage;

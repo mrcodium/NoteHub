@@ -309,3 +309,39 @@ export const moveTo = async (req, res) => {
         });
     }
 }
+
+export const updateVisibility = async (req, res) => {
+    const {noteId, visibility} = req.body;
+  const { user } = req;
+
+  if (!user) return res.status(401).json({ message: "You are unauthorized" });
+  if (!visibility || !noteId) {
+    return res.status(400).json({
+      message: "all fields required [`visibility`, `noteId`]",
+    });
+  }
+
+  try {
+    const note = await Note.findOneAndUpdate(
+      { _id: noteId, userId: user._id },
+      { visibility },
+      { new: true }
+    );
+    if (!note) {
+      return res.status(404).json({
+        message:
+          "note not found or you don't have permission to update it",
+      });
+    }
+    return res.status(200).json({
+      message: `visiblity updated to ${note.visibility}`,
+      note,
+    });
+  } catch (error) {
+    console.error("Error in updateVisibility controller:", error);
+    return res.status(500).json({
+      message: "Failed to update visibility",
+      error: error.message,
+    });
+  }
+};

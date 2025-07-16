@@ -6,15 +6,18 @@ import {
     renameCollection,
     getAllCollections,
     getCollection,
+    updateVisibility,
 } from '../controller/collection.controller.js';
 
 
 const router = express.Router();
 router.use(protectRoute);
 
-router.post('/', createCollection);
-router.delete('/:_id', deleteCollection);
-router.put('/', renameCollection);
+router.post('/', protectRoute, createCollection);
+router.delete('/:_id', protectRoute, deleteCollection);
+router.put('/', protectRoute, renameCollection);
+router.put('/update-visibility', protectRoute, updateVisibility);
+
 router.get('/all-collections', getAllCollections);
 router.get('/', getCollection);
 

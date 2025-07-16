@@ -8,7 +8,8 @@ import {
     updateContent,
     renameNote,
     moveTo,
-    getNoteBySlug
+    getNoteBySlug,
+    updateVisibility,
 } from "../controller/note.controller.js";
 
 const router = express.Router();
@@ -22,6 +23,7 @@ router.post('/', protectRoute, createNote);
 router.delete('/:_id', protectRoute, deleteNote);
 router.put('/', protectRoute, updateContent);
 router.put('/rename', protectRoute, renameNote);
+router.put('/update-visibility', protectRoute, updateVisibility);
 router.post('/move-to', protectRoute, moveTo);
 
 export default router;
