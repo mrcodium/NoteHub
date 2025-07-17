@@ -1,136 +1,89 @@
 # NoteHub 📝✨
 
-[![GitHub Stars](https://img.shields.io/github/stars/abhijeetSinghRajput/notehub?style=for-the-badge)](https://github.com/abhijeetSinghRajput/notehub/stargazers)
-[![React](https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js)](https://nodejs.org/)
-[![Mongoose](https://img.shields.io/badge/Mongoose-8.0-880000?style=for-the-badge&logo=mongoDB&logoColor=white)](https://mongoosejs.com/)
-[![Vite](https://img.shields.io/badge/Vite-4.0-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
-[![Zustand](https://img.shields.io/badge/State_Management-Zustand-9146FF?style=for-the-badge)](https://github.com/pmndrs/zustand)
+![NoteHub Banner](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776796/Screenshot_2025-07-17_232545_f0ucxh.png)
 
-A full-stack note-taking application with React frontend and Node.js backend.
-![NoteHub Demo](demo.gif) <!-- Add actual demo gif later -->
+A modern note-taking app with rich editing, collaboration, and cloud sync.
 
-## Project Structure 🏗️
+## Live Demo
 
-### Frontend (`/frontend`)
-```
-frontend/
-├── public/ 
-├── src/
-│ ├── assets/ 
-│ ├── components/
-│ ├── hooks/ 
-│ ├── lib/ 
-│ ├── pages/ 
-│ ├── stores/ # State management (Zustand)
-│ ├── App.css 
-│ ├── App.jsx 
-│ └── main.jsx # Application entry point
-├── .gitignore
-├── components.json 
-├── index.html
-├── jsconfig.json 
-├── package.json
-├── tailwind.config.js # Tailwind CSS configuration
-└── vite.config.js # Vite configuration
-```
+🌐 [https://notehub-production.onrender.com](https://notehub-production.onrender.com)
 
-### Backend (`/backend`)
-```
-backend/
-├── controller/ 
-├── middleware/ # Express middleware
-├── model/ 
-├── routers/ # API routes
-├── utils/ 
-├── .gitignore
-├── index.js # Server entry point
-└── package.json
-```
+## ✨ Editor Features
 
+| Feature | Visual | Description |
+|---------|--------|-------------|
+| **Rich Text Formatting** | ![Rich Text](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777133/Screenshot_2025-07-18_000149_yvaarv.png) | Bold, italic, headings, lists, blockquotes, and more |
+| **Code Blocks** | ![Code](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776757/Screenshot_2025-07-17_233033_nbxykt.png) | Syntax highlighting for 100+ programming languages |
+| **LaTeX Math** | ![Math](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776746/Screenshot_2025-07-17_233300_wrm65f.png) | Beautiful mathematical equations with KaTeX rendering |
+| **Todo Lists** | ![Todo](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776723/Screenshot_2025-07-17_233856_ze2irj.png) | Interactive checklists with progress tracking |
+| **Real-time Collaboration** | ![Collab](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752778393/Screenshot_2025-07-18_002236_xqme0u.png) | Co-edit documents with live presence indicators |
+| **Version History** | ![History](https://img.icons8.com/ios/50/000000/time-machine.png) | View and restore previous versions of your notes |
+| **Dark/Light Mode** | ![Theme](https://img.icons8.com/ios/50/000000/contrast.png) | Full theme customization with system preference detection |
 
+## 🖼️ App Screenshots
 
-## Features 🚀
+<div align="center">
+  <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776833/Screenshot_2025-07-17_232528_sazanl.png" width="45%" alt="Profile Page">
+  <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776798/Screenshot_2025-07-17_232655_tzgfti.png" width="45%" alt="Settings Page">  
+  <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777921/profile-mobile-view_xbncnn.jpg" width="30%" alt="Mobile Profile">
+  <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777931/collection-dashboard_l7uf1y.jpg" width="30%" alt="Mobile Dashboard">
+</div>
 
-- 🎨 **Rich Text Editing** - Markdown-supported note creation
-- 📂 **Smart Organization** - Collections-based note management
-- 🔍 **Instant Search** - Full-text search across all notes
-- 🌓 **Dark Mode** - Eye-friendly theme switching
-- 🗄️ **Database Backed** - MongoDB 
-- 📱 **Responsive Design** - Optimized for all devices
+## 🛠️ Tech Stack
 
+**Frontend:**
+- React 18 + TypeScript
+- Tailwind CSS + ShadCN UI
+- Tiptap Editor (ProseMirror-based)
+- Vite + SWC (Ultra-fast builds)
+- React Query (Data fetching)
+- Zustand (State management)
 
-## Tech Stack ⚙️
-
-**Frontend**:
-- React 18 with Vite
-- Zustand for state management
-- Tailwind CSS + shadcn/ui components
-- Axios for API communication
-
-**Backend**:
-- Node.js with Express
-- MongoDB (or your chosen database)
+**Backend:**
+- Node.js + Express
+- MongoDB Atlas (Database)
 - JWT Authentication
-- REST API architecture
+- Socket.IO (Real-time updates)
+- Cloudinary (Media storage)
+- Mongoose (ODM)
 
-## Getting Started 🚀
+**DevOps:**
+- Render (Hosting)
+- GitHub Actions (CI/CD)
+- ESLint + Prettier (Code quality)
 
+## ⚙️ Setup Guide
 
-### Prerequisites
-```bash
-- Node.js 18+
-- mongoose
-- npm package manager
-```
+### Backend Configuration
 
-### Installation
-1. Clone the repository:
-```bash
-git clone https://github.com/abhijeetSinghRajput/notehub.git
-cd notehub
-```
+Create `.env` in `/backend`:
 
-2. Install frontend dependencies:
+```env
+PORT=5000
+JWT_SECRET=your_64char_secret_here
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/dbname
 
-```bash
-cd frontend
-npm install
-```
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud
+CLOUDINARY_API_KEY=123456789
+CLOUDINARY_API_SECRET=your_secret_key
 
-3. Install backend dependencies:
+# OAuth
+GOOGLE_CLIENT_ID=123-abcd.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-your-secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 
-```bash
-Copy
-cd ../backend
-npm install
-```
-
-4. Configure environment variables:
-
-```bash
-# In /backend create .env file with:
-PORT=3001
-
-JWT_SECRET=your_jwt_secret_key
-MONGODB_URI=your_mongodb_connection_string
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
-
-EMAIL_USER=sender_email
-EMAIL_PASS=sender_passkey
 NODE_ENV=development
 ```
 
-5. Start both servers:
+### 🛠️ Frontend Configuration
 
-```bash
-# In one terminal (backend)
-cd backend && npm start
+Create a `.env`  the `/frontend` 
 
-# In another terminal (frontend)
-cd frontend && npm dev
+```env
+VITE_API_BASE=http://localhost:5000
+VITE_GOOGLE_CLIENT_ID=123-abcd.apps.googleusercontent.com
+VITE_GOOGLE_REDIRECT_URI=http://localhost:3000
 ```
+
+
