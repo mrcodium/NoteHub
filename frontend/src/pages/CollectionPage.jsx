@@ -34,6 +34,9 @@ import {
   Eye,
   File,
   LockOpen,
+  ArrowDownUp,
+  ArrowDown,
+  ArrowUp,
 } from "lucide-react";
 import CollectionPageSkeleton from "@/components/sekeletons/CollectionPageSkeleton";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -42,6 +45,7 @@ import NotesOption from "@/components/NotesOption";
 import { format } from "date-fns";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import AddNoteDrawer from "@/components/AddNoteDrawer";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const CollectionPage = () => {
   const { username, collectionSlug } = useParams();
@@ -49,6 +53,8 @@ const CollectionPage = () => {
   const [user, setUser] = useState(null);
   const [guestCollection, setGuestCollection] = useState(null); // Add this state
   const [isLoading, setIsLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("created");
+  const [sortDirection, setSortDirection] = useState("desc");
   const { getCollection, collections: ownerCollections } = useNoteStore();
   const { authUser } = useAuthStore();
 
@@ -61,7 +67,31 @@ const CollectionPage = () => {
     return guestCollection; // Return guest collection when not owner
   }, [isOwner, ownerCollections, collectionSlug, guestCollection]);
 
+  
   const notes = useMemo(() => collection?.notes || [], [collection]);
+  const sortedNotes = useMemo(() => {
+    if (!notes) return [];
+  
+    const notesCopy = [...notes];
+    const modifier = sortDirection === "asc" ? 1 : -1;
+  
+    const sortFunctions = {
+      created: (a, b) =>
+        modifier * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+      updated: (a, b) =>
+        modifier * (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()),
+      name: (a, b) => modifier * a.name.localeCompare(b.name),
+    };
+
+    return notesCopy.sort(sortFunctions[sortBy]);
+  }, [notes, sortBy, sortDirection]);
+
+  const toggleSortDirection = ()=>{
+    setSortDirection(prev=>(
+      prev === "asc" ? "desc" : "asc"
+    ))
+  }
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -138,27 +168,70 @@ const CollectionPage = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center gap-4">
-              <h2 className="text-3xl font-bold">{collection?.name}</h2>
-              <Badge variant="secondary" className="px-3 py-1">
-                {notes.length} {notes.length === 1 ? "Note" : "Notes"}
-              </Badge>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="text-muted-foreground font-medium">Collaborators</h4>
+              <div className="flex gap-2">
+                {collection.collaborators.map(collaborator=>(
+                  <TooltipWrapper key={collaborator._id} message={"@"+collaborator.userName}>
+                    <Avatar>
+                      <AvatarImage src={collaborator.avatar}/>
+                      <AvatarFallback>
+                        <img src="/avatar.svg"/>
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipWrapper>
+                ))
+              }
+              </div>
             </div>
-            {collection?.description && (
-              <p className="text-muted-foreground max-w-3xl">
-                {collection.description}
-              </p>
-            )}
+            
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-3xl font-bold">{collection?.name}</h2>
+                <Badge variant="secondary" className="px-3 py-1">
+                  {notes.length} {notes.length === 1 ? "Note" : "Notes"}
+                </Badge>
+              </div>
+
+              {/* Add the filter dropdown here */}
+              <div className="flex gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" size="sm" className="justify-end">
+                      <ArrowDownUp className="h-4 w-4" />
+                      <span className="capitalize">{sortBy}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setSortBy("created")}>
+                      Created
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("updated")}>
+                      Updated
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("name")}>
+                      Name
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="secondary" className="size-8" onClick={toggleSortDirection}>
+                  {sortDirection === "asc" ? (
+                    <ArrowUp className="h-4 w-4" />
+                  ) : (
+                    <ArrowDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-
         <Separator />
 
         {/* Notes Grid */}
-        {notes.length > 0 ? (
+        {sortedNotes.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {notes.map((note) => (
+            {sortedNotes.map((note) => (
               <NoteCard
                 key={note._id}
                 note={note}

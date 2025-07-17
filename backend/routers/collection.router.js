@@ -7,6 +7,7 @@ import {
     getAllCollections,
     getCollection,
     updateVisibility,
+    updateCollaborators,
 } from '../controller/collection.controller.js';
 
 
@@ -20,5 +21,6 @@ router.put('/update-visibility', protectRoute, updateVisibility);
 
 router.get('/all-collections', getAllCollections);
 router.get('/', getCollection);
+router.put('/update-collaborators', updateCollaborators);
 
 export default router;

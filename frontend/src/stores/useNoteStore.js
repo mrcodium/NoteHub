@@ -323,6 +323,32 @@ export const useNoteStore = create((set, get) => ({
     }
   },
 
+  updateCollectionCollaborators: async ({collectionId , collaborators}) => {
+    try {
+      const res = await axiosInstance.put("collection/update-collaborators", {collectionId, collaborators});
+      const { collection, message } = res.data;
+
+      // Replace note with updated note
+      set((state) => ({
+        collections: state.collections.map((c) => {
+          if (c._id === collection._id) {
+            return {
+              ...c,
+              collaborators: collection.collaborators,
+              updatedAt: collection.updatedAt,
+            };
+          }
+          return c;
+        }),
+      }));
+
+      toast.success(message);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data.message);
+    }
+  },
+
   updateNoteVisibility: async ({noteId, visibility}) => {
     try {
       const res = await axiosInstance.put("note/update-visibility", {noteId, visibility});
@@ -337,4 +363,5 @@ export const useNoteStore = create((set, get) => ({
       toast.error(error.response.data.message);
     }
   },
+
 }));

@@ -1,26 +1,17 @@
 import { cn } from "@/lib/utils";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Camera,
   Loader2,
-  Bookmark,
-  MoreVertical,
-  Trash2,
   ImageOff,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import imageCompression from "browser-image-compression";
 import { useNoteStore } from "@/stores/useNoteStore";
-import CollectionsOption from "@/components/CollectionsOption";
-import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { axiosInstance } from "@/lib/axios";
 import ProfilePageSkeleton from "@/components/sekeletons/ProfilePageSkeleton";
-import { Input } from "@/components/ui/input";
 import { useLocalStorage } from "@/stores/useLocalStorage";
 import {
   Dialog,
@@ -30,6 +21,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import CollectionCard from "@/components/CollectionCard";
 
 const ProfilePage = () => {
   const { username } = useParams();
@@ -61,7 +54,7 @@ const ProfilePage = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
+
         if (isOwner) {
           // Use store data for owner
           setUser(authUser);
@@ -162,7 +155,7 @@ const ProfilePage = () => {
     currentImageType === "avatar"
       ? !Boolean(user?.avatar) && !previewCover
       : !Boolean(user?.cover) && !previewavatar;
-  
+
   return (
     <div className="p-4 overflow-auto">
       {/* Image Dialog */}
@@ -280,7 +273,7 @@ const ProfilePage = () => {
         )}
       >
         <Avatar
-          className="relative max-h-48 h-full w-full overflow-hidden cursor-pointer"
+          className="relative rounded-none max-h-48 h-full w-full overflow-hidden cursor-pointer"
           style={{ aspectRatio: "3/1" }}
           onClick={() => {
             setCurrentImageType("cover");
@@ -293,7 +286,7 @@ const ProfilePage = () => {
             className="w-full h-full max-h-48 object-cover"
             style={{ aspectRatio: "3/1" }}
           />
-          <AvatarFallback className="brightness-[0.2]">
+          <AvatarFallback className="rounded-none brightness-[0.2]">
             <img
               src="/placeholder.svg"
               alt="placeholder"
@@ -367,123 +360,5 @@ const ProfilePage = () => {
   );
 };
 
-function CollectionCard({ collection, isOwner, pinnedCollections }) {
-  const [isCollectionRenaming, setIsCollectionRenaming] = useState(false);
-  const inputRef = useRef(null);
-  const { renameCollection } = useNoteStore();
-
-  const handleRenameStart = () => {
-    setIsCollectionRenaming(true);
-    setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 0);
-  };
-
-  const handleRenameSave = () => {
-    const newName = inputRef.current?.value.trim();
-    if (newName && newName !== collection.name) {
-      renameCollection({
-        _id: collection._id,
-        newName: newName,
-      });
-    }
-    setIsCollectionRenaming(false);
-  };
-
-  const handleInputKeyDown = (e) => {
-    // Stop propagation to prevent collapsible toggle
-    e.stopPropagation();
-    if (e.key === "Enter") {
-      handleRenameSave();
-    }
-  };
-
-  const handleInputBlur = () => {
-    handleRenameSave();
-  };
-
-  const handleInputClick = (e) => {
-    // Stop propagation to prevent collapsible toggle
-    e.stopPropagation();
-  };
-
-  const isPinned = (collectionId) => {
-    return pinnedCollections.includes(collectionId);
-  };
-
-  return (
-    <Card
-      key={collection._id}
-      className={cn("group hover:shadow-md transition-all")}
-    >
-      <div className="flex items-center gap-2 justify-between p-4">
-        <div className="flex items-start gap-3 flex-1">
-          <div className="relative">
-            <Bookmark
-              className={cn(
-                "h-5 w-5 mt-1",
-                isPinned(collection._id)
-                  ? "text-foreground fill-foreground"
-                  : "text-muted-foreground"
-              )}
-            />
-          </div>
-          <div className="w-full">
-            <div className="flex items-center gap-2 w-full">
-              {isCollectionRenaming ? (
-                <Input
-                  className="font-semibold bg-input/30"
-                  defaultValue={collection.name}
-                  ref={inputRef}
-                  onBlur={handleInputBlur}
-                  onKeyDown={handleInputKeyDown}
-                  onClick={handleInputClick}
-                />
-              ) : (
-                <Link
-                  to={`${collection.slug}`}
-                  className="hover:underline font-medium"
-                >
-                  {collection.name}
-                </Link>
-              )}
-              {!isCollectionRenaming && (
-                <Badge variant={collection.visibility === "public" ? "secondary" : "destructive"} className="text-xs flex-shrink-0">
-                  {collection.visibility}
-                </Badge>
-              )}
-            </div>
-            <div className="flex gap-2 items-center">
-              <Badge variant="secondary" className="px-1">
-                {collection.notes.length}
-              </Badge>
-              <p className="text-xs text-muted-foreground mt-1">
-                Created {format(new Date(collection.createdAt), "MMM d, yyyy")}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {isOwner && (
-          <CollectionsOption
-            trigger={
-              <Button
-                variant="ghost"
-                size="sm"
-                className="size-8 p-0 text-muted-foreground hover:text-foreground"
-              >
-                <MoreVertical className="size-4" />
-                <span className="sr-only">More</span>
-              </Button>
-            }
-            collection={collection}
-            onRenameStart={handleRenameStart}
-          />
-        )}
-      </div>
-    </Card>
-  );
-}
 
 export default ProfilePage;

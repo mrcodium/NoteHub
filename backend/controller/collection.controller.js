@@ -106,27 +106,68 @@ const getCollectionsAggregatePipeline = (
   requestingUserId = null,
   slug = null
 ) => {
-  // If the requesting user is NOT the owner, only show public collections/notes
-  const isOwner =
-    requestingUserId && userId.toString() === requestingUserId.toString();
+  const requestingUserIdObj = requestingUserId 
+    ? new mongoose.Types.ObjectId(requestingUserId)
+    : null;
+  const userIdObj = new mongoose.Types.ObjectId(userId);
 
-  const matchStage = {
-    userId: new mongoose.Types.ObjectId(userId),
-    ...(!isOwner && { visibility: "public" }), // Only show public if not owner
-    ...(slug && { slug: slug.toLowerCase() }), // Filter by slug if provided
-  };
+  const isOwner = requestingUserId && userIdObj.equals(requestingUserIdObj);
+  const isCollaborator = requestingUserId && !isOwner;
 
   return [
-    { $match: matchStage },
+    {
+      $match: {
+        $and: [
+          { userId: userIdObj },
+          {
+            $or: [
+              { visibility: "public" },
+              ...(isOwner ? [{}] : []),
+              ...(isCollaborator ? [{
+                collaborators: requestingUserIdObj
+              }] : [])
+            ]
+          },
+          ...(slug ? [{ slug: slug.toLowerCase() }] : [])
+        ]
+      }
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "collaborators",
+        foreignField: "_id",
+        as: "collaborators",
+        pipeline: [{
+          $project: {
+            _id: 1,
+            fullName: 1,
+            userName: 1,
+            avatar: 1,
+            email: 1
+          }
+        }]
+      }
+    },
     {
       $lookup: {
         from: "notes",
-        localField: "_id",
-        foreignField: "collectionId",
-        as: "notes",
+        let: { collectionId: "$_id", collabs: "$collaborators" },
         pipeline: [
-          // Apply visibility filter to notes as well
-          { $match: { ...(!isOwner && { visibility: "public" }) } },
+          {
+            $match: {
+              $expr: { $eq: ["$collectionId", "$$collectionId"] },
+              $or: [
+                { visibility: "public" },
+                ...(isOwner ? [{}] : []),
+                ...(isCollaborator ? [{
+                  $expr: {
+                    $in: [requestingUserIdObj, "$$collabs._id"]
+                  }
+                }] : [])
+              ]
+            }
+          },
           {
             $project: {
               _id: 1,
@@ -134,11 +175,18 @@ const getCollectionsAggregatePipeline = (
               slug: 1,
               visibility: 1,
               createdAt: 1,
-              updatedAt: 1,
-            },
-          },
+              updatedAt: 1
+            }
+          }
         ],
-      },
+        as: "notes"
+      }
+    },
+    {
+      $addFields: {
+        isRequesterCollaborator: isCollaborator,
+        isOwner: isOwner
+      }
     },
     {
       $project: {
@@ -150,10 +198,18 @@ const getCollectionsAggregatePipeline = (
         createdAt: 1,
         updatedAt: 1,
         notes: 1,
-      },
-    },
+        collaborators: {
+          $cond: {
+            if: { $or: ["$isOwner", "$isRequesterCollaborator"] },
+            then: "$collaborators",
+            else: "$$REMOVE"
+          }
+        }
+      }
+    }
   ];
 };
+
 
 export const getAllCollections = async (req, res) => {
   const { userId } = req.query;
@@ -234,6 +290,45 @@ export const updateVisibility = async (req, res) => {
     console.error("Error in updateVisibility controller:", error);
     return res.status(500).json({
       message: "Failed to update visibility",
+      error: error.message,
+    });
+  }
+};
+
+
+export const updateCollaborators = async (req, res) => {
+  const { collaborators, collectionId } = req.body;
+  const { user } = req;
+
+  if (!user) return res.status(401).json({ message: "You are unauthorized" });
+  if (!Array.isArray(collaborators) || !collectionId) {
+    return res.status(400).json({
+      message: "all fields required [`collaborators: Array`, `collectionId`]",
+    });
+  }
+
+  try {
+    // Update the collection's collaborators
+    const updatedCollection = await Collection.findOneAndUpdate(
+      { _id: collectionId, userId: user._id },
+      { collaborators },
+      { new: true }
+    ).populate("collaborators", "fullName userName email avatar _id"); 
+
+    if (!updatedCollection) {
+      return res.status(404).json({
+        message: "collection not found or you don't have permission to update it",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Collaborators updated and populated successfully",
+      collection: updatedCollection,
+    });
+  } catch (error) {
+    console.error("Error in updateCollaborators controller:", error);
+    return res.status(500).json({
+      message: "Failed to update collaborators",
       error: error.message,
     });
   }

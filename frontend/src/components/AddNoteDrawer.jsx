@@ -68,7 +68,7 @@ const AddNoteDrawer = ({ trigger }) => {
           page: 1,
           limit: 10,
           filter: "all",
-          query,
+          search: query,
         });
         const users = response.users?.filter((u) => u._id != authUser._id);
         setSearchResults(users || []);
