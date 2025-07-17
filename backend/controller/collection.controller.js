@@ -17,19 +17,25 @@ export const createCollection = async (req, res) => {
       name,
       userId: user._id,
     });
+    
     if (existingCollection) {
-      return res
-        .status(400)
-        .json({
-          message: `The repository ${name} already exists on this account`,
-        });
+      return res.status(400).json({
+        message: `The repository ${name} already exists on this account`,
+      });
     }
 
-    const collection = await Collection.create({ name, userId: user._id });
+    const collection = await Collection.create({
+      name,
+      userId: user._id,
+      visibility,
+      collaborators,
+    });
+
     res.status(201).json({
       message: "Collection created successfully",
       collection: { ...collection._doc, notes: [] },
     });
+
   } catch (error) {
     res.status(500).json({ message: "Internal server error." });
     console.error("Error in createCollection controller\n", error);
@@ -55,12 +61,10 @@ export const deleteCollection = async (req, res) => {
     }
 
     if (collection.userId.toString() !== user._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Forbidden: you do not have permission to delete this collection.",
-        });
+      return res.status(403).json({
+        message:
+          "Forbidden: you do not have permission to delete this collection.",
+      });
     }
 
     // deleting associated notes as well.
@@ -97,86 +101,106 @@ export const renameCollection = async (req, res) => {
   }
 };
 
-const getCollectionsAggregatePipeline = (userId, requestingUserId = null, slug = null) => {
-    // If the requesting user is NOT the owner, only show public collections/notes
-    const isOwner = requestingUserId && userId.toString() === requestingUserId.toString();
+const getCollectionsAggregatePipeline = (
+  userId,
+  requestingUserId = null,
+  slug = null
+) => {
+  // If the requesting user is NOT the owner, only show public collections/notes
+  const isOwner =
+    requestingUserId && userId.toString() === requestingUserId.toString();
 
-    const matchStage = {
-        userId: new mongoose.Types.ObjectId(userId),
-        ...(!isOwner && { visibility: "public" }), // Only show public if not owner
-        ...(slug && { slug: slug.toLowerCase() }), // Filter by slug if provided
-    };
+  const matchStage = {
+    userId: new mongoose.Types.ObjectId(userId),
+    ...(!isOwner && { visibility: "public" }), // Only show public if not owner
+    ...(slug && { slug: slug.toLowerCase() }), // Filter by slug if provided
+  };
 
-    return [
-        { $match: matchStage },
-        {
-            $lookup: {
-                from: "notes",
-                localField: "_id",
-                foreignField: "collectionId",
-                as: "notes",
-                pipeline: [
-                    // Apply visibility filter to notes as well
-                    { $match: { ...(!isOwner && { visibility: "public" }) } },
-                    { $project: { _id: 1, name: 1, slug: 1, visibility: 1, createdAt: 1, updatedAt: 1 } },
-                ],
-            },
-        },
-        {
+  return [
+    { $match: matchStage },
+    {
+      $lookup: {
+        from: "notes",
+        localField: "_id",
+        foreignField: "collectionId",
+        as: "notes",
+        pipeline: [
+          // Apply visibility filter to notes as well
+          { $match: { ...(!isOwner && { visibility: "public" }) } },
+          {
             $project: {
-                _id: 1,
-                name: 1,
-                slug: 1,
-                visibility: 1,
-                userId: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                notes: 1,
+              _id: 1,
+              name: 1,
+              slug: 1,
+              visibility: 1,
+              createdAt: 1,
+              updatedAt: 1,
             },
-        },
-    ];
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        slug: 1,
+        visibility: 1,
+        userId: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        notes: 1,
+      },
+    },
+  ];
 };
 
 export const getAllCollections = async (req, res) => {
-    const { userId } = req.query;
+  const { userId } = req.query;
 
-    if (!userId) {
-        return res.status(400).json({ message: "userId not provided" });
-    }
+  if (!userId) {
+    return res.status(400).json({ message: "userId not provided" });
+  }
 
-    try {
-        const requestingUserId = req.user?._id; // Check if user is authenticated
-        const pipeline = getCollectionsAggregatePipeline(userId, requestingUserId);
-        const collections = await Collection.aggregate(pipeline);
-        
-        res.status(200).json({ collections });
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error." });
-        console.error("Error in getAllCollections controller\n", error);
-    }
+  try {
+    const requestingUserId = req.user?._id; // Check if user is authenticated
+    const pipeline = getCollectionsAggregatePipeline(userId, requestingUserId);
+    const collections = await Collection.aggregate(pipeline);
+
+    res.status(200).json({ collections });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error." });
+    console.error("Error in getAllCollections controller\n", error);
+  }
 };
 
 export const getCollection = async (req, res) => {
-    const { userId, slug } = req.query;
-    
-    if (!userId || !slug) {
-        return res.status(400).json({ message: "userId and slug are required" });
+  const { userId, slug } = req.query;
+
+  if (!userId || !slug) {
+    return res.status(400).json({ message: "userId and slug are required" });
+  }
+
+  try {
+    const requestingUserId = req.user?._id; // Check if user is authenticated
+    const pipeline = getCollectionsAggregatePipeline(
+      userId,
+      requestingUserId,
+      slug?.toLowerCase()
+    );
+    const collections = await Collection.aggregate(pipeline);
+
+    if (!collections.length) {
+      return res
+        .status(404)
+        .json({ message: "Collection not found or not accessible" });
     }
 
-    try {
-        const requestingUserId = req.user?._id; // Check if user is authenticated
-        const pipeline = getCollectionsAggregatePipeline(userId, requestingUserId, slug?.toLowerCase());
-        const collections = await Collection.aggregate(pipeline);
-
-        if (!collections.length) {
-            return res.status(404).json({ message: "Collection not found or not accessible" });
-        }
-
-        res.status(200).json({ collection: collections[0] });
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
-        console.error("Error in getCollection controller\n", error);
-    }
+    res.status(200).json({ collection: collections[0] });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in getCollection controller\n", error);
+  }
 };
 
 export const updateVisibility = async (req, res) => {

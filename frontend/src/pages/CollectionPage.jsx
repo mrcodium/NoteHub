@@ -47,21 +47,20 @@ const CollectionPage = () => {
   const { username, collectionSlug } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [guestCollection, setGuestCollection] = useState(null); // Add this state
   const [isLoading, setIsLoading] = useState(true);
   const { getCollection, collections: ownerCollections } = useNoteStore();
   const { authUser } = useAuthStore();
 
-  // Memoize the collection data based on whether user is owner or not
   const isOwner = authUser?.userName.toLowerCase() === username.toLowerCase();
 
   const collection = useMemo(() => {
     if (isOwner) {
       return ownerCollections.find((c) => c.slug === collectionSlug);
     }
-    return null;
-  }, [isOwner, ownerCollections, collectionSlug]);
+    return guestCollection; // Return guest collection when not owner
+  }, [isOwner, ownerCollections, collectionSlug, guestCollection]);
 
-  // Memoize notes from the collection
   const notes = useMemo(() => collection?.notes || [], [collection]);
 
   useEffect(() => {
@@ -70,7 +69,6 @@ const CollectionPage = () => {
         setIsLoading(true);
 
         if (!isOwner) {
-          // Only fetch for non-owner users
           const response = await axiosInstance.get(`/user/${username}`);
           setUser(response.data);
 
@@ -78,14 +76,15 @@ const CollectionPage = () => {
             userId: response.data?._id,
             slug: collectionSlug,
           });
+          setGuestCollection(collectionsData); // Store the fetched collection
           setUser(response.data);
         } else {
-          // Use authUser for owner
           setUser(authUser);
         }
       } catch (error) {
         console.error("Error fetching profile data:", error);
         setUser(null);
+        setGuestCollection(null); // Reset guest collection on error
       } finally {
         setIsLoading(false);
       }
@@ -127,7 +126,9 @@ const CollectionPage = () => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold">{user?.fullName}</h1>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
+                {user?.fullName}
+              </h1>
               <Link
                 to={`/user/${user?.userName}`}
                 className="hover:underline text-sm sm:text-base text-muted-foreground"
@@ -269,8 +270,15 @@ const NoteCard = React.memo(({ note, isOwner, username, collectionSlug }) => {
 
       <CardFooter className="mt-auto p-4 pt-0 ">
         <div className="flex items-center justify-between w-full text-xs">
-          <Badge variant={note.visibility === "public" ? "secondary" : "destructive"} className="flex items-center gap-1 h-auto">
-            {note.visibility === "public" ? <Eye className="size-3.5" /> : <Lock className="size-3.5" />}
+          <Badge
+            variant={note.visibility === "public" ? "secondary" : "destructive"}
+            className="flex items-center gap-1 h-auto"
+          >
+            {note.visibility === "public" ? (
+              <Eye className="size-3.5" />
+            ) : (
+              <Lock className="size-3.5" />
+            )}
             {note.visibility}
           </Badge>
 
