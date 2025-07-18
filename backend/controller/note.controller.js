@@ -164,43 +164,68 @@ export const getNoteBySlug = async (req, res) => {
   }
 };
 
-
-export const getNotes = async (req, res) => {
+export const getPublicNotes = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const { user } = req;
 
     try {
-        const notes = await Note.find({ userId: user._id })
-            .sort({ updatedAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .select('-content');
+        // First find all public collections
+        const publicCollections = await Collection.find({ 
+            visibility: 'public' 
+        }).select('_id');
 
-        const totalNotes = await Note.countDocuments({ userId: user._id });
+        const collectionIds = publicCollections.map(c => c._id);
+
+        // Then find public notes in those collections
+        let noteQuery = Note.find({ 
+            visibility: 'public',
+            collectionId: { $in: collectionIds }
+        })
+        .populate({
+            path: 'userId',
+            select: '_id userName fullName avatar',
+            options: { lean: true }
+        })
+        .populate({
+            path: 'collectionId',
+            select: '_id name slug visibility',
+            options: { lean: true }
+        })
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+        const notes = await noteQuery.exec();
+        const totalNotes = await Note.countDocuments({ 
+            visibility: 'public',
+            collectionId: { $in: collectionIds }
+        });
         const totalPages = Math.ceil(totalNotes / limit);
 
         return res.status(200).json({ 
-            message: "Notes retrieved successfully",
-            data : {
+            success: true,
+            data: {
                 notes,
                 pagination: {
                     currentPage: page,
                     totalPages,
                     totalNotes,
-                    notesPerPage: limit
+                    notesPerPage: limit,
+                    hasMore: page < totalPages
                 }
             }
         });
+
     } catch (error) {
-        console.error("Error in getNotes controller:", error);
+        console.error("Error in getPublicNotes controller:", error);
         return res.status(500).json({ 
-            message: "Failed to retrieve notes",
+            success: false,
+            message: "Failed to retrieve public notes",
             error: error.message 
         });
     }
-}
+};
 
 export const updateContent = async (req, res) => {
     const { content, noteId } = req.body;

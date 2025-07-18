@@ -4,7 +4,7 @@ import {
     createNote,
     deleteNote,
     getNote,
-    getNotes,
+    getPublicNotes,
     updateContent,
     renameNote,
     moveTo,
@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.use(protectRoute);
 
-router.get('/', protectRoute, getNotes);
+router.get('/', protectRoute, getPublicNotes);
 router.get('/:username/:collectionSlug/:noteSlug', protectRoute, getNoteBySlug);
 router.get('/:_id', protectRoute, getNote);
 router.post('/', protectRoute, createNote);

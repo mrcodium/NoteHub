@@ -60,3 +60,90 @@ export const formatCompactNumber = (num) => {
     return num.toString();
   }
 }
+
+export const noteTransformer = (htmlContent, options = {}) => {
+  if (!htmlContent || typeof htmlContent !== 'string') {
+    return {
+      headings: [],
+      images: [],
+      description: ''
+    };
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const result = {
+      headings: [],
+      images: [],
+      description: ''
+    };
+
+    // Extract headings
+    if (options.headings) {
+      const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      result.headings = Array.from(headingElements).map(heading => ({
+        text: heading.textContent.trim(),
+        level: parseInt(heading.tagName.substring(1)),
+        id: heading.id || null
+      })).filter(h => h.text.length > 0);
+    }
+
+    // Extract images
+    if (options.images) {
+      const imgElements = doc.querySelectorAll('img[src]');
+      result.images = Array.from(imgElements).map(img => ({
+        src: img.src,
+        alt: img.alt?.trim() || '',
+        width: img.naturalWidth || null,
+        height: img.naturalHeight || null
+      })).filter(img => img.src);
+    }
+
+    // Enhanced paragraph extraction
+    if (options.description) {
+      // Get all text-containing elements
+      const textElements = Array.from(doc.querySelectorAll('p, div, section, article'))
+        .map(el => el.textContent.trim())
+        .filter(text => text.length > 0);
+
+      // Find the best candidate text
+      let bestText = '';
+      let maxWordCount = 0;
+
+      for (const text of textElements) {
+        const words = text.split(/\s+/);
+        const wordCount = words.length;
+
+        // If we find text with ≥20 words, use it immediately
+        if (wordCount >= 20) {
+          bestText = words.slice(0, 20).join(' '); // Take first 20 words
+          break;
+        }
+
+        // Otherwise track the longest text found
+        if (wordCount > maxWordCount) {
+          maxWordCount = wordCount;
+          bestText = text;
+        }
+      }
+
+      // Fallback to first heading if no text found
+      if (!bestText && result.headings.length > 0) {
+        bestText = result.headings[0].text;
+      }
+
+      result.description = bestText;
+    }
+
+    return result;
+
+  } catch (error) {
+    console.error('Error transforming note content:', error);
+    return {
+      headings: [],
+      images: [],
+      description: ''
+    };
+  }
+};

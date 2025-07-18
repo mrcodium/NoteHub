@@ -17,6 +17,53 @@ export const useNoteStore = create((set, get) => ({
   notesContent: {
     //noteId : 'content'
   },
+  isNotesLoading: false,
+  notes: [],
+  pagination: {
+    currentPage: 1,
+    totalPages: 0,
+    totalNotes: 0,
+    notesPerPage: 10,
+    hasMore: false
+  },
+
+  getPublicNotes: async ({page, limit, user}) => {
+    set({ isNotesLoading: true });
+    try {
+      const res = await axiosInstance.get('/note', {
+        params: {
+          page,
+          limit,
+          user: user ? 'true' : undefined
+        }
+      });
+
+      const { data } = res;
+      const newNotes = data.data.notes;
+      set({
+        notes: page === 1 ? newNotes : [...get().notes, ...newNotes],
+        pagination: data.data.pagination // Use pagination directly from API
+      });
+
+      return data.data;
+
+    } catch (error) {
+      throw error;
+    } finally {
+      set({ isNotesLoading: false });
+    }
+  },
+
+  resetNotes: () => set({
+    notes: [],
+    pagination: {
+      currentPage: 1,
+      totalPages: 0,
+      totalNotes: 0,
+      notesPerPage: 10,
+      hasMore: false
+    }
+  }),
 
   getNoteContent: async (noteId) => {
     const { notesContent } = get();

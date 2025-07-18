@@ -17,14 +17,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useRouteStore } from "@/stores/useRouteStore";
 import React, { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Plus,
-  ArrowLeft,
-  Telescope,
-  X,
-  Clock,
-  Trash2,
-} from "lucide-react";
+import { Plus, ArrowLeft, Telescope, X, Clock, Trash2 } from "lucide-react";
 import AddNoteDrawer from "@/components/AddNoteDrawer";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -42,7 +35,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Loader2 } from "lucide-react";
 import { debounce } from "lodash";
 import { SearchButton } from "@/components/SearchButton";
-
 
 const Dashboard = () => {
   return (
@@ -76,7 +68,6 @@ const DashboardContent = () => {
     fetchStars();
   }, []);
 
-
   return (
     <>
       <AppSidebar />
@@ -84,67 +75,70 @@ const DashboardContent = () => {
       <SidebarInset className="scrollbar-custom relative w-max h-svh overflow-hidden">
         <header className="z-50 flex border-b sticky top-0 bg-background justify-between h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4 min-w-0 flex-1">
+            {!isSidebarOpen && (
+              <>
                 <TooltipWrapper message={"Open Sidebar Ctrl M"}>
                   <SidebarOpenTrigger className="-ml-1" />
                 </TooltipWrapper>
                 <Separator orientation="vertical" className="mr-2 h-4" />
+              </>
+            )}
 
-              <Breadcrumb className="flex-1 min-w-0">
-                <BreadcrumbList className="flex-nowrap">
-                  {routes.length > 1 ? (
-                    <>
-                      <BreadcrumbItem>
-                        <DropdownMenu
-                          modal={true}
-                          className="z-50 transition-all"
-                        >
-                          <DropdownMenuTrigger className="flex items-center gap-1">
-                            <BreadcrumbEllipsis className="size-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            className="w-32 max-w-52 transition-all"
-                            align="start"
-                          >
-                            {routes
-                              .slice(0, -1)
-                              .reverse()
-                              .map((route, index) => (
-                                <Link
-                                  key={index}
-                                  className="block truncate whitespace-nowrap w-full"
-                                  to={route.path}
-                                >
-                                  <DropdownMenuItem className="px-2 py-1 min-w-0 ">
-                                    {route.name}
-                                  </DropdownMenuItem>
-                                </Link>
-                              ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </BreadcrumbItem>
-                      <BreadcrumbSeparator />
-                    </>
-                  ) : null}
-
-                  {routes.length > 0 && (
-                    <BreadcrumbItem className="min-w-0">
-                      <Link
-                        to={routes[routes.length - 1].path}
-                        className="text-foreground truncate block min-w-0"
+            <Breadcrumb className="flex-1 min-w-0">
+              <BreadcrumbList className="flex-nowrap">
+                {routes.length > 1 ? (
+                  <>
+                    <BreadcrumbItem>
+                      <DropdownMenu
+                        modal={true}
+                        className="z-50 transition-all"
                       >
-                        {routes[routes.length - 1].name}
-                      </Link>
+                        <DropdownMenuTrigger className="flex items-center gap-1">
+                          <BreadcrumbEllipsis className="size-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-32 max-w-52 transition-all"
+                          align="start"
+                        >
+                          {routes
+                            .slice(0, -1)
+                            .reverse()
+                            .map((route, index) => (
+                              <Link
+                                key={index}
+                                className="block truncate whitespace-nowrap w-full"
+                                to={route.path}
+                              >
+                                <DropdownMenuItem className="px-2 py-1 min-w-0 ">
+                                  {route.name}
+                                </DropdownMenuItem>
+                              </Link>
+                            ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </BreadcrumbItem>
-                  )}
-                </BreadcrumbList>
-              </Breadcrumb>
+                    <BreadcrumbSeparator />
+                  </>
+                ) : null}
 
+                {routes.length > 0 && (
+                  <BreadcrumbItem className="min-w-0">
+                    <Link
+                      to={routes[routes.length - 1].path}
+                      className="text-foreground truncate block min-w-0"
+                    >
+                      {routes[routes.length - 1].name}
+                    </Link>
+                  </BreadcrumbItem>
+                )}
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
 
           <div className="flex-shrink-0 mr-4 flex items-center gap-2">
-            <SearchButton/>
-            
+            <SearchButton />
+
             <AddNoteDrawer
               trigger={
                 <Button className={`size-8`}>
