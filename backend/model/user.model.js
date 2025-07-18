@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+    default: () => `user_${Date.now()}`,
     validate: {
       validator: async function(username) {
         const user = await this.constructor.findOne({ 
