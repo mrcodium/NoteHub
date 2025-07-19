@@ -5,9 +5,11 @@ import { useParams } from "react-router-dom";
 import { useNoteStore } from "@/stores/useNoteStore";
 import NoteSkeleton from "../sekeletons/NoteSkeleton";
 import { MenuBar } from "./MenuBar";
+import { useImageStore } from "@/stores/useImageStore";
 
 const Tiptap = () => {
   const { getNoteContent, isContentLoading } = useNoteStore();
+  const {getImages} = useImageStore();
   const { id: noteId } = useParams();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,7 @@ const Tiptap = () => {
         setLoading(false);
       }
     };
+    getImages();
     fetchData();
   }, [noteId, getNoteContent]);
 

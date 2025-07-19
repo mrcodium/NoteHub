@@ -6,6 +6,18 @@ import { Button } from "./ui/button";
 import { useImageStore } from "@/stores/useImageStore";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "./ui/alert-dialog";
+
 const FileDropZone = ({ editor }) => {
   const {
     getImages,
@@ -18,6 +30,7 @@ const FileDropZone = ({ editor }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, imageId: null });
 
   const handleDrop = async (droppedFiles, event) => {
     event.preventDefault();
@@ -26,8 +39,7 @@ const FileDropZone = ({ editor }) => {
     if (isUploading) return toast.error("Wait until uploading finishes");
 
     setIsUploading(true);
-
-    const success = await uploadImage(file); 
+    await uploadImage(file);
     setIsUploading(false);
   };
 
@@ -37,15 +49,10 @@ const FileDropZone = ({ editor }) => {
     if (isUploading) return toast.error("Wait until uploading finishes");
 
     setIsUploading(true);
-
-    const success = await uploadImage(file);
+    await uploadImage(file);
     setIsUploading(false);
-  };
 
-  const handleRemove = async (imageId) => {
-    setIsRemoving(imageId);
-    await removeImage(imageId);
-    setIsRemoving(null);
+    e.target.value = null;
   };
 
   const handleSetImage = useCallback(
@@ -84,7 +91,7 @@ const FileDropZone = ({ editor }) => {
               htmlFor="upload-photo"
               className="p-4 flex items-center gap-2 cursor-pointer"
             >
-              <Upload /> {isUploading ? "uploading..." : "Upload an image"}
+              <Upload /> {isUploading ? "Uploading..." : "Upload an image"}
               <input
                 type="file"
                 hidden
@@ -96,6 +103,7 @@ const FileDropZone = ({ editor }) => {
           </Button>
         </div>
       </FileDrop>
+
       <div className="max-h-[300px] grid grid-cols-3 gap-1 overflow-auto">
         {isUploading && <Skeleton className={"aspect-square"} />}
         {isLoadingImages
@@ -120,14 +128,44 @@ const FileDropZone = ({ editor }) => {
                   size="icon"
                   variant="secondary"
                   disabled={isRemoving}
-                  className="cursor-pointer rounded-full invisible group-hover:visible transition-opacity size-6 absolute top-0 right-0"
-                  onClick={() => handleRemove(_id)}
+                  className="cursor-pointer rounded-full sm:invisible group-hover:visible transition-opacity size-6 absolute top-0 right-0"
+                  onClick={() => setDeleteDialog({ open: true, imageId: _id })}
                 >
                   <X />
                 </Button>
               </div>
             ))}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) =>
+          setDeleteDialog((prev) => ({ ...prev, open }))
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete image?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This image will be permanently deleted. If it’s used in any notes, they may appear broken.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setIsRemoving(deleteDialog.imageId);
+                setDeleteDialog({ open: false, imageId: null });
+                await removeImage(deleteDialog.imageId);
+                setIsRemoving(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

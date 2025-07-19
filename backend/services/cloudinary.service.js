@@ -6,8 +6,8 @@ export const uploadStream = (buffer, folder = "default_folder") => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder,
-        use_filename: true,
-        unique_filename: false,
+        use_filename: false,
+        unique_filename: true,
       },
       (error, result) => {
         if (error) return reject(error);

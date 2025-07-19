@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/sidebar";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useRouteStore } from "@/stores/useRouteStore";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeft, Telescope, X, Clock, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import AddNoteDrawer from "@/components/AddNoteDrawer";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -30,11 +30,8 @@ import {
 } from "@radix-ui/react-dropdown-menu";
 import axios from "axios";
 import { formatCompactNumber } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { Loader2 } from "lucide-react";
-import { debounce } from "lodash";
 import { SearchButton } from "@/components/SearchButton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Dashboard = () => {
   return (
@@ -48,9 +45,9 @@ const DashboardContent = () => {
   const { routes } = useRouteStore();
   const { isSidebarOpen } = useSidebar();
   const { resolvedTheme } = useTheme();
-  const { getAllUsers, authUser } = useAuthStore();
+  const { isMobile } = useSidebar();
+  const { authUser } = useAuthStore();
   const [githubStarCount, setGithubStarCount] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStars = async () => {
@@ -146,22 +143,35 @@ const DashboardContent = () => {
                 </Button>
               }
             />
-            <TooltipWrapper message="Source Code">
-              <a href="https://github.com/abhijeetSinghRajput/notehub">
-                <Button size="sm" className="p-2" variant="secondary">
-                  <img
-                    src={
-                      resolvedTheme === "dark"
-                        ? "/github-mark-white.svg"
-                        : "/github-mark.svg"
-                    }
-                    alt="github logo"
-                    className="size-5 object-contain"
-                  />
-                  {githubStarCount || ""}
-                </Button>
-              </a>
-            </TooltipWrapper>
+            {!isMobile && (
+              <TooltipWrapper message="Source Code">
+                <a href="https://github.com/abhijeetSinghRajput/notehub">
+                  <Button size="sm" className="p-2" variant="secondary">
+                    <img
+                      src={
+                        resolvedTheme === "dark"
+                          ? "/github-mark-white.svg"
+                          : "/github-mark.svg"
+                      }
+                      alt="github logo"
+                      className="size-5 object-contain"
+                    />
+                    {githubStarCount || ""}
+                  </Button>
+                </a>
+              </TooltipWrapper>
+            )}
+
+            <Link to={`/user/${authUser?.userName}`}>
+              <TooltipWrapper message={authUser?.fullName}>
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={authUser?.avatar} />
+                  <AvatarFallback>
+                    {(authUser?.fullName || "U").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </TooltipWrapper>
+            </Link>
           </div>
         </header>
 

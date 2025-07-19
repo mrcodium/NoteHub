@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { axiosInstance } from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useImageStore } from "@/stores/useImageStore";
 
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
@@ -25,6 +26,7 @@ const NotePagePublic = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [noteId, setNoteId] = useState('');
+  const {getImages} = useImageStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +52,7 @@ const NotePagePublic = () => {
       }
     };
 
+    getImages();
     fetchData();
   }, [username, collectionSlug, noteSlug, authUser]);
 
