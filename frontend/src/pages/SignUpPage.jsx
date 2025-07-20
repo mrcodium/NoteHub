@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Check, Eye, EyeOff, Loader2, Lock, Mail, User2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -46,6 +46,7 @@ const SignupPage = () => {
   const [cooldown, setCooldown] = useState(0);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [emailStatus, setEmailStatus] = useState(null);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -214,6 +215,7 @@ const SignupPage = () => {
 
     try {
       await signup(trimmedData);
+      navigate("/");
     } catch (error) {
       console.error("Signup failed:", error);
     }

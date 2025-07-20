@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Lock, User2 } from "lucide-react";
 import { useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -29,6 +29,7 @@ const LogInPage = () => {
     password: "",
   });
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -36,11 +37,12 @@ const LogInPage = () => {
     setErrors((prev) => ({ ...prev, [id]: "" }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async(e) => {
     e.preventDefault();
     try {
       loginSchema.parse(formData);
-      login(formData);
+      await login(formData);
+      navigate('/');
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors = error.errors.reduce((acc, curr) => {
