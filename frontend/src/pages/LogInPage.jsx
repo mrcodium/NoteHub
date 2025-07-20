@@ -37,12 +37,12 @@ const LogInPage = () => {
     setErrors((prev) => ({ ...prev, [id]: "" }));
   };
 
-  const handleFormSubmit = async(e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
       loginSchema.parse(formData);
       await login(formData);
-      navigate('/');
+      navigate("/");
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors = error.errors.reduce((acc, curr) => {
@@ -56,7 +56,7 @@ const LogInPage = () => {
 
   return (
     <div className="flex pt-8 items-center justify-center h-svh bg-background">
-      <BaseHeader/>
+      <BaseHeader />
       <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
         <Card>
           <CardHeader>
@@ -159,6 +159,10 @@ const LogInPage = () => {
             </div>
           </CardContent>
         </Card>
+        <div className="text-muted-foreground mt-6 *:[a]:hover:text-primary text-center text-sm text-balance *:[a]:underline *:[a]:underline-offset-4">
+          By clicking continue, you agree to our{" "}
+          <Link to={"/privacy-policy"} className="underline">Privacy Policy</Link>
+        </div>
       </div>
     </div>
   );

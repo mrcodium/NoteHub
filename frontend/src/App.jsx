@@ -37,6 +37,7 @@ import TrashPage from "./pages/admin/trash";
 import NotificationPage from "./pages/NotificationPage";
 import CollectionPage from "./pages/CollectionPage";
 import NotePagePublic from "./pages/NotePagePublic";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
@@ -105,6 +106,7 @@ function App() {
             <Route path="/login" element={<LogInPage />} />
             <Route path="/forgot-password" element={<ForgetPasswordPage />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
             {/* Dashboard with public routes */}
             <Route path="/" element={<Dashboard />}>

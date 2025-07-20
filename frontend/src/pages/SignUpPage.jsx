@@ -223,7 +223,7 @@ const SignupPage = () => {
 
   return (
     <div className="flex pt-8 items-center justify-center h-svh bg-background">
-      <BaseHeader/>
+      <BaseHeader />
       <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
         <Card>
           <CardHeader>
@@ -364,10 +364,13 @@ const SignupPage = () => {
                         cooldown > 0 || isSendingOtp || emailStatus === "taken"
                       }
                     >
-                      {isSendingOtp 
-                        ? <Loader2 className="animate-spin mr-2 size-4" />
-                        : cooldown > 0 ? cooldown : "Send OTP"
-                      }
+                      {isSendingOtp ? (
+                        <Loader2 className="animate-spin mr-2 size-4" />
+                      ) : cooldown > 0 ? (
+                        cooldown
+                      ) : (
+                        "Send OTP"
+                      )}
                     </Button>
                     {errors.otp && (
                       <p className="text-xs absolute left-0 -bottom-4 text-red-500">
@@ -405,6 +408,12 @@ const SignupPage = () => {
             </div>
           </CardContent>
         </Card>
+        <div className="text-muted-foreground mt-6 *:[a]:hover:text-primary text-center text-sm text-balance *:[a]:underline *:[a]:underline-offset-4">
+          By clicking continue, you agree to our{" "}
+          <Link to={"/privacy-policy"} className="underline">
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </div>
   );
