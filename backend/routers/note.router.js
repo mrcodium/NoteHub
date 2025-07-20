@@ -14,11 +14,10 @@ import {
 
 const router = express.Router();
 
-router.use(protectRoute);
-
-router.get('/', protectRoute, getPublicNotes);
-router.get('/:username/:collectionSlug/:noteSlug', protectRoute, getNoteBySlug);
+router.get('/',  getPublicNotes);
+router.get('/:username/:collectionSlug/:noteSlug', getNoteBySlug);
 router.get('/:_id', protectRoute, getNote);
+
 router.post('/', protectRoute, createNote);
 router.delete('/:_id', protectRoute, deleteNote);
 router.put('/', protectRoute, updateContent);

@@ -46,7 +46,6 @@ export const useNoteStore = create((set, get) => ({
       });
 
       return data.data;
-
     } catch (error) {
       throw error;
     } finally {

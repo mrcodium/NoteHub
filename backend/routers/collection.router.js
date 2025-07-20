@@ -12,7 +12,6 @@ import {
 
 
 const router = express.Router();
-router.use(protectRoute);
 
 router.post('/', protectRoute, createCollection);
 router.delete('/:_id', protectRoute, deleteCollection);

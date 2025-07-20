@@ -15,6 +15,7 @@ export const useImageStore = create((set, get) => {
         set({ galleryImages });
       } catch (error) {
         console.log(error);
+        throw new Error("error");
       } finally {
         set({ isLoadingImages: false });
       }
@@ -61,7 +62,6 @@ export const useImageStore = create((set, get) => {
       }
     },
   };
-  store.getImages();
   return {
     ...store,
   };

@@ -84,7 +84,7 @@ function App() {
     setRoutes(routes);
   }, [location, collections, isCollectionsLoading]);
 
-  if (isCheckingAuth && !authUser) {
+  if (isCheckingAuth) {
     return (
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <div className="flex flex-col gap-2 items-center justify-center h-screen">
@@ -94,55 +94,43 @@ function App() {
       </ThemeProvider>
     );
   }
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <TooltipProvider>
         <div>
           <Routes>
-            <Route
-              path="/verify-email"
-              element={
-                !authUser?.isEmailVerified ? (
-                  <EmailVerificationPage />
-                ) : (
-                  <Navigate to="/" />
-                )
-              }
-            />
-            <Route
-              path="/signup"
-              element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/login"
-              element={!authUser ? <LogInPage /> : <Navigate to="/" />}
-            />
+            {/* Public routes */}
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/login" element={<LogInPage />} />
             <Route path="/forgot-password" element={<ForgetPasswordPage />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
 
-            {/* Nested routes inside Dashboard */}
-            <Route
-              path="/"
-              element={authUser ? <Dashboard /> : <Navigate to="/login" />}
-            >
+            {/* Dashboard with public routes */}
+            <Route path="/" element={<Dashboard />}>
               <Route index element={<HomePage />} />
-              <Route path="note/:id" element={<NotePage />} />
-              <Route path="note/:id/editor" element={<Tiptap />} />
               <Route path="user/:username" element={<ProfilePage />} />
               <Route path="user/:username/:collectionSlug" element={<CollectionPage />} />
               <Route path="user/:username/:collectionSlug/:noteSlug" element={<NotePagePublic />} />
-              <Route path="notifications" element={<NotificationPage />} />
 
-              <Route path="settings" element={<SettingsPage />}>
-                <Route index element={<Personalization />} />
-
-                <Route path="personal-details" element={<PersonalDetails />} />
-                <Route path="personalization" element={<Personalization />} />
-                <Route path="security" element={<Security />} />
-                <Route path="photo-and-cover" element={<PhotoAndCover />} />
-              </Route>
+              {/* Protected routes - only visible when authenticated */}
+              {authUser && (
+                <>
+                  <Route path="note/:id" element={<NotePage />} />
+                  <Route path="note/:id/editor" element={<Tiptap />} />
+                  <Route path="notifications" element={<NotificationPage />} />
+                  <Route path="settings" element={<SettingsPage />}>
+                    <Route index element={<Personalization />} />
+                    <Route path="personal-details" element={<PersonalDetails />} />
+                    <Route path="personalization" element={<Personalization />} />
+                    <Route path="security" element={<Security />} />
+                    <Route path="photo-and-cover" element={<PhotoAndCover />} />
+                  </Route>
+                </>
+              )}
             </Route>
 
+            {/* Admin routes (keep as is for now) */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<UsersPage />} />
               <Route path="users" element={<UsersPage />} />
