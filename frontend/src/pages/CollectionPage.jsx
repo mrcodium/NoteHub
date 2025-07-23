@@ -196,8 +196,8 @@ const CollectionPage = () => {
 
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <h2 className="text-3xl font-bold">{collection?.name}</h2>
-                <Badge variant="secondary" className="px-3 py-1">
+                <h2 className="text-2xl sm:text-3xl font-bold">{collection?.name}</h2>
+                <Badge variant="secondary" className="px-3 py-1 whitespace-nowrap">
                   {notes.length} {notes.length === 1 ? "Note" : "Notes"}
                 </Badge>
               </div>

@@ -1,17 +1,17 @@
 import { cn } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Loader2,
-  ImageOff,
-} from "lucide-react";
+import { Loader2, ImageOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/stores/useAuthStore";
 import imageCompression from "browser-image-compression";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "@/lib/axios";
-import ProfilePageSkeleton from "@/components/sekeletons/ProfilePageSkeleton";
+import {
+  CollectionSkeleton,
+  ProfilePageSkeleton,
+} from "@/components/sekeletons/ProfilePageSkeleton";
 import { useLocalStorage } from "@/stores/useLocalStorage";
 import {
   Dialog,
@@ -38,7 +38,11 @@ const ProfilePage = () => {
     removeUserCover,
   } = useAuthStore();
   const [previewUrl, setPreviewUrl] = useState(null);
-  const { getAllCollections, collections: ownerCollections } = useNoteStore();
+  const {
+    getAllCollections,
+    collections: ownerCollections,
+    isCollectionsLoading: isOwnerCollectionsLoading,
+  } = useNoteStore();
   const [user, setUser] = useState(null);
   const [collections, setCollections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -339,7 +343,9 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {collections.length === 0 ? (
+        {isOwnerCollectionsLoading ? (
+          <CollectionSkeleton />
+        ) : collections.length === 0 ? (
           <Card className="py-12 text-center">
             <p className="text-muted-foreground">No collections found</p>
           </Card>
@@ -359,6 +365,5 @@ const ProfilePage = () => {
     </div>
   );
 };
-
 
 export default ProfilePage;

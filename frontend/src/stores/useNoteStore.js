@@ -276,9 +276,6 @@ export const useNoteStore = create((set, get) => ({
   },
 
   createNote: async (data) => {
-    //data:{name, collectionId }
-    console.log(data);
-
     set({ isCreatingNote: true });
     const { collectionId } = data;
     try {

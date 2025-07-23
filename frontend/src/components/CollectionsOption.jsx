@@ -9,16 +9,15 @@ import {
 import { Button } from "./ui/button";
 import {
   FilePlus2,
+  Loader2,
   Lock,
   LockOpen,
   Pencil,
   Pin,
   PinOff,
-  Plus,
   Trash2,
 } from "lucide-react";
 import { useNoteStore } from "@/stores/useNoteStore";
-import { Separator } from "./ui/separator";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -30,30 +29,39 @@ import {
 } from "./ui/dialog";
 import { useLocalStorage } from "@/stores/useLocalStorage";
 import { Input } from "./ui/input";
-import { Command, CommandInput, CommandList, CommandItem } from "./ui/command";
+import { Label } from "./ui/label";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const CollectionsOption = ({
   trigger,
   collection,
-  onOpenChange,
   onRenameStart,
 }) => {
   const [noteName, setNoteName] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isInsertNoteDialogOpen, setIsInsertNoteDialogOpen] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
-
   const { pinnedCollections, togglePinnedCollection } = useLocalStorage();
-  const { deleteCollection, createNote, updateCollectionVisibility } =
-    useNoteStore();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const {
+    deleteCollection,
+    createNote,
+    isDeletingCollection,
+    isCreatingNote,
+    updateCollectionVisibility,
+  } = useNoteStore();
   const navigate = useNavigate();
 
   const isPinned = pinnedCollections.includes(collection._id);
 
   const togglePin = useCallback(() => {
     togglePinnedCollection(collection._id);
-    onOpenChange?.(false);
-  }, [collection._id, togglePinnedCollection, onOpenChange]);
+    setDropdownOpen(false);
+    toast.success(
+      isPinned ? "Collection unpinned" : "Collection pinned to top"
+    );
+  }, [collection._id, togglePinnedCollection, isPinned]);
 
   const insertNote = useCallback(async () => {
     if (!noteName.trim()) return;
@@ -63,75 +71,87 @@ const CollectionsOption = ({
       collectionId: collection._id,
       content: `<h1>${noteName}</h1>`,
     });
+
     setNoteName("");
-    navigate(`/note/${noteId}/editor`);
     setIsInsertNoteDialogOpen(false);
-    onOpenChange?.(false);
-  }, [noteName, collection._id, createNote, navigate, onOpenChange]);
+    setDropdownOpen(false); 
+    navigate(`/note/${noteId}/editor`);
+  }, [noteName, collection._id, createNote, navigate]);
 
   const handleRename = useCallback(() => {
     onRenameStart();
-    onOpenChange?.(false);
-  }, [onRenameStart, onOpenChange]);
+    setDropdownOpen(false);
+  }, [onRenameStart]);
 
-  const handleDelete = useCallback(() => {
-    deleteCollection(collection._id);
+  const handleDelete = useCallback(async () => {
+    await deleteCollection(collection._id);
     setIsDeleteDialogOpen(false);
-    onOpenChange?.(false);
+    setDropdownOpen(false);
     setDeleteConfirmationText("");
-  }, [collection._id, deleteCollection, onOpenChange]);
+  }, [collection._id, deleteCollection]);
 
-  const toggleVisibility = useCallback(() => {
+  const toggleVisibility = useCallback(async () => {
     const newVisibility =
       collection.visibility === "public" ? "private" : "public";
-    updateCollectionVisibility({
+    await updateCollectionVisibility({
       collectionId: collection._id,
       visibility: newVisibility,
     });
-    onOpenChange?.(false);
-  }, [collection._id, collection.visibility, updateCollectionVisibility, onOpenChange]);
+    setDropdownOpen(false);
+  }, [collection._id, collection.visibility, updateCollectionVisibility]);
 
-  const dropdownItems = useMemo(() => [
-    {
-      id: "pin",
-      icon: isPinned ? (
-        <PinOff className="size-4 text-muted-foreground" />
-      ) : (
-        <Pin className="size-4 text-muted-foreground" />
-      ),
-      label: isPinned ? "Unpin" : "Pin Top",
-      onClick: togglePin,
-    },
-    {
-      id: "insert-note",
-      icon: <FilePlus2 className="size-4 text-muted-foreground" />,
-      label: "Insert Note",
-      onClick: () => setIsInsertNoteDialogOpen(true),
-    },
-    {
-      id: "rename",
-      icon: <Pencil className="size-4 text-muted-foreground" />,
-      label: "Rename",
-      onClick: handleRename,
-    },
-    {
-      id: "visibility",
-      icon: collection.visibility === "public" ? (
-        <Lock className="size-4 text-muted-foreground" />
-      ) : (
-        <LockOpen className="size-4 text-muted-foreground" />
-      ),
-      label: collection.visibility === "public" ? "Make Private" : "Make Public",
-      onClick: toggleVisibility,
-    },
-    {
-      id: "delete",
-      icon: <Trash2 className="size-4" />,
-      label: "Delete Collection",
-      onClick: () => setIsDeleteDialogOpen(true),
-      className: "text-red-500 hover:bg-red-400/20 hover:text-red-500",
-    },
-  ], [isPinned, togglePin, handleRename, collection.visibility, toggleVisibility]);
+  const dropdownItems = useMemo(
+    () => [
+      {
+        id: "pin",
+        icon: isPinned ? (
+          <PinOff className="size-4 text-muted-foreground" />
+        ) : (
+          <Pin className="size-4 text-muted-foreground" />
+        ),
+        label: isPinned ? "Unpin" : "Pin to top",
+        onClick: togglePin,
+      },
+      {
+        id: "insert-note",
+        icon: <FilePlus2 className="size-4 text-muted-foreground" />,
+        label: "Create new note",
+        onClick: () => {
+          setIsInsertNoteDialogOpen(true);
+          setDropdownOpen(false);
+        },
+      },
+      {
+        id: "rename",
+        icon: <Pencil className="size-4 text-muted-foreground" />,
+        label: "Rename collection",
+        onClick: handleRename,
+      },
+      {
+        id: "visibility",
+        icon:
+          collection.visibility === "public" ? (
+            <Lock className="size-4 text-muted-foreground" />
+          ) : (
+            <LockOpen className="size-4 text-muted-foreground" />
+          ),
+        label:
+          collection.visibility === "public" ? "Make private" : "Make public",
+        onClick: toggleVisibility,
+      },
+      {
+        id: "delete",
+        icon: <Trash2 className="size-4 text-destructive" />,
+        label: "Delete collection",
+        onClick: () => {
+          setIsDeleteDialogOpen(true);
+          setDropdownOpen(false);
+        },
+        className: "text-destructive focus:text-destructive",
+      },
+    ],
+    [isPinned, togglePin, handleRename, collection.visibility, toggleVisibility]
+  );
 
   return (
     <>
@@ -145,39 +165,65 @@ const CollectionsOption = ({
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader className={"text-left"}>
-            <DialogTitle>Delete Collection</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">
+              Delete Collection
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               This action cannot be undone. This will permanently delete the
               collection and all notes within it.
-              <div className="mt-4 space-y-2">
-                <p>Type the collection name to confirm:</p>
-                <Input
-                  value={deleteConfirmationText}
-                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
-                  placeholder={collection.name}
-                  className="mt-2"
-                />
-              </div>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className={"flex flex-row gap-2 ml-auto"}>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="confirmation">
+                Type{" "}
+                <span className="font-mono bg-muted px-1.5 py-0.5 rounded">
+                  {collection.name}
+                </span>{" "}
+                to confirm:
+              </Label>
+              <Input
+                id="confirmation"
+                value={deleteConfirmationText}
+                onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                placeholder={collection.name}
+                autoFocus
+              />
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="size-4 flex items-center justify-center bg-destructive/10 text-destructive rounded-full">
+                !
+              </div>
+              <span>All notes in this collection will be deleted</span>
+            </div>
+          </div>
+
+          <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => {
-                setIsDeleteDialogOpen(false);
-                setDeleteConfirmationText("");
-              }}
+              onClick={() => setIsDeleteDialogOpen(false)}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
-              disabled={deleteConfirmationText !== collection.name}
+              disabled={
+                deleteConfirmationText !== collection.name ||
+                isDeletingCollection
+              }
             >
-              Delete
+              {isDeletingCollection ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -186,40 +232,91 @@ const CollectionsOption = ({
       {/* Insert Note Dialog */}
       <Dialog
         open={isInsertNoteDialogOpen}
-        onOpenChange={setIsInsertNoteDialogOpen}
+        onOpenChange={(open) => {
+          setIsInsertNoteDialogOpen(open);
+          if (!open) setNoteName("");
+        }}
       >
-        <DialogContent className="p-0 overflow-hidden">
-          <Command className="rounded-lg">
-            <CommandInput
-              placeholder="Note name..."
-              value={noteName}
-              onValueChange={setNoteName}
-            />
-            <CommandList>
-              <CommandItem
-                onSelect={insertNote}
-                disabled={!noteName.trim()}
-                className="gap-2"
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Note</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Add a new note to{" "}
+              <span className="font-medium">{collection.name}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              insertNote();
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="note-name">Note Name</Label>
+              <Input
+                id="note-name"
+                value={noteName}
+                onChange={(e) => setNoteName(e.target.value)}
+                autoFocus
+                placeholder="Enter note name..."
+                className="text-sm"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsInsertNoteDialogOpen(false)}
               >
-                <Plus className="size-4" />
-                <span>Create "{noteName}"</span>
-              </CommandItem>
-            </CommandList>
-          </Command>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!noteName.trim() || isCreatingNote}
+              >
+                {isCreatingNote ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Note"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
       {/* Dropdown Menu */}
-      <DropdownMenu onOpenChange={onOpenChange}>
+      <DropdownMenu 
+        open={dropdownOpen} 
+        onOpenChange={setDropdownOpen}
+        modal={false} // Important for nested dialogs
+      >
         <DropdownMenuTrigger asChild>
           {trigger}
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-48">
+        <DropdownMenuContent
+          className="w-56 rounded-lg shadow-lg border border-border"
+          align="start"
+          sideOffset={4}
+          onCloseAutoFocus={(e) => e.preventDefault()} // Prevent focus issues
+        >
+          <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+            {collection.name}
+          </div>
+          <DropdownMenuSeparator />
+
           {dropdownItems.slice(0, 3).map((item) => (
             <DropdownMenuItem
               key={item.id}
               onClick={item.onClick}
-              className="gap-2"
+              className="gap-2 text-sm cursor-pointer"
+              onSelect={(e) => e.preventDefault()} // Prevent default selection behavior
             >
               {item.icon}
               {item.label}
@@ -230,7 +327,8 @@ const CollectionsOption = ({
 
           <DropdownMenuItem
             onClick={dropdownItems[3].onClick}
-            className="gap-2"
+            className="gap-2 text-sm cursor-pointer"
+            onSelect={(e) => e.preventDefault()}
           >
             {dropdownItems[3].icon}
             {dropdownItems[3].label}
@@ -240,7 +338,11 @@ const CollectionsOption = ({
 
           <DropdownMenuItem
             onClick={dropdownItems[4].onClick}
-            className={`gap-2 ${dropdownItems[4].className}`}
+            className={cn(
+              "gap-2 text-sm cursor-pointer",
+              dropdownItems[4].className
+            )}
+            onSelect={(e) => e.preventDefault()}
           >
             {dropdownItems[4].icon}
             {dropdownItems[4].label}

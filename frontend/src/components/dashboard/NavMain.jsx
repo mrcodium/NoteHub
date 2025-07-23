@@ -137,12 +137,10 @@ const FolderCollapsible = ({
 }) => {
   const [isCollectionRenaming, setIsCollectionRenaming] = useState(false);
   const inputRef = useRef(null);
-  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const { renameCollection } = useNoteStore();
 
   const handleRenameStart = () => {
     setIsCollectionRenaming(true);
-    setIsOptionsOpen(false);
     setTimeout(() => {
       inputRef.current?.focus();
       inputRef.current?.select();
@@ -189,7 +187,7 @@ const FolderCollapsible = ({
       }
     >
       <SidebarMenuItem>
-        <div className={`relative ${isOptionsOpen ? "z-50" : "z-1"}`}>
+        <div className={`relative`}>
           <CollapsibleTrigger asChild>
             <SidebarMenuButton tooltip={collection.name}>
               <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 size-4" />
@@ -227,7 +225,6 @@ const FolderCollapsible = ({
                 <span className="sr-only">More</span>
               </SidebarMenuAction>
             }
-            onOpenChange={setIsOptionsOpen}
             collection={collection}
             onRenameStart={handleRenameStart}
           />

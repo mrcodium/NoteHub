@@ -22,7 +22,7 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
     setTimeout(() => {
       inputRef.current?.focus();
       inputRef.current?.select();
-    }, 0);
+    }, 200);
   };
 
   const handleRenameSave = () => {

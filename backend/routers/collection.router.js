@@ -9,6 +9,7 @@ import {
     updateVisibility,
     updateCollaborators,
 } from '../controller/collection.controller.js';
+import { requester } from '../middleware/requester.middleware.js';
 
 
 const router = express.Router();
@@ -18,7 +19,7 @@ router.delete('/:_id', protectRoute, deleteCollection);
 router.put('/', protectRoute, renameCollection);
 router.put('/update-visibility', protectRoute, updateVisibility);
 
-router.get('/all-collections', getAllCollections);
+router.get('/all-collections', requester, getAllCollections);
 router.get('/', getCollection);
 router.put('/update-collaborators', updateCollaborators);
 
