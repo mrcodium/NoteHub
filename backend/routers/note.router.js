@@ -11,11 +11,12 @@ import {
     getNoteBySlug,
     updateVisibility,
 } from "../controller/note.controller.js";
+import { requester } from "../middleware/requester.middleware.js";
 
 const router = express.Router();
 
 router.get('/',  getPublicNotes);
-router.get('/:username/:collectionSlug/:noteSlug', getNoteBySlug);
+router.get('/:username/:collectionSlug/:noteSlug', requester, getNoteBySlug);
 router.get('/:_id', protectRoute, getNote);
 
 router.post('/', protectRoute, createNote);

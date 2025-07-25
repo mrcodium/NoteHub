@@ -252,7 +252,7 @@ export function SearchButton() {
   );
 }
 
-function NotFound({ searchQuery = "" }) {
+export function NotFound({ searchQuery = "" }) {
   return (
     <div className="flex flex-col items-center justify-center py-4 border gap-6">
       <div className="bg-accent rounded-full p-5 animate-pulse">
@@ -277,7 +277,7 @@ function NotFound({ searchQuery = "" }) {
   );
 }
 
-function EmptyState() {
+export function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 gap-4">
       <div className="relative bg-accent rounded-full p-4">

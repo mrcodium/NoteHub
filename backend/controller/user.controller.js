@@ -81,7 +81,6 @@ export const getAllUsers = async (req, res) => {
     const search = req.query.search || '';
     const filter = req.query.filter || 'all';
 
-    console.log({page, limit, search, filter});
     // Build the base query
     let query = {};
     

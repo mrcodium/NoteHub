@@ -98,7 +98,7 @@ const DashboardContent = () => {
                             <span className="sr-only">Toggle menu</span>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
-                            className="w-32 max-w-52 transition-all"
+                            className="min-w-32 transition-all"
                             align="start"
                           >
                             {routes

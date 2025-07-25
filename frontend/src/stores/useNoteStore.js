@@ -24,25 +24,26 @@ export const useNoteStore = create((set, get) => ({
     totalPages: 0,
     totalNotes: 0,
     notesPerPage: 10,
-    hasMore: false
+    hasMore: false,
   },
+  updatingCollaborators: false,
 
-  getPublicNotes: async ({page, limit, user}) => {
+  getPublicNotes: async ({ page, limit, user }) => {
     set({ isNotesLoading: true });
     try {
-      const res = await axiosInstance.get('/note', {
+      const res = await axiosInstance.get("/note", {
         params: {
           page,
           limit,
-          user: user ? 'true' : undefined
-        }
+          user: user ? "true" : undefined,
+        },
       });
 
       const { data } = res;
       const newNotes = data.data.notes;
       set({
         notes: page === 1 ? newNotes : [...get().notes, ...newNotes],
-        pagination: data.data.pagination // Use pagination directly from API
+        pagination: data.data.pagination, // Use pagination directly from API
       });
 
       return data.data;
@@ -53,16 +54,17 @@ export const useNoteStore = create((set, get) => ({
     }
   },
 
-  resetNotes: () => set({
-    notes: [],
-    pagination: {
-      currentPage: 1,
-      totalPages: 0,
-      totalNotes: 0,
-      notesPerPage: 10,
-      hasMore: false
-    }
-  }),
+  resetNotes: () =>
+    set({
+      notes: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 0,
+        totalNotes: 0,
+        notesPerPage: 10,
+        hasMore: false,
+      },
+    }),
 
   getNoteContent: async (noteId) => {
     const { notesContent } = get();
@@ -208,25 +210,6 @@ export const useNoteStore = create((set, get) => ({
     }
   },
 
-  getCollection: async ({ userId, slug }) => {
-    try {
-      const res = await axiosInstance.get("collection/", {
-        params: {
-          userId,
-          slug,
-        },
-      });
-      const { collection } = res.data;
-      return collection;
-    } catch (error) {
-      // toast.error(
-      //   error.response?.data?.message || "failed to fetch collection"
-      // );
-      console.log(error);
-      return null;
-    }
-  },
-
   getAllCollections: async ({ userId, guest = false }) => {
     if (!guest) set({ isCollectionsLoading: true });
     try {
@@ -340,11 +323,11 @@ export const useNoteStore = create((set, get) => ({
       toast.error(error.response.data.message);
     }
   },
-  updateCollectionVisibility: async ({visibility, collectionId}) => {
+  updateCollectionVisibility: async ({ visibility, collectionId }) => {
     try {
       const res = await axiosInstance.put("collection/update-visibility", {
-        visibility, 
-        collectionId
+        visibility,
+        collectionId,
       });
       const { collection, message } = res.data;
       set((state) => ({
@@ -366,9 +349,13 @@ export const useNoteStore = create((set, get) => ({
     }
   },
 
-  updateCollectionCollaborators: async ({collectionId , collaborators}) => {
+  updateCollectionCollaborators: async ({ collectionId, collaborators }) => {
+    set({ updatingCollaborators: true });
     try {
-      const res = await axiosInstance.put("collection/update-collaborators", {collectionId, collaborators});
+      const res = await axiosInstance.put("collection/update-collaborators", {
+        collectionId,
+        collaborators,
+      });
       const { collection, message } = res.data;
 
       // Replace note with updated note
@@ -389,12 +376,17 @@ export const useNoteStore = create((set, get) => ({
     } catch (error) {
       console.log(error);
       toast.error(error.response.data.message);
+    } finally {
+      set({ updatingCollaborators: false });
     }
   },
 
-  updateNoteVisibility: async ({noteId, visibility}) => {
+  updateNoteVisibility: async ({ noteId, visibility }) => {
     try {
-      const res = await axiosInstance.put("note/update-visibility", {noteId, visibility});
+      const res = await axiosInstance.put("note/update-visibility", {
+        noteId,
+        visibility,
+      });
       const { note: updatedNote, message } = res.data;
 
       // Replace note with updated note
@@ -406,5 +398,4 @@ export const useNoteStore = create((set, get) => ({
       toast.error(error.response.data.message);
     }
   },
-
 }));

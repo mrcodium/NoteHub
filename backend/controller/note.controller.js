@@ -119,12 +119,13 @@ export const getNote = async (req, res) => {
 export const getNoteBySlug = async (req, res) => {
   const { username, collectionSlug, noteSlug } = req.params;
   const requester = req.user || null;
+
   try {
-    // 1. Find user by username
-    const user = await User.findOne({ 
-        userName: { $regex: new RegExp(`^${username}$`, 'i') } 
+    // 1. Find user by username (case-insensitive)
+    const user = await User.findOne({
+      userName: { $regex: new RegExp(`^${username}$`, 'i') },
     });
-        
+
     if (!user) return res.status(404).json({ message: "User not found" });
 
     // 2. Find collection by user + slug
@@ -135,7 +136,7 @@ export const getNoteBySlug = async (req, res) => {
 
     if (!collection) return res.status(404).json({ message: "Collection not found" });
 
-    // 3. Find the note by collection + slug
+    // 3. Find note by collection + slug
     const note = await Note.findOne({
       collectionId: collection._id,
       slug: noteSlug.toLowerCase(),
@@ -143,26 +144,57 @@ export const getNoteBySlug = async (req, res) => {
 
     if (!note) return res.status(404).json({ message: "Note not found" });
 
-    // 4. Authorization check:
+    // 4. Permission logic
     const isOwner = requester && requester._id.equals(user._id);
-    const isPublic = note.visibility === 'public';
+    const isNotePublic = note.visibility === "public";
+    const isCollectionPublic = collection.visibility === "public";
+    const isNoteCollaborator =
+      requester && note.collaborators?.some(id => id.equals(requester._id));
+    const isCollectionCollaborator =
+      requester && collection.collaborators?.some(id => id.equals(requester._id));
 
-    if (!isOwner && !isPublic) {
+    let accessAllowed = false;
+
+    if (isOwner) {
+      accessAllowed = true;
+    } else if (isCollectionPublic && isNotePublic) {
+      // Public + Public → ❌ Owner only
+      accessAllowed = false;
+    } else if (isCollectionPublic && !isNotePublic) {
+      // Public + Private → Note collaborators only
+      accessAllowed = isNoteCollaborator;
+    } else if (!isCollectionPublic && isNotePublic) {
+      // Private + Public → Collection collaborators only
+      accessAllowed = isCollectionCollaborator;
+    } else if (!isCollectionPublic && !isNotePublic) {
+      // Private + Private → Must be both collaborators
+      accessAllowed = isNoteCollaborator && isCollectionCollaborator;
+    }
+
+    if (!accessAllowed) {
       return res.status(403).json({ message: "You don't have access to this note" });
     }
 
     return res.status(200).json({
       message: "Note fetched successfully",
-      note
+      note,
     });
   } catch (error) {
     console.error("Error fetching note by slug:", error);
     return res.status(500).json({
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
+
+
+// collection  note    authorized_user
+// public      public  owner only
+// public      private owner, (collab in note)
+// private     public  owner, (collab in collection)
+// private     private owner, (collab in note && collab in collection)
+
 
 export const getPublicNotes = async (req, res) => {
     const page = parseInt(req.query.page) || 1;

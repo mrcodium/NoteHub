@@ -1,0 +1,156 @@
+import CollectionPageSkeleton from "@/components/sekeletons/CollectionPageSkeleton";
+import { Button } from "@/components/ui/button";
+import { TriangleAlert, Lock } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { CollectionHeader } from "./CollectionHeader";
+import { CollaboratorsDialog } from "./CollaboratorsDialog";
+import { CollectionNotesGrid } from "./CollectionNotesGrid";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNoteStore } from "@/stores/useNoteStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { axiosInstance } from "@/lib/axios";
+import { Forbidden, NotFound } from "./ErrorStates";
+
+const CollectionPage = () => {
+  const { username, collectionSlug } = useParams();
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [guestCollection, setGuestCollection] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorStatus, setErrorStatus] = useState(null); // Track error status
+  const [sortBy, setSortBy] = useState("created");
+  const [sortDirection, setSortDirection] = useState("desc");
+  const {
+    isCollectionsLoading,
+    updateCollectionCollaborators,
+    updatingCollaborators,
+    collections: ownerCollections,
+  } = useNoteStore();
+  const { authUser } = useAuthStore();
+  const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
+  const isOwner = authUser?.userName.toLowerCase() === username.toLowerCase();
+
+  const collection = useMemo(() => {
+    if (isOwner) {
+      return ownerCollections.find((c) => c.slug === collectionSlug);
+    }
+    return guestCollection;
+  }, [isOwner, ownerCollections, collectionSlug, guestCollection]);
+
+  const notes = useMemo(() => collection?.notes || [], [collection]);
+  const sortedNotes = useMemo(() => {
+    if (!notes) return [];
+
+    const notesCopy = [...notes];
+    const modifier = sortDirection === "asc" ? 1 : -1;
+
+    const sortFunctions = {
+      created: (a, b) =>
+        modifier *
+        (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+      updated: (a, b) =>
+        modifier *
+        (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()),
+      name: (a, b) => modifier * a.name.localeCompare(b.name),
+    };
+
+    return notesCopy.sort(sortFunctions[sortBy]);
+  }, [notes, sortBy, sortDirection]);
+
+  const toggleSortDirection = () => {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
+  const getCollection = async ({ userId, slug }) => {
+    try {
+      const res = await axiosInstance.get("/collection", {
+        params: {
+          userId,
+          slug,
+        },
+      });
+      const { collection } = res.data;
+      return collection;
+    } catch (error) {
+      if (error.response) {
+        setErrorStatus(error.response.status);
+      }
+      console.log(error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setErrorStatus(null);
+
+        if (!isOwner) {
+          const response = await axiosInstance.get(`/user/${username}`);
+          const collectionsData = await getCollection({
+            userId: response.data?._id,
+            slug: collectionSlug,
+          });
+
+          setGuestCollection(collectionsData);
+          setUser(response.data);
+        } else {
+          setUser(authUser);
+        }
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+        setUser(null);
+        setGuestCollection(null);
+        if (error.response) {
+          setErrorStatus(error.response.status);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [username, collectionSlug, isOwner, authUser]);
+
+  if (isCollectionsLoading || isLoading) return <CollectionPageSkeleton />;
+
+  return (
+    <div className="container overflow-y-auto mx-auto px-4 py-8 max-w-7xl">
+      <div className="flex flex-col gap-8">
+        <CollectionHeader
+          user={user}
+          collection={collection}
+          isOwner={isOwner}
+          onAddCollaborator={() => setShowCollaboratorDialog(true)}
+        />
+
+        <CollaboratorsDialog
+          open={showCollaboratorDialog}
+          onOpenChange={setShowCollaboratorDialog}
+          collaborators={collection?.collaborators || []} // in case error 
+          onSave={(newCollaborators) => {
+            updateCollectionCollaborators({
+              collectionId: collection?._id,
+              collaborators: newCollaborators,
+            });
+            setShowCollaboratorDialog(false);
+          }}
+        />
+        { errorStatus === 404 ? <NotFound />
+          : errorStatus === 403 ? <Forbidden />
+          : <CollectionNotesGrid
+              notes={notes}
+              sortedNotes={sortedNotes}
+              isOwner={isOwner}
+              username={username}
+              collectionSlug={collectionSlug}
+              collection={collection}
+            />
+        }
+      </div>
+    </div>
+  );
+};
+
+export default CollectionPage;

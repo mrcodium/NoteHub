@@ -20,7 +20,7 @@ router.put('/', protectRoute, renameCollection);
 router.put('/update-visibility', protectRoute, updateVisibility);
 
 router.get('/all-collections', requester, getAllCollections);
-router.get('/', getCollection);
-router.put('/update-collaborators', updateCollaborators);
+router.get('/', requester, getCollection);
+router.put('/update-collaborators', protectRoute, updateCollaborators);
 
 export default router;

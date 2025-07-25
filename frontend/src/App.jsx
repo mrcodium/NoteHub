@@ -35,9 +35,9 @@ import CommunicationPage from "./pages/admin/communication";
 import ReportsPage from "./pages/admin/reports";
 import TrashPage from "./pages/admin/trash";
 import NotificationPage from "./pages/NotificationPage";
-import CollectionPage from "./pages/CollectionPage";
 import NotePagePublic from "./pages/NotePagePublic";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import CollectionPage from "./pages/collection/CollectionPage";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();

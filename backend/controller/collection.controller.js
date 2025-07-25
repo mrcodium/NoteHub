@@ -17,7 +17,7 @@ export const createCollection = async (req, res) => {
       name,
       userId: user._id,
     });
-    
+
     if (existingCollection) {
       return res.status(400).json({
         message: `The repository ${name} already exists on this account`,
@@ -35,7 +35,6 @@ export const createCollection = async (req, res) => {
       message: "Collection created successfully",
       collection: { ...collection._doc, notes: [] },
     });
-
   } catch (error) {
     res.status(500).json({ message: "Internal server error." });
     console.error("Error in createCollection controller\n", error);
@@ -104,15 +103,30 @@ export const renameCollection = async (req, res) => {
 const getCollectionsAggregatePipeline = (
   userId,
   requestingUserId = null,
-  slug = null
+  slug = null,
+  includeNoteCollaborators = false
 ) => {
-  const requestingUserIdObj = requestingUserId 
+  const requestingUserIdObj = requestingUserId
     ? new mongoose.Types.ObjectId(requestingUserId)
     : null;
   const userIdObj = new mongoose.Types.ObjectId(userId);
 
   const isOwner = requestingUserId && userIdObj.equals(requestingUserIdObj);
   const isCollaborator = requestingUserId && !isOwner;
+
+  // Base note projection
+  const noteProjection = {
+    _id: 1,
+    name: 1,
+    slug: 1,
+    visibility: 1,
+    createdAt: 1,
+    updatedAt: 1,
+  };
+
+  if (includeNoteCollaborators) {
+    noteProjection.collaborators = 1;
+  }
 
   return [
     {
@@ -123,14 +137,14 @@ const getCollectionsAggregatePipeline = (
             $or: [
               { visibility: "public" },
               ...(isOwner ? [{}] : []),
-              ...(isCollaborator ? [{
-                collaborators: requestingUserIdObj
-              }] : [])
-            ]
+              ...(isCollaborator
+                ? [{ collaborators: requestingUserIdObj }]
+                : []),
+            ],
           },
-          ...(slug ? [{ slug: slug.toLowerCase() }] : [])
-        ]
-      }
+          ...(slug ? [{ slug: slug.toLowerCase() }] : []),
+        ],
+      },
     },
     {
       $lookup: {
@@ -138,55 +152,81 @@ const getCollectionsAggregatePipeline = (
         localField: "collaborators",
         foreignField: "_id",
         as: "collaborators",
-        pipeline: [{
-          $project: {
-            _id: 1,
-            fullName: 1,
-            userName: 1,
-            avatar: 1,
-            email: 1
-          }
-        }]
-      }
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              fullName: 1,
+              userName: 1,
+              avatar: 1,
+              email: 1,
+            },
+          },
+        ],
+      },
     },
     {
       $lookup: {
         from: "notes",
-        let: { collectionId: "$_id", collabs: "$collaborators" },
+        let: { collectionId: "$_id" }, // ✅ defining collectionId here
         pipeline: [
           {
             $match: {
-              $expr: { $eq: ["$collectionId", "$$collectionId"] },
-              $or: [
-                { visibility: "public" },
-                ...(isOwner ? [{}] : []),
-                ...(isCollaborator ? [{
-                  $expr: {
-                    $in: [requestingUserIdObj, "$$collabs._id"]
-                  }
-                }] : [])
-              ]
-            }
+              $expr: {
+                $and: [
+                  { $eq: ["$collectionId", "$$collectionId"] },
+                  {
+                    $or: [
+                      { $eq: ["$visibility", "public"] },
+                      ...(isOwner ? [{}] : []),
+                      ...(isCollaborator
+                        ? [
+                            {
+                              $in: [requestingUserIdObj, "$collaborators"], // ✅ checking note.collaborators
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                ],
+              },
+            },
           },
           {
-            $project: {
-              _id: 1,
-              name: 1,
-              slug: 1,
-              visibility: 1,
-              createdAt: 1,
-              updatedAt: 1
-            }
-          }
+            $project: noteProjection,
+          },
+          ...(includeNoteCollaborators
+            ? [
+                {
+                  $lookup: {
+                    from: "users",
+                    localField: "collaborators",
+                    foreignField: "_id",
+                    as: "collaborators",
+                    pipeline: [
+                      {
+                        $project: {
+                          _id: 1,
+                          fullName: 1,
+                          userName: 1,
+                          avatar: 1,
+                          email: 1,
+                        },
+                      },
+                    ],
+                  },
+                },
+              ]
+            : []),
         ],
-        as: "notes"
-      }
+        as: "notes",
+      },
     },
     {
       $addFields: {
         isRequesterCollaborator: isCollaborator,
-        isOwner: isOwner
-      }
+        isOwner: isOwner,
+      },
     },
     {
       $project: {
@@ -202,11 +242,11 @@ const getCollectionsAggregatePipeline = (
           $cond: {
             if: { $or: ["$isOwner", "$isRequesterCollaborator"] },
             then: "$collaborators",
-            else: "$$REMOVE"
-          }
-        }
-      }
-    }
+            else: "$$REMOVE",
+          },
+        },
+      },
+    },
   ];
 };
 
@@ -217,10 +257,14 @@ export const getAllCollections = async (req, res) => {
   if (!userId) {
     return res.status(400).json({ message: "userId not provided" });
   }
-
   try {
     const requestingUserId = req.user?._id; // Check if user is authenticated
-    const pipeline = getCollectionsAggregatePipeline(userId, requestingUserId);
+    const pipeline = getCollectionsAggregatePipeline(
+      userId,
+      requestingUserId,
+      null,
+      true
+    );
     const collections = await Collection.aggregate(pipeline);
 
     res.status(200).json({ collections });
@@ -239,17 +283,23 @@ export const getCollection = async (req, res) => {
 
   try {
     const requestingUserId = req.user?._id; // Check if user is authenticated
+    const existingCollection = await Collection.exists({
+      userId: new mongoose.Types.ObjectId(userId),
+      slug: slug.toLowerCase(),
+    });
+    if (!existingCollection) {
+      return res.status(404).json({ message: "Collection not found" });
+    }
     const pipeline = getCollectionsAggregatePipeline(
       userId,
       requestingUserId,
-      slug?.toLowerCase()
+      slug.toLowerCase(),
+      true // Include note collaborators for getCollection
     );
     const collections = await Collection.aggregate(pipeline);
 
     if (!collections.length) {
-      return res
-        .status(404)
-        .json({ message: "Collection not found or not accessible" });
+      return res.status(403).json({ message: "Collection not accessible" });
     }
 
     res.status(200).json({ collection: collections[0] });
@@ -277,10 +327,9 @@ export const updateVisibility = async (req, res) => {
       { new: true }
     );
     if (!collection) {
-      return res.status(404).json({
-        message:
-          "collection not found or you don't have permission to update it",
-      });
+      return res
+        .status(403)
+        .json({ message: "you don't have permission to update it" });
     }
     return res.status(200).json({
       message: `visiblity updated to ${collection.visibility}`,
@@ -295,9 +344,8 @@ export const updateVisibility = async (req, res) => {
   }
 };
 
-
 export const updateCollaborators = async (req, res) => {
-  const { collaborators, collectionId } = req.body;
+  let { collaborators, collectionId } = req.body;
   const { user } = req;
 
   if (!user) return res.status(401).json({ message: "You are unauthorized" });
@@ -306,6 +354,7 @@ export const updateCollaborators = async (req, res) => {
       message: "all fields required [`collaborators: Array`, `collectionId`]",
     });
   }
+  collaborators = [...new Set(collaborators)];
 
   try {
     // Update the collection's collaborators
@@ -313,11 +362,12 @@ export const updateCollaborators = async (req, res) => {
       { _id: collectionId, userId: user._id },
       { collaborators },
       { new: true }
-    ).populate("collaborators", "fullName userName email avatar _id"); 
+    ).populate("collaborators", "fullName userName email avatar _id");
 
     if (!updatedCollection) {
       return res.status(404).json({
-        message: "collection not found or you don't have permission to update it",
+        message:
+          "collection not found or you don't have permission to update it",
       });
     }
 
