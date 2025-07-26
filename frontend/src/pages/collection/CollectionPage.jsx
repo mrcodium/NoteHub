@@ -115,14 +115,14 @@ const CollectionPage = () => {
     <div className="p-2 sm:p-4 h-full overflow-y-auto">
       <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
         <CollectionHeader
-          user={{ ...user, fullName: user.fullName + errorStatus }}
+          user={user}
           collection={collection}
           isOwner={isOwner}
         />
-        {errorStatus === 404 || !collection ? (
-          <NotFound />
-        ) : errorStatus === 403 ? (
+        {errorStatus === 403 ? (
           <Forbidden />
+        ) : errorStatus === 404 || !collection ? (
+          <NotFound />
         ) : (
           <CollectionNotesGrid
             notes={notes}
