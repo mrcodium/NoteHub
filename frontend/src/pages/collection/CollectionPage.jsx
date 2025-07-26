@@ -8,10 +8,12 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { axiosInstance } from "@/lib/axios";
 import { Forbidden, NotFound } from "./ErrorStates";
-import { useCollaboratorManager } from "@/contex/CollaboratorManagerContext";
+import { Separator } from "@/components/ui/separator";
 
 const CollectionPage = () => {
-  const { username, collectionSlug } = useParams();
+  const { username, collectionSlug: rawSlug } = useParams();
+  const collectionSlug = rawSlug?.toLowerCase();
+
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [guestCollection, setGuestCollection] = useState(null);
@@ -19,14 +21,10 @@ const CollectionPage = () => {
   const [errorStatus, setErrorStatus] = useState(null); // Track error status
   const [sortBy, setSortBy] = useState("created");
   const [sortDirection, setSortDirection] = useState("desc");
-  const {
-    isCollectionsLoading,
-    collections: ownerCollections,
-  } = useNoteStore();
+  const { isCollectionsLoading, collections: ownerCollections } =
+    useNoteStore();
   const { authUser } = useAuthStore();
-  const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const isOwner = authUser?.userName.toLowerCase() === username.toLowerCase();
-  const {openDialog} = useCollaboratorManager();
   const collection = useMemo(() => {
     if (isOwner) {
       return ownerCollections.find((c) => c.slug === collectionSlug);
@@ -66,6 +64,7 @@ const CollectionPage = () => {
           slug,
         },
       });
+      console.log(res.data);
       const { collection } = res.data;
       return collection;
     } catch (error) {
@@ -113,25 +112,27 @@ const CollectionPage = () => {
   if (isCollectionsLoading || isLoading) return <CollectionPageSkeleton />;
 
   return (
-    <div className="container overflow-y-auto mx-auto px-4 py-8 max-w-7xl">
-      <div className="flex flex-col gap-8">
+    <div className="p-2 sm:p-4 h-full overflow-y-auto">
+      <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
         <CollectionHeader
-          user={user}
+          user={{ ...user, fullName: user.fullName + errorStatus }}
           collection={collection}
           isOwner={isOwner}
         />
-
-        {   errorStatus === 404 ? <NotFound />  :
-            errorStatus === 403 ? <Forbidden /> :
-            <CollectionNotesGrid
-              notes={notes}
-              sortedNotes={sortedNotes}
-              isOwner={isOwner}
-              username={username}
-              collectionSlug={collectionSlug}
-              collection={collection}
-            />
-        }
+        {errorStatus === 404 || !collection ? (
+          <NotFound />
+        ) : errorStatus === 403 ? (
+          <Forbidden />
+        ) : (
+          <CollectionNotesGrid
+            notes={notes}
+            sortedNotes={sortedNotes}
+            isOwner={isOwner}
+            username={username}
+            collectionSlug={collectionSlug}
+            collection={collection}
+          />
+        )}
       </div>
     </div>
   );
