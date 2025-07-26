@@ -14,6 +14,8 @@ import {
   LockOpen,
   Pencil,
   Trash2,
+  UserPlus2,
+  Users2,
 } from "lucide-react";
 import {
   Command,
@@ -33,20 +35,21 @@ import {
   DialogFooter,
 } from "./ui/dialog";
 import { Separator } from "./ui/separator";
+import { useCollaboratorManager } from "@/contex/CollaboratorManagerContext";
 
 const NotesOption = React.memo(({ trigger, note, setIsRenaming }) => {
   const { collections, moveTo, deleteNote, updateNoteVisibility } =
     useNoteStore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { openDialog } = useCollaboratorManager();
 
-  // Memoize filtered collections to avoid recalculating on every render
   const filteredCollections = useMemo(() => {
     return collections.filter((c) => c._id !== note.collectionId);
   }, [collections, note.collectionId]);
 
-  // Memoize the move handler
   const handleMove = useCallback(
     async (collectionId) => {
       await moveTo({ collectionId, noteId: note._id });
@@ -55,13 +58,11 @@ const NotesOption = React.memo(({ trigger, note, setIsRenaming }) => {
     [moveTo, note._id]
   );
 
-  // Memoize the delete handler
   const handleDelete = useCallback(() => {
     deleteNote(note._id);
     setIsDeleteDialogOpen(false);
   }, [deleteNote, note._id]);
 
-  // Memoize visibility toggle
   const toggleVisibility = useCallback(() => {
     const newVisibility = note.visibility === "public" ? "private" : "public";
     updateNoteVisibility({
@@ -70,47 +71,60 @@ const NotesOption = React.memo(({ trigger, note, setIsRenaming }) => {
     });
   }, [note.visibility, note._id, updateNoteVisibility]);
 
-  // Memoize dropdown menu items to prevent unnecessary re-renders
-  const dropdownItems = useMemo(() => [
-    {
-      id: "rename",
-      icon: <Pencil className="size-4 text-muted-foreground" />,
-      label: "Rename",
-      onClick: () => {
-        setIsRenaming(true);
-        setDropdownOpen(false);
+  const dropdownItems = useMemo(
+    () => [
+      {
+        id: "rename",
+        icon: <Pencil className="size-4 text-muted-foreground" />,
+        label: "Rename",
+        onClick: () => {
+          setIsRenaming(true);
+          setDropdownOpen(false);
+        },
       },
-    },
-    {
-      id: "visibility",
-      icon: note.visibility === "public" ? (
-        <Lock className="size-4 text-muted-foreground" />
-      ) : (
-        <LockOpen className="size-4 text-muted-foreground" />
-      ),
-      label: note.visibility === "public" ? "Make Private" : "Make Public",
-      onClick: toggleVisibility,
-    },
-    {
-      id: "move",
-      icon: <FolderOutput className="size-4 text-muted-foreground" />,
-      label: "Move to",
-      onClick: () => {
-        setIsMoveDialogOpen(true);
-        setDropdownOpen(false);
+      {
+        id: "visibility",
+        icon:
+          note.visibility === "public" ? (
+            <Lock className="size-4 text-muted-foreground" />
+          ) : (
+            <LockOpen className="size-4 text-muted-foreground" />
+          ),
+        label: note.visibility === "public" ? "Make Private" : "Make Public",
+        onClick: toggleVisibility,
       },
-    },
-    {
-      id: "delete",
-      icon: <Trash2 className="size-4" />,
-      label: "Delete Note",
-      onClick: () => {
-        setIsDeleteDialogOpen(true);
-        setDropdownOpen(false);
+      {
+        id: "move",
+        icon: <FolderOutput className="size-4 text-muted-foreground" />,
+        label: "Move to",
+        onClick: () => {
+          setIsMoveDialogOpen(true);
+          setDropdownOpen(false);
+        },
       },
-      className: "font-normal p-2 h-auto w-full justify-start gap-2 text-red-500 hover:bg-red-400/20 hover:text-red-500",
-    },
-  ], [note.visibility, toggleVisibility, setIsRenaming]);
+      {
+        id: "collaborators",
+        icon: <UserPlus2 className="size-4 text-muted-foreground" />,
+        label: "Collaborators",
+        onClick: () => {
+          openDialog(note?.collaborators || [], note?._id, "note"),
+            setDropdownOpen(false);
+        },
+      },
+      {
+        id: "delete",
+        icon: <Trash2 className="size-4" />,
+        label: "Delete Note",
+        onClick: () => {
+          setIsDeleteDialogOpen(true);
+          setDropdownOpen(false);
+        },
+        className:
+          "font-normal p-2 h-auto w-full justify-start gap-2 text-red-500 hover:bg-red-400/20 hover:text-red-500",
+      },
+    ],
+    [note.visibility, note._id, note.collaborators, openDialog, toggleVisibility, setIsRenaming]
+  );
 
   return (
     <>
@@ -177,7 +191,7 @@ const NotesOption = React.memo(({ trigger, note, setIsRenaming }) => {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent className="w-48">
-          {dropdownItems.slice(0, 3).map((item) => (
+          {dropdownItems.slice(0, 4).map((item) => (
             <DropdownMenuItem
               key={item.id}
               onClick={item.onClick}
@@ -190,13 +204,13 @@ const NotesOption = React.memo(({ trigger, note, setIsRenaming }) => {
 
           <DropdownMenuSeparator />
           <Separator orientation="horizontal" className="my-1" />
-          
+
           <DropdownMenuItem
-            onClick={dropdownItems[3].onClick}
-            className={dropdownItems[3].className}
+            onClick={dropdownItems[4].onClick}
+            className={dropdownItems[4].className}
           >
-            {dropdownItems[3].icon}
-            {dropdownItems[3].label}
+            {dropdownItems[4].icon}
+            {dropdownItems[4].label}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

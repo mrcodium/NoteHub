@@ -14,13 +14,15 @@ import { requester } from '../middleware/requester.middleware.js';
 
 const router = express.Router();
 
-router.post('/', protectRoute, createCollection);
-router.delete('/:_id', protectRoute, deleteCollection);
-router.put('/', protectRoute, renameCollection);
-router.put('/update-visibility', protectRoute, updateVisibility);
-
 router.get('/all-collections', requester, getAllCollections);
 router.get('/', requester, getCollection);
+
+router.delete('/:_id', protectRoute, deleteCollection);
+
+router.post('/', protectRoute, createCollection);
+router.put('/', protectRoute, renameCollection);
+router.put('/update-visibility', protectRoute, updateVisibility);
 router.put('/update-collaborators', protectRoute, updateCollaborators);
+
 
 export default router;

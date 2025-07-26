@@ -22,7 +22,7 @@
     "google-auth-library": "^10.1.0",
     "jsonwebtoken": "^9.0.2",
     "maxmind": "^4.3.27",
-    "mongoose": "^8.16.1",
+    "mongoose": "^8.16.5",
     "multer": "^2.0.1",
     "nodemailer": "^6.9.16",
     "notehub": "file:..",

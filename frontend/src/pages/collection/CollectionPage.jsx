@@ -1,15 +1,14 @@
+// src > pages > collection > CollectionPage.jsx
 import CollectionPageSkeleton from "@/components/sekeletons/CollectionPageSkeleton";
-import { Button } from "@/components/ui/button";
-import { TriangleAlert, Lock } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { CollectionHeader } from "./CollectionHeader";
-import { CollaboratorsDialog } from "./CollaboratorsDialog";
 import { CollectionNotesGrid } from "./CollectionNotesGrid";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { axiosInstance } from "@/lib/axios";
 import { Forbidden, NotFound } from "./ErrorStates";
+import { useCollaboratorManager } from "@/contex/CollaboratorManagerContext";
 
 const CollectionPage = () => {
   const { username, collectionSlug } = useParams();
@@ -22,14 +21,12 @@ const CollectionPage = () => {
   const [sortDirection, setSortDirection] = useState("desc");
   const {
     isCollectionsLoading,
-    updateCollectionCollaborators,
-    updatingCollaborators,
     collections: ownerCollections,
   } = useNoteStore();
   const { authUser } = useAuthStore();
   const [showCollaboratorDialog, setShowCollaboratorDialog] = useState(false);
   const isOwner = authUser?.userName.toLowerCase() === username.toLowerCase();
-
+  const {openDialog} = useCollaboratorManager();
   const collection = useMemo(() => {
     if (isOwner) {
       return ownerCollections.find((c) => c.slug === collectionSlug);
@@ -122,24 +119,11 @@ const CollectionPage = () => {
           user={user}
           collection={collection}
           isOwner={isOwner}
-          onAddCollaborator={() => setShowCollaboratorDialog(true)}
         />
 
-        <CollaboratorsDialog
-          open={showCollaboratorDialog}
-          onOpenChange={setShowCollaboratorDialog}
-          collaborators={collection?.collaborators || []} // in case error 
-          onSave={(newCollaborators) => {
-            updateCollectionCollaborators({
-              collectionId: collection?._id,
-              collaborators: newCollaborators,
-            });
-            setShowCollaboratorDialog(false);
-          }}
-        />
-        { errorStatus === 404 ? <NotFound />
-          : errorStatus === 403 ? <Forbidden />
-          : <CollectionNotesGrid
+        {   errorStatus === 404 ? <NotFound />  :
+            errorStatus === 403 ? <Forbidden /> :
+            <CollectionNotesGrid
               notes={notes}
               sortedNotes={sortedNotes}
               isOwner={isOwner}

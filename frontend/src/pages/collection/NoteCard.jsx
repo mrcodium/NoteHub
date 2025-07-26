@@ -1,3 +1,4 @@
+import AvatarStack from "@/components/CollaboratorAvatars";
 import NotesOption from "@/components/NotesOption";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -114,21 +115,11 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
             </div>
           </TooltipWrapper>
           {Array.isArray(note.collaborators) && (
-            <div className="flex">
-              {note.collaborators.map((collaborator) => (
-                <TooltipWrapper
-                  key={collaborator._id}
-                  message={"@" + collaborator.userName}
-                >
-                  <Avatar className="shadow-sm border-2 -ml-2 h-6 w-6 rounded-full overflow-hidden">
-                    <AvatarImage src={collaborator.avatar} />
-                    <AvatarFallback>
-                      <img src="/avatar.svg" />
-                    </AvatarFallback>
-                  </Avatar>
-                </TooltipWrapper>
-              ))}
-            </div>
+            <AvatarStack
+              collaborators={note.collaborators}
+              maxVisible={2}
+              size="sm"
+            />
           )}
         </div>
       </CardFooter>

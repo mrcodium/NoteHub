@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Note from "../model/note.model.js";
 import Collection from "../model/collection.model.js";
 import User from "../model/user.model.js";
+import { canAccessNote } from "../utils/permissions.js";
 
 export const createNote = async (req, res) => {
     const { 
@@ -116,19 +117,22 @@ export const getNote = async (req, res) => {
     }
 }
 
+// Public collection  + Public note  → Everyone
+// Public collection  + Private note → Owner + Note collaborators
+// Private collection + Public note  → Owner + Collection collaborators
+// Private collection + Private note → Owner + (Note AND Collection
+
 export const getNoteBySlug = async (req, res) => {
   const { username, collectionSlug, noteSlug } = req.params;
   const requester = req.user || null;
 
   try {
-    // 1. Find user by username (case-insensitive)
     const user = await User.findOne({
       userName: { $regex: new RegExp(`^${username}$`, 'i') },
     });
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // 2. Find collection by user + slug
     const collection = await Collection.findOne({
       userId: user._id,
       slug: collectionSlug.toLowerCase(),
@@ -136,7 +140,6 @@ export const getNoteBySlug = async (req, res) => {
 
     if (!collection) return res.status(404).json({ message: "Collection not found" });
 
-    // 3. Find note by collection + slug
     const note = await Note.findOne({
       collectionId: collection._id,
       slug: noteSlug.toLowerCase(),
@@ -144,32 +147,7 @@ export const getNoteBySlug = async (req, res) => {
 
     if (!note) return res.status(404).json({ message: "Note not found" });
 
-    // 4. Permission logic
-    const isOwner = requester && requester._id.equals(user._id);
-    const isNotePublic = note.visibility === "public";
-    const isCollectionPublic = collection.visibility === "public";
-    const isNoteCollaborator =
-      requester && note.collaborators?.some(id => id.equals(requester._id));
-    const isCollectionCollaborator =
-      requester && collection.collaborators?.some(id => id.equals(requester._id));
-
-    let accessAllowed = false;
-
-    if (isOwner) {
-      accessAllowed = true;
-    } else if (isCollectionPublic && isNotePublic) {
-      // Public + Public → ❌ Owner only
-      accessAllowed = false;
-    } else if (isCollectionPublic && !isNotePublic) {
-      // Public + Private → Note collaborators only
-      accessAllowed = isNoteCollaborator;
-    } else if (!isCollectionPublic && isNotePublic) {
-      // Private + Public → Collection collaborators only
-      accessAllowed = isCollectionCollaborator;
-    } else if (!isCollectionPublic && !isNotePublic) {
-      // Private + Private → Must be both collaborators
-      accessAllowed = isNoteCollaborator && isCollectionCollaborator;
-    }
+    const accessAllowed = canAccessNote({ requester, ownerId: user._id, note, collection });
 
     if (!accessAllowed) {
       return res.status(403).json({ message: "You don't have access to this note" });
@@ -188,76 +166,81 @@ export const getNoteBySlug = async (req, res) => {
   }
 };
 
-
-// collection  note    authorized_user
-// public      public  owner only
-// public      private owner, (collab in note)
-// private     public  owner, (collab in collection)
-// private     private owner, (collab in note && collab in collection)
-
-
 export const getPublicNotes = async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const requester = req.user || null;
+  const requesterId = requester?._id;
 
-    try {
-        // First find all public collections
-        const publicCollections = await Collection.find({ 
-            visibility: 'public' 
-        }).select('_id');
+  try {
+    // Get all collections the user has access to
+    const accessibleCollections = await Collection.find({
+      $or: [
+        { visibility: 'public' },
+        { 
+          visibility: 'private',
+          $or: [
+            { userId: requesterId },
+            { collaborators: requesterId }
+          ]
+        }
+      ]
+    })
+    .select('_id visibility collaborators userId')
+    .lean();
 
-        const collectionIds = publicCollections.map(c => c._id);
+    // Get notes from these collections
+    const notes = await Note.find({
+      collectionId: { $in: accessibleCollections.map(c => c._id) }
+    })
+    .populate('userId', '_id userName fullName avatar')
+    .populate('collectionId', '_id name slug visibility collaborators userId')
+    .sort({ updatedAt: -1 })
+    .lean();
 
-        // Then find public notes in those collections
-        let noteQuery = Note.find({ 
-            visibility: 'public',
-            collectionId: { $in: collectionIds }
-        })
-        .populate({
-            path: 'userId',
-            select: '_id userName fullName avatar',
-            options: { lean: true }
-        })
-        .populate({
-            path: 'collectionId',
-            select: '_id name slug visibility',
-            options: { lean: true }
-        })
-        .sort({ updatedAt: -1 })
-        .skip(skip)
-        .limit(limit);
+    // Filter notes based on access rules
+    const accessibleNotes = notes.filter(note => {
+      const collection = accessibleCollections.find(c => 
+        c._id.toString() === note.collectionId._id.toString()
+      );
+      return canAccessNote({
+        requester,
+        ownerId: note.userId._id,
+        note,
+        collection: collection || note.collectionId
+      });
+    });
 
-        const notes = await noteQuery.exec();
-        const totalNotes = await Note.countDocuments({ 
-            visibility: 'public',
-            collectionId: { $in: collectionIds }
-        });
-        const totalPages = Math.ceil(totalNotes / limit);
+    // Apply pagination
+    const paginatedNotes = accessibleNotes.slice(skip, skip + limit);
+    const totalNotes = accessibleNotes.length;
+    const totalPages = Math.ceil(totalNotes / limit);
 
-        return res.status(200).json({ 
-            success: true,
-            data: {
-                notes,
-                pagination: {
-                    currentPage: page,
-                    totalPages,
-                    totalNotes,
-                    notesPerPage: limit,
-                    hasMore: page < totalPages
-                }
-            }
-        });
+    return res.status(200).json({
+      success: true,
+      data: {
+        notes: paginatedNotes,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalNotes,
+          notesPerPage: limit,
+          hasMore: page < totalPages
+        }
+      }
+    });
 
-    } catch (error) {
-        console.error("Error in getPublicNotes controller:", error);
-        return res.status(500).json({ 
-            success: false,
-            message: "Failed to retrieve public notes",
-            error: error.message 
-        });
-    }
+  } catch (error) {
+    console.error("Error in getPublicNotes controller:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve notes",
+      error: error.message
+    });
+  }
 };
+
 
 export const updateContent = async (req, res) => {
     const { content, noteId } = req.body;
@@ -398,6 +381,46 @@ export const updateVisibility = async (req, res) => {
     console.error("Error in updateVisibility controller:", error);
     return res.status(500).json({
       message: "Failed to update visibility",
+      error: error.message,
+    });
+  }
+};
+
+export const updateCollaborators = async (req, res) => {
+  let { collaborators, noteId } = req.body;
+  const { user } = req;
+
+  if (!user) return res.status(401).json({ message: "You are unauthorized" });
+  if (!Array.isArray(collaborators) || !noteId) {
+    return res.status(400).json({
+      message: "all fields required [`collaborators: Array`, `noteId`]",
+    });
+  }
+  collaborators = [...new Set(collaborators)];
+
+  try {
+    // Update the note's collaborators
+    const updatedNote = await Note.findOneAndUpdate(
+      { _id: noteId, userId: user._id },
+      { collaborators },
+      { new: true }
+    ).populate("collaborators", "fullName userName email avatar _id");
+
+    if (!updatedNote) {
+      return res.status(404).json({
+        message:
+          "note not found or you don't have permission to update it",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Collaborators updated and populated successfully",
+      note: updatedNote,
+    });
+  } catch (error) {
+    console.error("Error in updateCollaborators controller:", error);
+    return res.status(500).json({
+      message: "Failed to update collaborators",
       error: error.message,
     });
   }

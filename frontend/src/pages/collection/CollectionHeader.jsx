@@ -1,16 +1,15 @@
+// src > pages > collection > CollectionHeader
+import AvatarStack from "@/components/CollaboratorAvatars";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useCollaboratorManager } from "@/contex/CollaboratorManagerContext";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export const CollectionHeader = ({
-  user,
-  collection,
-  isOwner,
-  onAddCollaborator,
-}) => {
+export const CollectionHeader = ({ user, collection, isOwner }) => {
+  const { openDialog } = useCollaboratorManager();
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
@@ -42,14 +41,22 @@ export const CollectionHeader = ({
               <div className="flex gap-5">
                 {collection?.collaborators &&
                   collection.collaborators.length > 0 && (
-                    <CollaboratorAvatars
+                    <AvatarStack
                       collaborators={collection.collaborators}
+                      maxVisible={4}
+                      size="lg"
                     />
                   )}
                 {isOwner && (
                   <Button
                     className="size-10 text-xl rounded-full"
-                    onClick={onAddCollaborator}
+                    onClick={() =>
+                      openDialog(
+                        collection?.collaborators || [],
+                        collection?._id,
+                        "collection"
+                      )
+                    }
                   >
                     <Plus />
                   </Button>
@@ -78,34 +85,3 @@ export const CollectionHeader = ({
   );
 };
 
-const CollaboratorAvatars = ({ collaborators }) => (
-  <div className="flex flex-row-reverse">
-    {collaborators.length > 5 && (
-      <TooltipWrapper
-        message={`${collaborators.length - 5} more collaborators`}
-      >
-        <Avatar className="relative border-2 -mr-3 shadow-md">
-          <AvatarImage src={collaborators[5].avatar} />
-          <div className="absolute bg-black/70 inset-0 flex items-center justify-center">
-            <span className="text-white text-xs">
-              +{collaborators.length - 5}
-            </span>
-          </div>
-        </Avatar>
-      </TooltipWrapper>
-    )}
-    {collaborators.slice(0, 5).map((collaborator) => (
-      <TooltipWrapper
-        key={collaborator._id}
-        message={"@" + collaborator.userName}
-      >
-        <Avatar className="border-2 -mr-2 shadow-md">
-          <AvatarImage src={collaborator.avatar} />
-          <AvatarFallback>
-            {collaborator.fullName?.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-      </TooltipWrapper>
-    ))}
-  </div>
-);

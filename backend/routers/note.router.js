@@ -10,12 +10,13 @@ import {
     moveTo,
     getNoteBySlug,
     updateVisibility,
+    updateCollaborators,
 } from "../controller/note.controller.js";
 import { requester } from "../middleware/requester.middleware.js";
 
 const router = express.Router();
 
-router.get('/',  getPublicNotes);
+router.get('/', requester, getPublicNotes);
 router.get('/:username/:collectionSlug/:noteSlug', requester, getNoteBySlug);
 router.get('/:_id', protectRoute, getNote);
 
@@ -25,5 +26,6 @@ router.put('/', protectRoute, updateContent);
 router.put('/rename', protectRoute, renameNote);
 router.put('/update-visibility', protectRoute, updateVisibility);
 router.post('/move-to', protectRoute, moveTo);
+router.put('/update-collaborators', protectRoute, updateCollaborators);
 
 export default router;

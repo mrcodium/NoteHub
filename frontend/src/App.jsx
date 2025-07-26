@@ -38,6 +38,8 @@ import NotificationPage from "./pages/NotificationPage";
 import NotePagePublic from "./pages/NotePagePublic";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import CollectionPage from "./pages/collection/CollectionPage";
+import { CollaboratorManagerProvider } from "./contex/CollaboratorManagerContext";
+import { CollaboratorsDialog } from "./pages/collection/CollaboratorsDialog";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
@@ -71,13 +73,11 @@ function App() {
         let noteName = getNoteName(noteId) || "Not found";
         routes.push({ name: noteName, path });
         setselectedNote(noteId);
-      }
-      else if(segment === "user"){
+      } else if (segment === "user") {
         const username = segments[++i];
         path += `${username}/`;
-        routes.push({name: username, path});
-      } 
-      else {
+        routes.push({ name: username, path });
+      } else {
         const name = segment;
         routes.push({ name, path });
       }
@@ -98,54 +98,75 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <TooltipProvider>
-        <div>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/login" element={<LogInPage />} />
-            <Route path="/forgot-password" element={<ForgetPasswordPage />} />
-            <Route path="/oauth/callback" element={<OAuthCallback />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <CollaboratorManagerProvider>
+        <CollaboratorsDialog/>
+        <TooltipProvider>
+          <div>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/login" element={<LogInPage />} />
+              <Route path="/forgot-password" element={<ForgetPasswordPage />} />
+              <Route path="/oauth/callback" element={<OAuthCallback />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-            {/* Dashboard with public routes */}
-            <Route path="/" element={<Dashboard />}>
-              <Route index element={<HomePage />} />
-              <Route path="user/:username" element={<ProfilePage />} />
-              <Route path="user/:username/:collectionSlug" element={<CollectionPage />} />
-              <Route path="user/:username/:collectionSlug/:noteSlug" element={<NotePagePublic />} />
+              {/* Dashboard with public routes */}
+              <Route path="/" element={<Dashboard />}>
+                <Route index element={<HomePage />} />
+                <Route path="user/:username" element={<ProfilePage />} />
+                <Route
+                  path="user/:username/:collectionSlug"
+                  element={<CollectionPage />}
+                />
+                <Route
+                  path="user/:username/:collectionSlug/:noteSlug"
+                  element={<NotePagePublic />}
+                />
 
-              {/* Protected routes - only visible when authenticated */}
-              {authUser && (
-                <>
-                  <Route path="note/:id" element={<NotePage />} />
-                  <Route path="note/:id/editor" element={<Tiptap />} />
-                  <Route path="notifications" element={<NotificationPage />} />
-                  <Route path="settings" element={<SettingsPage />}>
-                    <Route index element={<Personalization />} />
-                    <Route path="personal-details" element={<PersonalDetails />} />
-                    <Route path="personalization" element={<Personalization />} />
-                    <Route path="security" element={<Security />} />
-                    <Route path="photo-and-cover" element={<PhotoAndCover />} />
-                  </Route>
-                </>
-              )}
-            </Route>
+                {/* Protected routes - only visible when authenticated */}
+                {authUser && (
+                  <>
+                    <Route path="note/:id" element={<NotePage />} />
+                    <Route path="note/:id/editor" element={<Tiptap />} />
+                    <Route
+                      path="notifications"
+                      element={<NotificationPage />}
+                    />
+                    <Route path="settings" element={<SettingsPage />}>
+                      <Route index element={<Personalization />} />
+                      <Route
+                        path="personal-details"
+                        element={<PersonalDetails />}
+                      />
+                      <Route
+                        path="personalization"
+                        element={<Personalization />}
+                      />
+                      <Route path="security" element={<Security />} />
+                      <Route
+                        path="photo-and-cover"
+                        element={<PhotoAndCover />}
+                      />
+                    </Route>
+                  </>
+                )}
+              </Route>
 
-            {/* Admin routes (keep as is for now) */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<UsersPage />} />
-              <Route path="users" element={<UsersPage />} />
-              <Route path="communication" element={<CommunicationPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              <Route path="trash" element={<TrashPage />} />
-            </Route>
+              {/* Admin routes (keep as is for now) */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<UsersPage />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="communication" element={<CommunicationPage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                <Route path="trash" element={<TrashPage />} />
+              </Route>
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </div>
-        <Toaster />
-      </TooltipProvider>
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </div>
+          <Toaster />
+        </TooltipProvider>
+      </CollaboratorManagerProvider>
     </ThemeProvider>
   );
 }

@@ -11,6 +11,7 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import { Card } from "./ui/card";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import AvatarStack from "./CollaboratorAvatars";
 
 function CollectionCard({ collection, isOwner, pinnedCollections }) {
   const [isCollectionRenaming, setIsCollectionRenaming] = useState(false);
@@ -137,21 +138,11 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
               </div>
 
               {Array.isArray(collection.collaborators) && (
-                <div className="flex">
-                  {collection.collaborators.map((collaborator) => (
-                    <TooltipWrapper
-                      key={collaborator._id}
-                      message={"@" + collaborator.userName}
-                    >
-                      <Avatar className="shadow-sm border-2 -ml-2 h-6 w-6 rounded-full overflow-hidden">
-                        <AvatarImage src={collaborator.avatar} />
-                        <AvatarFallback>
-                          <img src="/avatar.svg" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </TooltipWrapper>
-                  ))}
-                </div>
+                <AvatarStack
+                  collaborators={collection.collaborators}
+                  maxVisible={3}
+                  size="sm"
+                />
               )}
             </div>
           </div>

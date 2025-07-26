@@ -381,6 +381,26 @@ export const useNoteStore = create((set, get) => ({
     }
   },
 
+  updateNoteCollaborators: async ({ noteId, collaborators }) => {
+    set({ updatingCollaborators: true });
+    try {
+      const res = await axiosInstance.put("note/update-collaborators", {
+        noteId,
+        collaborators,
+      });
+      const { note : updatedNote, message } = res.data;
+
+      // Replace note with updated note
+      get().replaceNoteFromCollection(updatedNote);
+      toast.success(message);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response.data.message);
+    } finally {
+      set({ updatingCollaborators: false });
+    }
+  },
+
   updateNoteVisibility: async ({ noteId, visibility }) => {
     try {
       const res = await axiosInstance.put("note/update-visibility", {
