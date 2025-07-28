@@ -295,7 +295,6 @@ const CollectionsOption = ({
       <DropdownMenu 
         open={dropdownOpen} 
         onOpenChange={setDropdownOpen}
-        modal={false} // Important for nested dialogs
       >
         <DropdownMenuTrigger asChild>
           {trigger}
