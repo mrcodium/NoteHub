@@ -28,45 +28,39 @@ import Link from "@tiptap/extension-link";
 
 const lowlight = createLowlight(all);
 
-const CustomCodeBlock = CodeBlockLowlight.extend({
-  addNodeView() {
-    return ReactNodeViewRenderer(CodeBlockComponent);
-  },
-
-  addKeyboardShortcuts() {
-    return {
-      Tab: () => {
-        return this.editor.commands.insertContent("    "); // 4 spaces
-      },
-    };
-  },
-}).configure({ lowlight });
-
 const TabExtension = Extension.create({
   name: "tabHandler",
 
   addKeyboardShortcuts() {
     return {
       Tab: ({ editor }) => {
-        if (editor.isActive("listItem")) {
-          editor.commands.sinkListItem("listItem");
-          return true;
+        // Allow default behavior in tables
+        if (editor.isActive("table")) {
+          return false; // Let the table extension handle it
         }
 
+        // Only allow Tab in code blocks
         if (editor.isActive("codeBlock")) {
           return false; // Let CustomCodeBlock handle it
         }
 
-        editor.commands.insertContent("    "); // 4 spaces for regular text
+        // Block Tab everywhere else
         return true;
       },
 
       "Shift-Tab": ({ editor }) => {
-        if (editor.isActive("listItem")) {
-          editor.commands.liftListItem("listItem");
-          return true;
+        // Allow default behavior in tables
+        if (editor.isActive("table")) {
+          return false; // Let the table extension handle it
         }
-        return false;
+
+        // Only allow Shift-Tab in code blocks
+        if (editor.isActive("codeBlock")) {
+          return false; // Let CustomCodeBlock handle it
+        }
+
+        // Block Shift-Tab everywhere else
+        return true;
       },
     };
   },
@@ -89,6 +83,11 @@ const AutoPairExtension = Extension.create({
 
     Object.entries(pairs).forEach(([open, close]) => {
       shortcuts[open] = ({ editor }) => {
+        // Only auto-pair in code blocks
+        if (!editor.isActive("codeBlock")) {
+          return false;
+        }
+
         const { state } = editor;
         const { selection } = state;
         const { from, to, empty } = selection;
@@ -105,6 +104,24 @@ const AutoPairExtension = Extension.create({
     return shortcuts;
   },
 });
+
+const CustomCodeBlock = CodeBlockLowlight.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CodeBlockComponent);
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      Tab: () => {
+        return this.editor.commands.insertContent("    "); // 4 spaces
+      },
+      "Shift-Tab": () => {
+        // You can implement Shift-Tab behavior for code blocks here if needed
+        return true;
+      },
+    };
+  },
+}).configure({ lowlight });
 
 export const extensions = [
   Color.configure({ types: [TextStyle.name, ListItem.name] }),
@@ -161,6 +178,6 @@ export const extensions = [
       target: "_blank",
       rel: "noopener noreferrer",
     },
-    validate: href => /^https?:\/\//.test(href),
+    validate: (href) => /^https?:\/\//.test(href),
   }),
 ];
