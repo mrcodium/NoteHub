@@ -119,7 +119,7 @@ export function ArticleCard({
               </Accordion>
             )}
 
-            <p className="text-muted-foreground text-sm line-clamp-3">
+            <p className="text-muted-foreground text-sm line-clamp-3" style={{overflowWrap: "anywhere"}}>
               {description}
             </p>
             <div className="mt-2 flex items-center gap-2">
