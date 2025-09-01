@@ -23,6 +23,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,7 @@ const highlightMatch = (text, query) => {
 };
 
 const NoteItem = ({ note }) => {
+  const {closeSidebar, isMobile} = useSidebar();
   const [isNoteRenaming, setIsNoteRenaming] = useState(false);
   const inputRef = useRef(null);
   const { selectedNote, setselectedNote, renameNote } = useNoteStore();
@@ -87,13 +89,14 @@ const NoteItem = ({ note }) => {
   };
 
   return (
-    <SidebarMenuSubItem className="group/note">
+    <SidebarMenuSubItem className="group/note h-auto">
       <SidebarMenuSubButton
         asChild
+        className="p-0 h-auto"
         onClick={() => !isNoteRenaming && setselectedNote(note._id)}
       >
         <div
-          className={`flex items-center gap-0 w-full hover:bg-sidebar-accent rounded-md p-1 ${
+          className={`flex items-center gap-0 w-full hover:bg-sidebar-accent rounded-md p-0 h-auto ${
             selectedNote === note._id && "bg-accent"
           }`}
         >
@@ -101,7 +104,7 @@ const NoteItem = ({ note }) => {
             <Input
               ref={inputRef}
               defaultValue={note.name}
-              className="h-6 flex-1 min-w-0 p-1"
+              className="flex-1 min-w-0 px-2.5 py-2 bg-background"
               onBlur={handleSaveRename}
               onKeyDown={handleKeyDown}
               onClick={(e) => e.stopPropagation()}
@@ -109,7 +112,8 @@ const NoteItem = ({ note }) => {
           ) : (
             <Link
               to={`/note/${note._id}`}
-              className="truncate flex-1 text-sidebar-foreground/70"
+              onClick={()=>isMobile && closeSidebar()}
+              className="truncate px-2.5 py-2 flex-1 text-sidebar-foreground/70"
             >
               {note.name}
             </Link>
@@ -121,6 +125,7 @@ const NoteItem = ({ note }) => {
                 trigger={<EllipsisVertical className="size-4" />}
                 setIsRenaming={setIsNoteRenaming}
                 note={note}
+                className="mr-2"
               />
             </div>
           )}

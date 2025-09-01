@@ -36,8 +36,9 @@ import {
 } from "./ui/dialog";
 import { Separator } from "./ui/separator";
 import { useCollaboratorManager } from "@/contex/CollaboratorManagerContext";
+import { cn } from "@/lib/utils";
 
-const NotesOption = React.memo(({ trigger, note, setIsRenaming }) => {
+const NotesOption = React.memo(({ trigger, note, setIsRenaming, className }) => {
   const { collections, moveTo, deleteNote, updateNoteVisibility } =
     useNoteStore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -184,7 +185,7 @@ const NotesOption = React.memo(({ trigger, note, setIsRenaming }) => {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="flex-shrink-0 p-1 size-6 text-muted-foreground hover:text-foreground"
+            className={cn("flex-shrink-0 p-1 size-6 text-muted-foreground hover:text-foreground", className)}
           >
             {trigger}
           </Button>
