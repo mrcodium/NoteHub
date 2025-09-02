@@ -62,7 +62,7 @@ const socketAuthMiddleware = async (socket, next) => {
     // 5. IP check (optional)
     const socketIP = socket.handshake.address;
     if (session.ipAddress && session.ipAddress !== socketIP) {
-      console.log(session.ipAddress, socketIP);
+      // console.log(session.ipAddress, socketIP);
       console.warn(`IP mismatch for user ${user._id}`);
     }
 

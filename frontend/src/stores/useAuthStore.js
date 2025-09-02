@@ -150,7 +150,7 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
     } catch (error) {
       set({ authUser: null });
-      console.log(console.log(error));
+      console.error(error);
     } finally {
       set({ isCheckingAuth: false });
     }
@@ -204,7 +204,7 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Log in successful");
     } catch (error) {
       set({ authUser: null });
-      console.log(error);
+      console.error(error);
       toast.error(error.response.data.message || "error while logging in");
     } finally {
       set({ isLoggingIn: false });
@@ -221,7 +221,6 @@ export const useAuthStore = create((set, get) => ({
         redirectUri,
       });
       set({ authUser: res.data.user });
-      console.log(res.data.user);
       get().connectSocket();
       toast.success("Log in successful");
       return true;
@@ -255,7 +254,7 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       set({ authUser: null });
       toast.error(error.response.data.message);
-      console.log(error);
+      console.error(error);
     } finally {
       set({ isVerifyingEmail: false });
     }
@@ -339,7 +338,6 @@ export const useAuthStore = create((set, get) => ({
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(res.data.user);
       set({ authUser: res.data.user });
       toast.success(res.data.message);
       return res.data.user;

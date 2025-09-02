@@ -112,11 +112,6 @@ export const resetPassword = async (req, res) => {
 export const updatePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   const { user } = req;
-  console.log({
-    currentPassword,
-    newPassword,
-    user,
-  });
 
   if (!user || !user.password) {
     return res.status(401).json({message: "Unauthorized user"});
