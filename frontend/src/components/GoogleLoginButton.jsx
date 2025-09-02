@@ -5,7 +5,7 @@ import { generatePKCE } from "@/lib/auth";
 const GoogleLoginButton = ({ className }) => {
   const handleGoogleLogin = async () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const redirectUri = encodeURIComponent(import.meta.env.VITE_GOOGLE_REDIRECT_URI);
+    const redirectUri = encodeURIComponent(`${window.location.origin}/oauth/callback`);
     const scope = encodeURIComponent("openid profile email");
     
     try {

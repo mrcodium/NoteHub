@@ -48,7 +48,6 @@ export const revokeToken = async (token) => {
     throw error;
   }
 
-  console.log(decoded);
   const { sessionId } = decoded;
   if (!sessionId) {
     const error = new Error("Token missing sessionId");
@@ -94,6 +93,5 @@ export const logoutAllSessions = async (userId) => {
       isRevoked: true,
     }
   );
-  console.log(result);
   return result;
 };
