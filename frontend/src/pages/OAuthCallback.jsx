@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { Loader2 } from "lucide-react";
 
 const OAuthCallback = () => {
-  const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+  const redirectUri = `${window.location.origin}/oauth/callback`;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { googleLogin } = useAuthStore();
