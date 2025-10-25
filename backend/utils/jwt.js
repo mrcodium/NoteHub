@@ -12,7 +12,7 @@ export const setCookie = (res, name, value, options = {}) => {
     sameSite: 'Strict',
     path: '/',
     domain: process.env.COOKIE_DOMAIN,
-    maxAge: durationToMs(process.env.JWT_EXPIRY || '7d'),
+    maxAge: durationToMs(process.env.JWT_EXPIRY || '30d'),
   };
 
   res.cookie(name, value, { ...defaultOptions, ...options });
@@ -36,7 +36,7 @@ export const generateToken = (res, sessionId) => {
     },
     process.env.JWT_SECRET,
     { 
-      expiresIn: process.env.JWT_EXPIRY || '7d',
+      expiresIn: process.env.JWT_EXPIRY || '30d',
       algorithm: 'HS256'
     }
   );

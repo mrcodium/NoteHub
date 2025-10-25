@@ -15,7 +15,7 @@ export const createLoginRecord = async (
   const ipAddress =
     req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
   const userAgent = req.headers["user-agent"] || "";
-  const expiryMs = durationToMs(process.env.JWT_EXPIRY || "7d");
+  const expiryMs = durationToMs(process.env.JWT_EXPIRY || "30d");
   const tokenExpiry = new Date(Date.now() + expiryMs); // convert ms to Date
 
   const record = await LoginRecord.create({

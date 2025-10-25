@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreVertical, User, Bell, Mail, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useState } from "react";
 
 export const UserTable = ({
   users,
@@ -29,6 +30,7 @@ export const UserTable = ({
   handleDeleteClick,
 }) => {
   const { onlineUsers } = useAuthStore();
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   return (
     <Table className="whitespace-nowrap">
@@ -43,7 +45,6 @@ export const UserTable = ({
             />
           </TableHead>
           {columnVisibility.fullName && <TableHead>Profile</TableHead>}
-          {columnVisibility.email && <TableHead>Email</TableHead>}
           {columnVisibility.userName && <TableHead>Username</TableHead>}
           {columnVisibility.userId && <TableHead>User ID</TableHead>}
           {columnVisibility.authProvider && (
@@ -93,7 +94,6 @@ export const UserTable = ({
                 </div>
               </TableCell>
             )}
-            {columnVisibility.email && <TableCell>{user.email}</TableCell>}
             {columnVisibility.userName && (
               <TableCell>{user.userName}</TableCell>
             )}
@@ -123,14 +123,24 @@ export const UserTable = ({
             )}
             {columnVisibility.actions && (
               <TableCell>
-                <DropdownMenu>
+                <DropdownMenu
+                  open={openDropdownId === user._id}
+                  onOpenChange={(isOpen) => {
+                    setOpenDropdownId(isOpen ? user._id : null);
+                  }}
+                >
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="size-6">
                       <MoreVertical className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleUserClick(user)}>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setOpenDropdownId(null);
+                        handleUserClick(user);
+                      }}
+                    >
                       <User className="mr-2 h-4 w-4" />
                       <span>View Details</span>
                     </DropdownMenuItem>
@@ -144,7 +154,10 @@ export const UserTable = ({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600"
-                      onClick={() => handleDeleteClick(user._id)}
+                      onClick={() => {
+                        setOpenDropdownId(null);
+                        handleDeleteClick(user._id)
+                      }}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       <span>Delete User</span>

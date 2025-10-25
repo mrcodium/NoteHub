@@ -41,8 +41,8 @@ const LogInPage = () => {
     e.preventDefault();
     try {
       loginSchema.parse(formData);
-      await login(formData);
-      navigate("/");
+      const success =  await login(formData);
+      if(success) navigate("/");
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors = error.errors.reduce((acc, curr) => {

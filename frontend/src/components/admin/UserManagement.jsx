@@ -14,17 +14,16 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { PaginationControls } from "./PaginationControls.jsx";
 
 export function UserManagement() {
-  const { getUser, getAllUsers } = useAuthStore();
+  const { getAllUsers } = useAuthStore();
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({
     fullName: true,
-    email: false,
     userName: true,
-    userId: true,
+    userId: false,
     authProvider: true,
-    lastLogin: true,
+    lastLogin: false,
     actions: true,
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -34,6 +33,7 @@ export function UserManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [openDrawer, setOpenDrawer] = useState(false);
   const [usersData, setUsersData] = useState({
     users: [],
     pagination: {
@@ -88,15 +88,12 @@ export function UserManagement() {
     }
   };
 
-  const handleUserClick = async (user) => {
+  const handleUserClick = (user) => {
     // Fetch fresh user data if needed
     // const freshUser = await getUser(user._id);
     // setSelectedUser(freshUser || user);
     setSelectedUser(user);
-  };
-
-  const closeDrawer = () => {
-    setSelectedUser(null);
+    setOpenDrawer(true);
   };
 
   const handleDeleteClick = (userId) => {
@@ -203,8 +200,8 @@ export function UserManagement() {
 
       <UserDetailDrawer
         user={selectedUser}
-        open={!!selectedUser}
-        onClose={closeDrawer}
+        open={openDrawer}
+        onOpenChange={setOpenDrawer}
       />
 
       <ConfirmDialog

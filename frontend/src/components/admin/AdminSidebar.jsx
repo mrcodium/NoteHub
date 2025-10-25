@@ -122,6 +122,7 @@ export function AdminSidebar({ ...props }) {
 
 function NavMain({ items }) {
   const location = useLocation(); // Get current location
+  const {isMobile, closeSidebar} = useSidebar();
 
   return (
     <SidebarGroup>
@@ -142,6 +143,7 @@ function NavMain({ items }) {
               >
                 <Link
                   to={item.url}
+                  onClick={()=>isMobile && closeSidebar()}
                   className={cn(
                     "flex gap-2 px-2 py-2 w-full",
                     "peer-data-[collapsed]:justify-center",

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Drawer,
   DrawerContent,
@@ -333,7 +332,7 @@ const LoginHistoryTab = ({ loginHistory, loading, error }) => {
 };
 
 // Main component
-export function UserDetailDrawer({ user, open, onClose }) {
+export function UserDetailDrawer({ user, open, onOpenChange }) {
   const [sessions, setSessions] = useState([]);
   const [loginHistory, setLoginHistory] = useState([]);
   const [loading, setLoading] = useState({
@@ -404,7 +403,13 @@ export function UserDetailDrawer({ user, open, onClose }) {
   if (!user) return null;
 
   return (
-    <Drawer open={open} onClose={onClose}>
+    <Drawer
+      open={open}
+      onOpenChange={(open) => {
+        console.log(open);
+        onOpenChange(open);
+      }}
+    >
       <DrawerContent className="h-[80vh]">
         <DrawerHeader>
           <DrawerTitle>User Details</DrawerTitle>

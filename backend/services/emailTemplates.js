@@ -86,7 +86,7 @@ export const otpTemplate = ({ email, otpCode, expiresInMinutes, purpose }) => {
                                 <tr>
                                     <td style="text-align: center;">
                                         <p style="font-size: 16px; color: #737373; margin-bottom: 10px; font-weight: 600;">${subHeading}</p>
-                                        <p style="font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 15px 0;">${otpCode.toString().replace(/(\\d{3})(\\d{3})/, '$1 $2')}</p>
+                                        <p style="font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 15px 0;">${otpCode.toString().replace(/(\d{3})(\d{3})/, '$1 $2')}</p>
                                         <p style="font-size: 13px; color: #737373;">This code will expire in ${expiresInMinutes} minutes.</p>
                                     </td>
                                 </tr>

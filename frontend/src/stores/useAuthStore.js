@@ -150,7 +150,7 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
     } catch (error) {
       set({ authUser: null });
-      console.log(console.log(error));
+      console.log(error);
     } finally {
       set({ isCheckingAuth: false });
     }
@@ -202,10 +202,12 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: user, sessionId });
       get().connectSocket();
       toast.success("Log in successful");
+      return true;
     } catch (error) {
       set({ authUser: null });
       console.log(error);
       toast.error(error.response.data.message || "error while logging in");
+      return false;
     } finally {
       set({ isLoggingIn: false });
     }
@@ -339,7 +341,7 @@ export const useAuthStore = create((set, get) => ({
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(res.data.user);
+
       set({ authUser: res.data.user });
       toast.success(res.data.message);
       return res.data.user;
