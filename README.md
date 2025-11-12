@@ -6,7 +6,7 @@ A modern note-taking app with rich editing, collaboration, and cloud sync.
 
 ## Live Demo
 
-🌐 [https://notehub-production.onrender.com](https://notehub-production.onrender.com)
+🌐 [https://notehub-38kp.onrender.com](https://notehub-38kp.onrender.com)
 
 ## ✨ Editor Features
 
