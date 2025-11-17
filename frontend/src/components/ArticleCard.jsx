@@ -9,7 +9,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "./ui/carousel";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -17,6 +17,7 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 import { Dialog, DialogContent } from "./ui/dialog";
+import { Button } from "./ui/button";
 
 export function ArticleCard({
   author,
@@ -87,14 +88,25 @@ export function ArticleCard({
         <div className="flex flex-col items-start md:flex-row gap-4">
           <div className="flex-1">
             <CardTitle className="text-base sm:text-xl font-semibold mb-2">
-              <span className="text-muted-foreground">{collection.slug}/</span>
-              {title}
+              <Link
+                to={`/user/${author?.userName}/${collection.slug}`}
+                className="text-muted-foreground hover:underline"
+              >
+                {collection.slug}
+              </Link>
+              {" / "}
+              <Link
+                to={`/user/${author?.userName}/${collection.slug}/${noteSlug}`}
+                className="hover:underline"
+              >
+                {title}
+              </Link>
             </CardTitle>
 
             {headings?.length > 0 && (
               <Accordion type="single" collapsible className="mb-3">
-                <AccordionItem value="headings" className="border-b-0">
-                  <AccordionTrigger className="py-1 text-sm hover:no-underline">
+                <AccordionItem value="headings" className="border-b-0 w-max">
+                  <AccordionTrigger className="gap-4 py-1 text-sm hover:no-underline">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <span>Table of Contents</span>
                     </div>
@@ -119,15 +131,21 @@ export function ArticleCard({
               </Accordion>
             )}
 
-            <p className="text-muted-foreground text-sm line-clamp-3" style={{overflowWrap: "anywhere"}}>
+            <p
+              className="text-muted-foreground text-sm line-clamp-3"
+              style={{ overflowWrap: "anywhere" }}
+            >
               {description}
             </p>
             <div className="mt-2 flex items-center gap-2">
               <Link
                 to={`/user/${author?.userName}/${collection.slug}/${noteSlug}`}
-                className="text-sm text-primary hover:underline"
+                className="block w-fit"
               >
-                Read More
+                <Button className="w-full">
+                  Read More
+                  <ChevronRight />
+                </Button>
               </Link>
             </div>
           </div>

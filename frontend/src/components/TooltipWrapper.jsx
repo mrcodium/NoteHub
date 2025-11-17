@@ -7,14 +7,12 @@ import {
 
 const TooltipWrapper = ({ message = "", children }) => {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent>
-          <p>{message}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>
+        <p>{message}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

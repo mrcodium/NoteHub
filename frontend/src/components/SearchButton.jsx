@@ -86,7 +86,7 @@ export function SearchButton() {
   return (
     <>
       {/* Square search button */}
-      <TooltipWrapper message="search user">
+      <TooltipWrapper message="Ctrl + K">
         <Button
           variant="ghost"
           size="icon"

@@ -1,5 +1,5 @@
-import * as React from "react"
-import { Moon, Sun, Monitor } from "lucide-react"
+import * as React from "react";
+import { Moon, Sun, Monitor } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -8,7 +8,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -16,17 +16,29 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { useTheme } from "@/components/theme-provider"
-import { Button } from "./ui/button"
-import { cn } from "@/lib/utils"
+import { useTheme } from "@/components/theme-provider";
+import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 export function ModeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
   const options = {
-    "light":<Sun className="h-4 w-4" />,
-    "dark": <Moon className="h-4 w-4" />,
-    "system":<Monitor className="h-4 w-4" />,
-  }
+    light: <Sun className="h-4 w-4" />,
+    dark: <Moon className="h-4 w-4" />,
+    system: <Monitor className="h-4 w-4" />,
+  };
+
+  // Keyboard shortcut
+  React.useEffect(() => {
+    const down = (e) => {
+      if (e.key === "d" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        toggleMode();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   return (
     <Select value={theme} onValueChange={setTheme}>
@@ -59,14 +71,26 @@ export function ModeToggle() {
         </SelectGroup>
       </SelectContent>
     </Select>
-  )
+  );
 }
 
 export function ModeToggleMini({ className }) {
   const { setTheme, theme, resolvedTheme } = useTheme();
+
   const toggleMode = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
+
+  React.useEffect(() => {
+    const down = (e) => {
+      if (e.key === "d" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        toggleMode();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [theme]);
 
   return (
     <TooltipProvider>
@@ -74,18 +98,19 @@ export function ModeToggleMini({ className }) {
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
-            className={cn("size-8", className)}
+            className={cn("size-8 relative", className)}
             onClick={toggleMode}
           >
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
         </TooltipTrigger>
+
         <TooltipContent>
-          <p>switch to {resolvedTheme === "dark"? "light" : "dark"}</p>
+          <p>Ctrl + D</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 }
+

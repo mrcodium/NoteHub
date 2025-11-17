@@ -32,6 +32,7 @@ import {
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
+import TooltipWrapper from "./TooltipWrapper";
 
 const AddNoteDrawer = ({ trigger }) => {
   const [noteName, setNoteName] = useState("");
@@ -128,7 +129,9 @@ const AddNoteDrawer = ({ trigger }) => {
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+      <TooltipWrapper message="Create Notes" asChild={false}>
+        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+      </TooltipWrapper>
       <DrawerContent className="max-h-[90vh]">
         <div className="mx-auto pt-10 w-full max-w-2xl overflow-y-auto">
           <DrawerHeader className={"hidden"}>

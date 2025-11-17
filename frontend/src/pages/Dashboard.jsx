@@ -17,7 +17,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useRouteStore } from "@/stores/useRouteStore";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { InfoIcon, Plus } from "lucide-react";
 import AddNoteDrawer from "@/components/AddNoteDrawer";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -33,6 +33,11 @@ import { formatCompactNumber } from "@/lib/utils";
 import { SearchButton } from "@/components/SearchButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggleMini } from "@/components/mode-toggle";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Dashboard = () => {
   return (
@@ -49,7 +54,30 @@ const DashboardContent = () => {
   const { isMobile } = useSidebar();
   const { authUser } = useAuthStore();
   const [githubStarCount, setGithubStarCount] = useState(null);
+  const [visibleBreadcrumbs, setVisibleBreadcrumbs] = useState(3);
   const navigate = useNavigate();
+
+  // Determine number of visible breadcrumbs based on viewport width
+  useEffect(() => {
+    const updateVisibleBreadcrumbs = () => {
+      const width = window.innerWidth;
+      if (width >= 1536) {
+        setVisibleBreadcrumbs(5); // 2xl: show 5 breadcrumbs
+      } else if (width >= 1280) {
+        setVisibleBreadcrumbs(4); // xl: show 4 breadcrumbs
+      } else if (width >= 1024) {
+        setVisibleBreadcrumbs(3); // lg: show 3 breadcrumbs
+      } else if (width >= 768) {
+        setVisibleBreadcrumbs(2); // md: show 2 breadcrumbs
+      } else {
+        setVisibleBreadcrumbs(1); // sm: show only current breadcrumb
+      }
+    };
+
+    updateVisibleBreadcrumbs();
+    window.addEventListener("resize", updateVisibleBreadcrumbs);
+    return () => window.removeEventListener("resize", updateVisibleBreadcrumbs);
+  }, []);
 
   useEffect(() => {
     const fetchStars = async () => {
@@ -66,6 +94,34 @@ const DashboardContent = () => {
     };
     fetchStars();
   }, []);
+
+  // Calculate which breadcrumbs to show
+  const getBreadcrumbDisplay = () => {
+    if (routes.length === 0) return { visible: [], hidden: [] };
+
+    const totalRoutes = routes.length;
+
+    // For very small screens (1 breadcrumb), only show current
+    if (visibleBreadcrumbs === 1 && totalRoutes > 1) {
+      return {
+        visible: [routes[routes.length - 1]],
+        hidden: routes.slice(0, -1),
+      };
+    }
+
+    // If total routes fit within visible limit, show all
+    if (totalRoutes <= visibleBreadcrumbs) {
+      return { visible: routes, hidden: [] };
+    }
+
+    // Show first route, ellipsis, and last N-1 routes
+    const visible = [routes[0], ...routes.slice(-(visibleBreadcrumbs - 1))];
+    const hidden = routes.slice(1, -(visibleBreadcrumbs - 1));
+
+    return { visible, hidden };
+  };
+
+  const { visible, hidden } = getBreadcrumbDisplay();
 
   return (
     <>
@@ -86,7 +142,7 @@ const DashboardContent = () => {
 
               <Breadcrumb className="flex-1 min-w-0">
                 <BreadcrumbList className="flex-nowrap">
-                  {routes.length > 1 ? (
+                  {hidden.length > 0 && visibleBreadcrumbs === 1 && (
                     <>
                       <BreadcrumbItem>
                         <DropdownMenu
@@ -101,37 +157,77 @@ const DashboardContent = () => {
                             className="min-w-32 transition-all"
                             align="start"
                           >
-                            {routes
-                              .slice(0, -1)
-                              .reverse()
-                              .map((route, index) => (
-                                <Link
-                                  key={index}
-                                  className="block truncate whitespace-nowrap w-full"
-                                  to={route.path}
-                                >
-                                  <DropdownMenuItem className="px-2 py-1 min-w-0 ">
-                                    {route.name}
-                                  </DropdownMenuItem>
-                                </Link>
-                              ))}
+                            {hidden.map((hiddenRoute, hiddenIndex) => (
+                              <Link
+                                key={hiddenIndex}
+                                className="block truncate whitespace-nowrap w-full"
+                                to={hiddenRoute.path}
+                              >
+                                <DropdownMenuItem className="px-2 py-1 min-w-0">
+                                  {hiddenRoute.name}
+                                </DropdownMenuItem>
+                              </Link>
+                            ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </BreadcrumbItem>
                       <BreadcrumbSeparator />
                     </>
-                  ) : null}
-
-                  {routes.length > 0 && (
-                    <BreadcrumbItem className="min-w-0">
-                      <Link
-                        to={routes[routes.length - 1].path}
-                        className="text-foreground truncate block min-w-0"
-                      >
-                        {routes[routes.length - 1].name}
-                      </Link>
-                    </BreadcrumbItem>
                   )}
+
+                  {visible.map((route, index) => (
+                    <React.Fragment key={route.path}>
+                      {index === 1 &&
+                        hidden.length > 0 &&
+                        visibleBreadcrumbs > 1 && (
+                          <>
+                            <BreadcrumbItem>
+                              <DropdownMenu
+                                modal={true}
+                                className="z-50 transition-all"
+                              >
+                                <DropdownMenuTrigger className="flex items-center gap-1">
+                                  <BreadcrumbEllipsis className="size-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  className="min-w-32 transition-all"
+                                  align="start"
+                                >
+                                  {hidden.map((hiddenRoute, hiddenIndex) => (
+                                    <Link
+                                      key={hiddenIndex}
+                                      className="block truncate whitespace-nowrap w-full"
+                                      to={hiddenRoute.path}
+                                    >
+                                      <DropdownMenuItem className="px-2 py-1 min-w-0">
+                                        {hiddenRoute.name}
+                                      </DropdownMenuItem>
+                                    </Link>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                          </>
+                        )}
+
+                      <BreadcrumbItem className="min-w-0">
+                        <Link
+                          to={route.path}
+                          className={`truncate block min-w-0 ${
+                            index === visible.length - 1
+                              ? "text-foreground"
+                              : ""
+                          }`}
+                        >
+                          {route.name}
+                        </Link>
+                      </BreadcrumbItem>
+
+                      {index < visible.length - 1 && <BreadcrumbSeparator />}
+                    </React.Fragment>
+                  ))}
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
@@ -172,14 +268,29 @@ const DashboardContent = () => {
                   )}
 
                   <Link to={`/user/${authUser?.userName}`}>
-                    <TooltipWrapper message={authUser?.fullName}>
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={authUser?.avatar} />
-                        <AvatarFallback>
-                          {(authUser?.fullName || "U").charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TooltipWrapper>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={authUser?.avatar} />
+                          <AvatarFallback>
+                            {(authUser?.fullName || "U")
+                              .charAt(0)
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-64 text-pretty">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {authUser?.fullName}
+                          </p>
+                          <div className="text-primary-foreground/80 text-xs">
+                            <p>{`@${authUser?.userName}`}</p>
+                            <p>{authUser?.email}</p>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   </Link>
                 </>
               )}
