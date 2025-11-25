@@ -220,10 +220,11 @@ const NotePagePublic = () => {
             <Button
               onClick={() => navigate(`/note/${noteId}/editor`)}
               variant="secondary"
-              className="fixed right-2 bottom-2 shadow-md z-10 font-bold flex items-center justify-center md:space-x-2 size-8 md:w-auto md:h-auto"
+              size="lg"
+              className="fixed right-2 rounded-full bottom-2 z-10 px-6 border bg-muted"
             >
               <Pencil />
-              <span className="hidden md:block">Edit</span>
+              <span>Edit</span>
             </Button>
           </TooltipWrapper>
         )}

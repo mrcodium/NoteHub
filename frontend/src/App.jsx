@@ -99,8 +99,8 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <CollaboratorManagerProvider>
-        <CollaboratorsDialog/>
         <TooltipProvider>
+          <CollaboratorsDialog />
           <div>
             <Routes>
               {/* Public routes */}

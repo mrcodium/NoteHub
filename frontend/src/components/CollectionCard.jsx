@@ -88,12 +88,14 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                     onClick={handleInputClick}
                   />
                 ) : (
-                  <Link
-                    to={`${collection.slug}`}
-                    className="hover:underline font-medium"
-                  >
-                    {collection.name}
-                  </Link>
+                  <TooltipWrapper message={collection.name}>
+                    <Link
+                      to={`${collection.slug}`}
+                      className="hover:underline font-medium text-muted-foreground"
+                    >
+                      {collection.name}
+                    </Link>
+                  </TooltipWrapper>
                 )}
                 {!isCollectionRenaming && (
                   <Badge

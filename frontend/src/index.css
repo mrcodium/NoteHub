@@ -815,12 +815,15 @@
 .katex-display::-webkit-scrollbar{
   width: 3px;
   height: 3px;
+  display: none;
 }
 .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
   max-width: 100%;
-  padding: 0.5rem;
+  padding: 0.2rem;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
 }
 
 div[role="menu"] {
@@ -1004,7 +1007,7 @@ div:has(> .tiptap.ProseMirror) {
   }
 
   p {
-    @apply mb-2 leading-[1.75];
+    @apply mb-2 leading-[1.75] dark:text-muted-foreground;
   }
   p:not(:first-child) {
     @apply mt-2;

@@ -15,7 +15,7 @@ const NotFoundPage = () => {
                 </div>
                 <div className='grid grid-cols-2 w-52 gap-2 '>
                     <Button variant="secondary" onClick={() => navigate('/login')}>Login</Button>
-                    <Button variant="secondary" onClick={() => navigate('/signup')}>Register</Button>
+                    <Button variant="secondary" onClick={() => navigate('/')}>Home</Button>
                 </div>
             </div>
         </div>

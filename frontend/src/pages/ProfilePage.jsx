@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, ImageOff } from "lucide-react";
+import { Loader2, ImageOff, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/stores/useAuthStore";
 import imageCompression from "browser-image-compression";
@@ -23,6 +23,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CollectionCard from "@/components/CollectionCard";
+import TooltipWrapper from "@/components/TooltipWrapper";
 
 const ProfilePage = () => {
   const { username } = useParams();
@@ -321,13 +322,20 @@ const ProfilePage = () => {
                 />
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h2 className="text-base sm:text-xl font-semibold">
-                {user?.fullName}
-              </h2>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                @{user?.userName}
-              </p>
+            <div className="flex justify-between w-full items-start">
+              <div>
+                <h2 className="text-base sm:text-xl font-semibold">
+                  {user?.fullName}
+                </h2>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  @{user?.userName}
+                </p>
+              </div>
+              <TooltipWrapper message="Edit Profile">
+                <Button variant="ghost" size="icon">
+                  <Pencil />
+                </Button>
+              </TooltipWrapper>
             </div>
           </div>
         </CardContent>

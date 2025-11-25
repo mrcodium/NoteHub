@@ -134,7 +134,7 @@ const DashboardContent = () => {
               {!isSidebarOpen && authUser && (
                 <>
                   <TooltipWrapper message={"Open Sidebar Ctrl M"}>
-                    <SidebarOpenTrigger className="-ml-1" />
+                    <SidebarOpenTrigger className="-ml-1 bg-muted/50 size-11 rounded-full border sm:border-none sm:size-8 sm:bg-transparent sm:rounded-md" />
                   </TooltipWrapper>
                   <Separator orientation="vertical" className="mr-2 h-4" />
                 </>

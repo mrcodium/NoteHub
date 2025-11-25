@@ -348,6 +348,11 @@ const AddNoteDrawer = ({ trigger }) => {
                     value={collectionName}
                     onChange={(e) => setCollectionName(e.target.value)}
                   />
+                  {!collectionName.trim() && (
+                    <p className="text-xs mt-1 text-red-500">
+                      Collection name is required
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

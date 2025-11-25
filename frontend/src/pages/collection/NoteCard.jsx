@@ -69,12 +69,14 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
               />
             ) : (
               <>
-                <Link
-                  to={`/user/${username}/${collectionSlug}/${note.slug}`}
-                  className="font-medium text-sm line-clamp-1 hover:underline flex-1"
-                >
-                  {note.name}
-                </Link>
+                <TooltipWrapper message={note.name}>
+                  <Link
+                    to={`/user/${username}/${collectionSlug}/${note.slug}`}
+                    className="font-medium text-sm line-clamp-1 hover:underline flex-1"
+                  >
+                    {note.name}
+                  </Link>
+                </TooltipWrapper>
                 <Badge
                   variant={
                     note.visibility === "public" ? "secondary" : "destructive"
