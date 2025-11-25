@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/stores/useAuthStore";
 import imageCompression from "browser-image-compression";
 import { useNoteStore } from "@/stores/useNoteStore";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { axiosInstance } from "@/lib/axios";
 import {
   CollectionSkeleton,
@@ -301,7 +301,7 @@ const ProfilePage = () => {
           </AvatarFallback>
         </Avatar>
         <CardContent>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-start sm:gap-8 gap-2 sm:items-center">
             <Avatar
               className="relative shadow-md size-28 sm:size-48 shrink-0 border-4 sm:border-8 border-background -mt-14 rounded-full cursor-pointer"
               onClick={() => {
@@ -322,7 +322,7 @@ const ProfilePage = () => {
                 />
               </AvatarFallback>
             </Avatar>
-            <div className="flex justify-between w-full items-start">
+            <div className="flex m-0 justify-between w-full items-start">
               <div>
                 <h2 className="text-base sm:text-xl font-semibold">
                   {user?.fullName}
@@ -332,9 +332,12 @@ const ProfilePage = () => {
                 </p>
               </div>
               <TooltipWrapper message="Edit Profile">
-                <Button variant="ghost" size="icon">
-                  <Pencil />
-                </Button>
+                <Link
+                  to="/settings/personal-details"
+                  className="hover:bg-muted rounded-md size-10 flex justify-center items-center"
+                >
+                  <Pencil size={18}/>
+                </Link>
               </TooltipWrapper>
             </div>
           </div>
