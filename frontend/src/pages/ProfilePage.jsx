@@ -162,7 +162,7 @@ const ProfilePage = () => {
       : !Boolean(user?.cover) && !previewavatar;
 
   return (
-    <div className="p-4 overflow-auto">
+    <div className="p-4 overflow-auto bg-[#f5f5f5] dark:bg-background">
       {/* Image Dialog */}
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
         <DialogContent className="p-0 overflow-hidden max-w-[100vw] sm:max-w-none w-auto">

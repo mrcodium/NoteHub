@@ -24,11 +24,6 @@ export const ProfileSkeleton = () => {
 export const CollectionSkeleton = () => {
   return (
     <div>
-      <div className="flex justify-between items-center gap-2 mb-8">
-        <div className="h-8 w-48 bg-input/30 rounded" />
-        <div className="h-5 w-16 bg-input/30 rounded" />
-      </div>
-
       <div className="space-y-2">
         {Array(5)
           .fill(null)

@@ -112,7 +112,7 @@ const CollectionPage = () => {
   if (isCollectionsLoading || isLoading) return <CollectionPageSkeleton />;
 
   return (
-    <div className="p-2 sm:p-4 h-full overflow-y-auto">
+    <div className="p-2 sm:p-4 h-full overflow-y-auto bg-[#f5f5f5] dark:bg-background">
       <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
         <CollectionHeader
           user={user}

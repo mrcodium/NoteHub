@@ -222,7 +222,7 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="flex pt-8 items-center justify-center h-svh bg-background">
+    <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
       <BaseHeader />
       <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
         <Card>

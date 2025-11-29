@@ -157,13 +157,13 @@ export function ArticleCard({
                   {images.map((img, index) => (
                     <CarouselItem key={index}>
                       <div
-                        className="aspect-video rounded-lg bg-muted overflow-hidden cursor-pointer"
+                        className="aspect-video bg-white rounded-lg bg-muted overflow-hidden cursor-pointer"
                         onClick={() => setOpenImageIndex(index)}
                       >
                         <img
                           src={img.src}
                           alt={img.alt}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                         />
                       </div>
                     </CarouselItem>

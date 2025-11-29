@@ -10,7 +10,7 @@ export const sendEmail = async (email, subject, text, html) => {
     });
 
     const mailOptions = {
-        from: process.env.MAIL_USER,
+        from: process.env.EMAIL_USER,
         to: email,
         subject,
         text, // plain text fallback

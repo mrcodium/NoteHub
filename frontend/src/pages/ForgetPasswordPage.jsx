@@ -144,7 +144,7 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="flex pt-8 items-center justify-center h-svh bg-background">
+    <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
       <BaseHeader/>
       <Card className="w-full max-w-md">
         <CardHeader>

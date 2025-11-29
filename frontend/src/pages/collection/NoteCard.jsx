@@ -77,19 +77,6 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
                     {note.name}
                   </Link>
                 </TooltipWrapper>
-                <Badge
-                  variant={
-                    note.visibility === "public" ? "secondary" : "destructive"
-                  }
-                  className="flex items-center gap-1 h-auto"
-                >
-                  {note.visibility === "public" ? (
-                    <Eye className="size-3.5" />
-                  ) : (
-                    <Lock className="size-3.5" />
-                  )}
-                  {note.visibility}
-                </Badge>
               </>
             )}
           </div>
@@ -116,13 +103,28 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
               <span>{format(new Date(note.createdAt), "MMM d, yyyy")}</span>
             </div>
           </TooltipWrapper>
-          {Array.isArray(note.collaborators) && (
-            <AvatarStack
-              collaborators={note.collaborators}
-              maxVisible={2}
-              size="sm"
-            />
-          )}
+          <div className="flex justify-between items-center gap-4">
+            {Array.isArray(note.collaborators) && (
+              <AvatarStack
+                collaborators={note.collaborators}
+                maxVisible={2}
+                size="sm"
+              />
+            )}
+            <Badge
+              variant={
+                note.visibility === "public" ? "secondary" : "destructive"
+              }
+              className="flex items-center gap-1 h-auto"
+            >
+              {note.visibility === "public" ? (
+                <Eye className="size-3.5" />
+              ) : (
+                <Lock className="size-3.5" />
+              )}
+              {note.visibility}
+            </Badge>
+          </div>
         </div>
       </CardFooter>
     </Card>

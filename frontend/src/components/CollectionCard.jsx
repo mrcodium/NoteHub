@@ -91,23 +91,11 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                   <TooltipWrapper message={collection.name}>
                     <Link
                       to={`${collection.slug}`}
-                      className="hover:underline font-medium text-muted-foreground"
+                      className="hover:underline font-medium"
                     >
                       {collection.name}
                     </Link>
                   </TooltipWrapper>
-                )}
-                {!isCollectionRenaming && (
-                  <Badge
-                    variant={
-                      collection.visibility === "public"
-                        ? "secondary"
-                        : "destructive"
-                    }
-                    className="text-xs flex-shrink-0"
-                  >
-                    {collection.visibility}
-                  </Badge>
                 )}
               </div>
 
@@ -139,13 +127,25 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                 </p>
               </div>
 
-              {Array.isArray(collection.collaborators) && (
-                <AvatarStack
-                  collaborators={collection.collaborators}
-                  maxVisible={3}
-                  size="sm"
-                />
-              )}
+              <div className="flex justify-between items-center gap-4">
+                {Array.isArray(collection.collaborators) && (
+                  <AvatarStack
+                    collaborators={collection.collaborators}
+                    maxVisible={3}
+                    size="sm"
+                  />
+                )}
+                <Badge
+                  variant={
+                    collection.visibility === "public"
+                      ? "secondary"
+                      : "destructive"
+                  }
+                  className="text-xs flex-shrink-0"
+                >
+                  {collection.visibility}
+                </Badge>
+              </div>
             </div>
           </div>
         </div>
