@@ -73,7 +73,6 @@ const ForgotPasswordPage = () => {
         setIsCheckingIdentifier(true);
         try {
           const userData = await getUser(identifier);
-          console.log(userData);
           setUser(userData);
           setIdentifierError("");
           setIsValidIdentifier(true);
