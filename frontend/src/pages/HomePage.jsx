@@ -1,43 +1,16 @@
 import React, { useEffect, useCallback, useRef } from "react";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { ArticleCard } from "@/components/ArticleCard";
-import { noteTransformer } from "@/lib/utils";
+import { noteToArticle} from "@/lib/utils";
 import HomePageNotesSkeleton from "@/components/sekeletons/HomePageNotesSkeleton";
-import { Loader2 } from "lucide-react";
 import { ArticleCardSkeleton } from "@/components/ArticleCardSkeleton";
 
 const HomePage = () => {
-  const { notes, isNotesLoading, pagination, getPublicNotes } = useNoteStore();
   const loaderRef = useRef(null);
+  const { notes, isNotesLoading, pagination, getPublicNotes } = useNoteStore();
 
   // Transform notes with proper fallbacks
-  const transformedNotes = notes.map((note) => {
-    // Ensure content exists before transforming
-    const content = note.content || "";
-    const transformed = noteTransformer(content, {
-      headings: true,
-      images: true,
-      description: true, // Changed from longDescription to match the transformer
-    });
-
-    // Get the best available description
-    let description = "";
-    if (transformed.description) {
-      description = transformed.description;
-    } else if (note.name) {
-      description = note.name; // Fallback to note name
-    }
-
-    return {
-      ...note,
-      article: {
-        ...transformed,
-        description,
-        // Ensure images array exists even if empty
-        images: transformed.images || [],
-      },
-    };
-  });
+  const articles = notes.map(noteToArticle);
 
   // Infinite scroll handler
   const handleObserver = useCallback(
@@ -74,12 +47,13 @@ const HomePage = () => {
       getPublicNotes({ page: 1, limit: 10 });
     }
   }, []);
+  console.log(articles[0]);
 
   return (
     <div className="p-2 sm:p-4 h-full overflow-y-auto bg-[#f5f5f5] dark:bg-background">
       <div className="space-y-8 max-w-screen-lg mx-auto">
         {/* Render transformed notes */}
-        {transformedNotes.map((note) => (
+        {articles.map((note) => (
           <ArticleCard
             key={note._id}
             title={note.name}

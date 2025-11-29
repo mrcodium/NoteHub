@@ -1,46 +1,25 @@
-import nodemailer from "nodemailer";
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmail = async (email, subject, text, html) => {
-    console.log("testing start...");
-    await testSMTPConnection();
-    console.log("testing end...");
-
-    const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
-
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject,
-        text, // plain text fallback
-        html, // HTML content
-    };
-
-    await transporter.sendMail(mailOptions);
-};
-
-export const testSMTPConnection = async () => {
-    const transporter = nodemailer.createTransport({
-        port: 465,
-        host: "smtp.gmail.com",
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-        secure: true,
-    });
-
     try {
-        await transporter.verify();
-        console.log("✅ SMTP connection successful!");
-        return true;
+        const { data, error } = await resend.emails.send({
+            from: 'NoteHub <onboarding@resend.dev>',
+            to: email,
+            subject: subject,
+            html: html,
+            text: text, // plain text fallback
+        });
+
+        if (error) {
+            console.error('❌ Resend error:', error);
+            throw error;
+        }
+
+        return data;
     } catch (error) {
-        console.error("❌ SMTP connection failed:", error.message);
-        return false;
+        console.error('❌ Email sending failed:', error);
+        throw error;
     }
 };

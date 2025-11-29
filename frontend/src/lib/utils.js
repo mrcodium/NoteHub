@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -10,29 +10,29 @@ export const formatTime = (isoString) => {
 
   // Get time components
   let hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  
+  const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+
   // Convert hours to 12-hour format
   hours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
-  const formattedHours = hours.toString().padStart(2, '0');
+  const formattedHours = hours.toString().padStart(2, "0");
   const formattedTime = `${formattedHours}:${minutes} ${ampm}`;
   return formattedTime;
-}
+};
 
 export const formatDate = (isoString) => {
   const date = new Date(isoString);
 
   // Get date components
-  const day = date.getUTCDate().toString().padStart(2, '0');
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = date.getUTCDate().toString().padStart(2, "0");
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
   const year = date.getUTCFullYear();
-  
+
   // Construct date and time strings
   const formattedDate = `${day}-${month}-${year}`;
 
   return formattedDate;
-}
+};
 
 export const formatDeviceInfo = (device) => {
   if (!device) return "Unknown device";
@@ -40,7 +40,6 @@ export const formatDeviceInfo = (device) => {
     device.os?.name || "Unknown OS"
   }`;
 };
-
 
 export const formatLocation = (location) => {
   if (!location) return "Unknown location";
@@ -59,56 +58,62 @@ export const formatCompactNumber = (num) => {
   } else {
     return num.toString();
   }
-}
+};
 
 export const noteTransformer = (htmlContent, options = {}) => {
-  if (!htmlContent || typeof htmlContent !== 'string') {
+  if (!htmlContent || typeof htmlContent !== "string") {
     return {
       headings: [],
       images: [],
-      description: ''
+      description: "",
     };
   }
 
   try {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const doc = parser.parseFromString(htmlContent, "text/html");
     const result = {
       headings: [],
       images: [],
-      description: ''
+      description: "",
     };
 
     // Extract headings
     if (options.headings) {
-      const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
-      result.headings = Array.from(headingElements).map(heading => ({
-        text: heading.textContent.trim(),
-        level: parseInt(heading.tagName.substring(1)),
-        id: heading.id || null
-      })).filter(h => h.text.length > 0);
+      const headingElements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6");
+      result.headings = Array.from(headingElements)
+        .map((heading) => ({
+          text: heading.textContent.trim(),
+          level: parseInt(heading.tagName.substring(1)),
+          id: heading.id || null,
+        }))
+        .filter((h) => h.text.length > 0);
     }
 
     // Extract images
     if (options.images) {
-      const imgElements = doc.querySelectorAll('img[src]');
-      result.images = Array.from(imgElements).map(img => ({
-        src: img.src,
-        alt: img.alt?.trim() || '',
-        width: img.naturalWidth || null,
-        height: img.naturalHeight || null
-      })).filter(img => img.src);
+      const imgElements = doc.querySelectorAll("img[src]");
+      result.images = Array.from(imgElements)
+        .map((img) => ({
+          src: img.src,
+          alt: img.alt?.trim() || "",
+          width: img.naturalWidth || null,
+          height: img.naturalHeight || null,
+        }))
+        .filter((img) => img.src);
     }
 
     // Enhanced paragraph extraction
     if (options.description) {
       // Get all text-containing elements
-      const textElements = Array.from(doc.querySelectorAll('p, div, section, article'))
-        .map(el => el.textContent.trim())
-        .filter(text => text.length > 0);
+      const textElements = Array.from(
+        doc.querySelectorAll("p, div, section, article")
+      )
+        .map((el) => el.textContent.trim())
+        .filter((text) => text.length > 0);
 
       // Find the best candidate text
-      let bestText = '';
+      let bestText = "";
       let maxWordCount = 0;
 
       for (const text of textElements) {
@@ -117,7 +122,7 @@ export const noteTransformer = (htmlContent, options = {}) => {
 
         // If we find text with ≥20 words, use it immediately
         if (wordCount >= 20) {
-          bestText = words.slice(0, 20).join(' '); // Take first 20 words
+          bestText = words.slice(0, 20).join(" "); // Take first 20 words
           break;
         }
 
@@ -137,13 +142,40 @@ export const noteTransformer = (htmlContent, options = {}) => {
     }
 
     return result;
-
   } catch (error) {
-    console.error('Error transforming note content:', error);
+    console.error("Error transforming note content:", error);
     return {
       headings: [],
       images: [],
-      description: ''
+      description: "",
     };
   }
+};
+
+export const noteToArticle = (note) => {
+  // Ensure content exists before transforming
+  const content = note.content || "";
+  const transformed = noteTransformer(content, {
+    headings: true,
+    images: true,
+    description: true, // Changed from longDescription to match the transformer
+  });
+
+  // Get the best available description
+  let description = "";
+  if (transformed.description) {
+    description = transformed.description;
+  } else if (note.name) {
+    description = note.name; // Fallback to note name
+  }
+
+  return {
+    ...note,
+    article: {
+      ...transformed,
+      description,
+      // Ensure images array exists even if empty
+      images: transformed.images || [],
+    },
+  };
 };

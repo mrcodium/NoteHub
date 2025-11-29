@@ -111,19 +111,21 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
                 size="sm"
               />
             )}
-            <Badge
-              variant={
-                note.visibility === "public" ? "secondary" : "destructive"
-              }
-              className="flex items-center gap-1 h-auto"
-            >
-              {note.visibility === "public" ? (
-                <Eye className="size-3.5" />
-              ) : (
-                <Lock className="size-3.5" />
-              )}
-              {note.visibility}
-            </Badge>
+            {isOwner && (
+              <Badge
+                variant={
+                  note.visibility === "public" ? "secondary" : "destructive"
+                }
+                className="flex items-center gap-1 h-auto"
+              >
+                {note.visibility === "public" ? (
+                  <Eye className="size-3.5" />
+                ) : (
+                  <Lock className="size-3.5" />
+                )}
+                {note.visibility}
+              </Badge>
+            )}
           </div>
         </div>
       </CardFooter>

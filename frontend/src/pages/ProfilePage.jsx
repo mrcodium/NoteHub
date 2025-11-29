@@ -331,14 +331,16 @@ const ProfilePage = () => {
                   @{user?.userName}
                 </p>
               </div>
-              <TooltipWrapper message="Edit Profile">
-                <Link
-                  to="/settings/personal-details"
-                  className="hover:bg-muted rounded-md size-10 flex justify-center items-center"
-                >
-                  <Pencil size={18}/>
-                </Link>
-              </TooltipWrapper>
+              {isOwner && (
+                <TooltipWrapper message="Edit Profile">
+                  <Link
+                    to="/settings/personal-details"
+                    className="hover:bg-muted rounded-md size-10 flex justify-center items-center"
+                  >
+                    <Pencil size={18} />
+                  </Link>
+                </TooltipWrapper>
+              )}
             </div>
           </div>
         </CardContent>

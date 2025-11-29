@@ -4,35 +4,52 @@ import TooltipWrapper from "@/components/TooltipWrapper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useCollaboratorManager } from "@/contex/CollaboratorManagerContext";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const CollectionHeader = ({ user, collection, isOwner }) => {
   const { openDialog } = useCollaboratorManager();
-  
+
   const hasCollaborators = collection?.collaborators?.length > 0;
   const showCollaboratorSection = isOwner || hasCollaborators;
-  
+
   return (
     <div className="flex flex-col gap-6">
       {/* User Profile Section */}
       <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16 border-2 border-primary/20">
-          <AvatarImage src={user?.avatar} />
-          <AvatarFallback className="bg-primary/10 text-primary font-medium">
-            {user?.fullName?.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
-            {user?.fullName}
-          </h1>
-          <Link
-            to={`/user/${user?.userName}`}
-            className="hover:underline text-sm sm:text-base text-muted-foreground transition-colors"
+        <Dialog>
+          <DialogTrigger>
+            <Avatar className="h-16 w-16 border-2 border-primary/20">
+              <AvatarImage src={user?.avatar} alt={user?.fullName} />
+              <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                {user?.fullName?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </DialogTrigger>
+          <DialogContent
+            className="rounded-full max-w-96 max-h-96 p-0 overflow-hidden"
+            style={{ borderRadius: "50%" }}
           >
-            @{user?.userName}
+            <img
+              className="w-full h-full"
+              src={user?.avatar}
+              alt={user?.fullName}
+            />
+          </DialogContent>
+        </Dialog>
+        <div>
+          <Link to={`/user/${user?.userName}`}>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
+              {user?.fullName}
+            </h1>
+            <div
+              to={`/user/${user?.userName}`}
+              className="text-sm sm:text-base text-muted-foreground transition-colors"
+            >
+              @{user?.userName}
+            </div>
           </Link>
         </div>
       </div>
@@ -64,7 +81,7 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
                   </TooltipWrapper>
                 )}
               </div>
-              
+
               {hasCollaborators ? (
                 <div className="flex items-center gap-3">
                   <AvatarStack

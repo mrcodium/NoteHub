@@ -6,7 +6,6 @@ import { Badge } from "./ui/badge";
 import CollectionsOption from "./CollectionsOption";
 import { Button } from "./ui/button";
 import TooltipWrapper from "./TooltipWrapper";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { Card } from "./ui/card";
 import { cn } from "@/lib/utils";
@@ -135,16 +134,18 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                     size="sm"
                   />
                 )}
-                <Badge
-                  variant={
-                    collection.visibility === "public"
-                      ? "secondary"
-                      : "destructive"
-                  }
-                  className="text-xs flex-shrink-0"
-                >
-                  {collection.visibility}
-                </Badge>
+                {isOwner && (
+                  <Badge
+                    variant={
+                      collection.visibility === "public"
+                        ? "secondary"
+                        : "destructive"
+                    }
+                    className="text-xs flex-shrink-0"
+                  >
+                    {collection.visibility}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
