@@ -13,7 +13,6 @@ import SignUpPage from "./pages/SignUpPage";
 import ProfilePage from "./pages/ProfilePage";
 import LogInPage from "./pages/LogInPage";
 import SettingsPage from "./pages/SettingsPage";
-import EmailVerificationPage from "./pages/EmailVerificationPage";
 
 import { Loader } from "lucide-react";
 import Dashboard from "./pages/Dashboard";

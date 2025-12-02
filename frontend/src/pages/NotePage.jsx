@@ -184,7 +184,7 @@ const NotePage = () => {
 
         <TooltipWrapper message="Edit Content">
           <Button
-            onClick={() => navigate(`/note/${noteId}/editor`)}
+            onClick={() => navigate(`/note/${id}/editor`)}
             variant="secondary"
             size="lg"
             className="fixed right-2 rounded-full bottom-2 z-10 px-6 border bg-muted"

@@ -884,9 +884,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   tab-size: 4;
   -moz-tab-size: 4;
 }
-.tiptap {
-  tab-size: 4;
-}
+
 .tiptap .pre-wrapper {
   @apply rounded-2xl overflow-hidden my-4;
 }
@@ -899,10 +897,6 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   @apply my-4;
 }
 
-.tiptap {
-  white-space: pre-wrap;
-}
-
 div:has(> .tiptap.ProseMirror) {
   flex: 1;
   overflow-y: auto;
@@ -911,8 +905,10 @@ div:has(> .tiptap.ProseMirror) {
 .tiptap.ProseMirror {
   @apply max-w-screen-md;
 }
+
 .tiptap {
-  @apply relative w-full border-none outline-none mx-auto bg-background text-foreground font-sans leading-relaxed overflow-x-hidden p-4;
+  tab-size: 4;
+  @apply relative whitespace-pre-wrap w-full border-none outline-none mx-auto bg-background text-foreground font-sans leading-relaxed overflow-x-hidden p-4 pb-[25vh];
 
   img {
     @apply max-h-[50vh] my-4 rounded-xl;
@@ -1036,12 +1032,9 @@ div:has(> .tiptap.ProseMirror) {
     @apply mt-0;
   }
 
+  h1 code, h2 code, h3 code, h4 code, h5 code, h6 code,
   p code {
-    @apply bg-accent;
-  }
-
-  code {
-    @apply text-sm py-[2.4px] px-[4.8px] rounded whitespace-pre-wrap;
+    @apply font-mono bg-black/10 dark:bg-accent/50 py-[2.4px] px-[4.8px] rounded whitespace-pre-wrap;
   }
   pre {
     @apply bg-input/30 text-primary dark:text-primary p-4 overflow-x-auto;
