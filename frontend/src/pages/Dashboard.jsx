@@ -236,7 +236,7 @@ const DashboardContent = () => {
               <SearchButton />
               {!authUser ? (
                 <div className="flex gap-2">
-                  <ModeToggleMini />
+                  <ModeToggleMini className={"size-9"}/>
                   <Button onClick={() => navigate("/login")}>Login</Button>
                 </div>
               ) : (
