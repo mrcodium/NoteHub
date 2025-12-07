@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export function ArticleCardSkeleton() {
   return (
-    <Card className="w-full rounded-none sm:rounded-2xl border-t border-border lg:border p-4 lg:p-6">
+    <Card className="w-full rounded-xl sm:rounded-2xl border-t border-border lg:border p-4 lg:p-6">
       <CardHeader className="p-0 pb-3">
         <div className="flex flex-row items-center w-max gap-3">
           {/* User avatar skeleton */}

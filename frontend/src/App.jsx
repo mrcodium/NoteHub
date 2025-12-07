@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import "./stores/useNetworkStore";
-import { ThemeProvider } from "./components/theme-provider";
+import { ThemeProvider, useTheme } from "./components/theme-provider";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "./stores/useAuthStore";
 import { Toaster } from "sonner";
@@ -22,7 +22,6 @@ import NotePage from "./pages/NotePage";
 import { useRouteStore } from "./stores/useRouteStore";
 import { useNoteStore } from "./stores/useNoteStore";
 import NotFoundPage from "./pages/NotFoundPage";
-import { useLocalStorage } from "./stores/useLocalStorage";
 import PersonalDetails from "./pages/Settings/PersonalDetails";
 import Personalization from "./pages/Settings/Personalization";
 import Security from "./pages/Settings/Security";
@@ -42,7 +41,7 @@ import { CollaboratorsDialog } from "./pages/collection/CollaboratorsDialog";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
-  const { theme } = useLocalStorage();
+  const { theme } = useTheme();
 
   useEffect(() => {
     checkAuth();

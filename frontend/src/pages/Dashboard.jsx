@@ -40,6 +40,19 @@ import {
 } from "@/components/ui/tooltip";
 
 const Dashboard = () => {
+  const { theme, toggleTheme } = useTheme();
+
+  React.useEffect(() => {
+    const down = (e) => {
+      if (e.key === "d" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        toggleTheme();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [theme]);
+  
   return (
     <SidebarProvider>
       <DashboardContent />
@@ -236,7 +249,7 @@ const DashboardContent = () => {
               <SearchButton />
               {!authUser ? (
                 <div className="flex gap-2">
-                  <ModeToggleMini className={"size-9"}/>
+                  <ModeToggleMini className={"size-9"} />
                   <Button onClick={() => navigate("/login")}>Login</Button>
                 </div>
               ) : (

@@ -33,6 +33,9 @@ import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
 import TooltipWrapper from "./TooltipWrapper";
+import { LabledInput } from "./ui/labeled-input";
+import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
 
 const AddNoteDrawer = ({ trigger }) => {
   const [noteName, setNoteName] = useState("");
@@ -42,8 +45,6 @@ const AddNoteDrawer = ({ trigger }) => {
   const [visibility, setVisibility] = useState("public");
   const [collaborators, setCollaborators] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
   const { getAllUsers, authUser } = useAuthStore();
   const navigate = useNavigate();
 
@@ -150,26 +151,19 @@ const AddNoteDrawer = ({ trigger }) => {
 
             <TabsContent value="note" className="space-y-4 pt-4">
               <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium mb-1 block">
-                    Note Name
-                  </label>
-                  <Input
-                    placeholder="Enter note title"
-                    value={noteName}
-                    onChange={(e) => setNoteName(e.target.value)}
-                  />
-                  {!noteName.trim() && (
-                    <p className="text-xs mt-1 text-red-500">
-                      Note name is required
-                    </p>
-                  )}
-                </div>
+                <LabledInput
+                  inputClassName="bg-muted/30"
+                  label="Note Name"
+                  placeholder="Enter note title"
+                  value={noteName}
+                  onChange={(e) => setNoteName(e.target.value)}
+                  error={!noteName.trim() && "Note name is required"}
+                />
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium mb-1 block">
+                <div className="space-y-2 relative">
+                  <Label className="absolute left-3 top-2 text-muted-foreground">
                     Collection
-                  </label>
+                  </Label>
                   <Select
                     value={selectedCollection?._id}
                     onValueChange={(value) => {
@@ -179,7 +173,7 @@ const AddNoteDrawer = ({ trigger }) => {
                       setSelectedCollection(collection);
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="pt-7 bg-muted/30 h-auto rounded-lg transition-all">
                       <SelectValue placeholder="Select a collection">
                         {selectedCollection ? (
                           <div className="flex items-center gap-2">
@@ -207,110 +201,44 @@ const AddNoteDrawer = ({ trigger }) => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="bg-muted/30 relative flex w-full items-start gap-2 rounded-md border p-4 shadow-xs outline-none">
+                  <Switch
+                    checked={visibility === "public"}
+                    onCheckedChange={(value) =>
+                      setVisibility(value ? "public" : "private")
+                    }
+                    id="note-visibility"
+                    className="order-1 after:absolute after:inset-0"
+                    aria-describedby="note-visibility-description"
+                  />
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium mb-1 block">
-                    Visibility
-                  </label>
-                  <Select value={visibility} onValueChange={setVisibility}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select visibility" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-muted">
-                      <SelectItem
-                        className="hover:bg-accent cursor-pointer"
-                        value="public"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4" />
-                          Public
-                        </div>
-                      </SelectItem>
-                      <SelectItem
-                        className="hover:bg-accent cursor-pointer"
-                        value="private"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Lock className="h-4 w-4" />
-                          Private
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium mb-1 block">
-                    Collaborators
-                  </label>
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Search users..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    {isSearching && (
-                      <div className="flex justify-center py-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
-                    )}
-                    {searchResults.length > 0 && (
-                      <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto">
-                        {searchResults.map((user) => (
-                          <div
-                            key={user._id}
-                            onClick={() => addCollaborator(user)}
-                            className="flex items-center gap-2 p-2 rounded hover:bg-accent cursor-pointer"
-                          >
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={user?.avatar} />
-                              <AvatarFallback>
-                                <img src="/avatar.svg" alt={user?.fullName} />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="text-sm">
-                              <p>{user?.fullName}</p>
-                              <p className="text-xs text-muted-foreground">
-                                @{user?.userName}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {!isSearching &&
-                      searchQuery &&
-                      searchResults.length === 0 && (
-                        <div className="text-center py-2 text-sm text-muted-foreground">
-                          No users found
-                        </div>
+                  <div className="w-full">
+                    <div className="text-sm font-medium leading-none text-muted-foreground mb-4">
+                      Visibility
+                    </div>
+                    <div className="w-full flex grow items-start gap-3">
+                      {visibility === "private" ? (
+                        <Lock size="20" />
+                      ) : (
+                        <Globe size="20" />
                       )}
-
-                    {collaborators.length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-2 border rounded-lg">
-                        {collaborators.map((user) => (
-                          <div
-                            key={user._id}
-                            className="flex items-center gap-1 p-1 pr-2 bg-secondary rounded-full text-sm"
-                          >
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.avatar} />
-                              <AvatarFallback>
-                                <img src="/avatar.svg" alt={user?.fullName} />
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>{user.username}</span>
-                            <Button
-                              variant="ghost"
-                              onClick={() => removeCollaborator(user._id)}
-                              className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
-                            >
-                              <X />
-                            </Button>
-                          </div>
-                        ))}
+                      <div className="grid grow gap-2">
+                        <Label
+                          htmlFor={"note-visibility"}
+                          className="capitalize"
+                        >
+                          {visibility}
+                        </Label>
+                        <p
+                          id={`note-visibility-description`}
+                          className="text-muted-foreground text-xs"
+                        >
+                          {visibility === "public"
+                            ? "This note will be visible to everyone."
+                            : "This note will be private and only visible to your collaborators."}
+                        </p>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -339,126 +267,55 @@ const AddNoteDrawer = ({ trigger }) => {
 
             <TabsContent value="collection" className="space-y-4 pt-4">
               <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium mb-1 block">
-                    Collection Name
-                  </label>
-                  <Input
-                    placeholder="Enter collection name"
-                    value={collectionName}
-                    onChange={(e) => setCollectionName(e.target.value)}
+                <LabledInput
+                  label="Collection Name"
+                  placeholder="Enter collection name"
+                  inputClassName="bg-muted/30"
+                  value={collectionName}
+                  onChange={(e) => setCollectionName(e.target.value)}
+                  error={
+                    !collectionName.trim() && "Collection name is required"
+                  }
+                />
+
+                <div className="bg-muted/30 relative flex w-full items-start gap-2 rounded-md border p-4 shadow-xs outline-none">
+                  <Switch
+                    checked={visibility === "public"}
+                    onCheckedChange={(value) =>
+                      setVisibility(value ? "public" : "private")
+                    }
+                    id="note-visibility"
+                    className="order-1 after:absolute after:inset-0"
+                    aria-describedby="note-visibility-description"
                   />
-                  {!collectionName.trim() && (
-                    <p className="text-xs mt-1 text-red-500">
-                      Collection name is required
-                    </p>
-                  )}
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium mb-1 block">
-                    Visibility
-                  </label>
-
-                  <Select value={visibility} onValueChange={setVisibility}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select visibility" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-muted">
-                      <SelectItem
-                        className="hover:bg-accent cursor-pointer"
-                        value="public"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4" />
-                          Public
-                        </div>
-                      </SelectItem>
-                      <SelectItem
-                        className="hover:bg-accent cursor-pointer"
-                        value="private"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Lock className="h-4 w-4" />
-                          Private
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium mb-1 block">
-                    Collaborators
-                  </label>
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Search users..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    {isSearching && (
-                      <div className="flex justify-center py-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
-                    )}
-                    {searchResults.length > 0 && (
-                      <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto">
-                        {searchResults.map((user) => (
-                          <div
-                            key={user._id}
-                            onClick={() => addCollaborator(user)}
-                            className="flex items-center gap-2 p-2 rounded hover:bg-accent cursor-pointer"
-                          >
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={user?.avatar} />
-                              <AvatarFallback>
-                                <img src="/avatar.svg" alt={user?.fullName} />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="text-sm">
-                              <p>{user?.fullName}</p>
-                              <p className="text-xs text-muted-foreground">
-                                @{user?.userName}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {!isSearching &&
-                      searchQuery &&
-                      searchResults.length === 0 && (
-                        <div className="text-center py-2 text-sm text-muted-foreground">
-                          No users found
-                        </div>
+                  <div className="w-full">
+                    <div className="text-sm font-medium leading-none text-muted-foreground mb-4">
+                      Visibility
+                    </div>
+                    <div className="w-full flex grow items-start gap-3">
+                      {visibility === "private" ? (
+                        <Lock size="20" />
+                      ) : (
+                        <Globe size="20" />
                       )}
-
-                    {collaborators.length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-2 border rounded-lg">
-                        {collaborators.map((user) => (
-                          <div
-                            key={user._id}
-                            className="flex items-center gap-1 p-1 pr-2 bg-secondary rounded-full text-sm"
-                          >
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.avatar} />
-                              <AvatarFallback>
-                                <img src="/avatar.svg" alt={user?.fullName} />
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>{user.username}</span>
-                            <Button
-                              variant="ghost"
-                              onClick={() => removeCollaborator(user._id)}
-                              className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
-                            >
-                              <X />
-                            </Button>
-                          </div>
-                        ))}
+                      <div className="grid grow gap-2">
+                        <Label
+                          htmlFor={"note-visibility"}
+                          className="capitalize"
+                        >
+                          {visibility}
+                        </Label>
+                        <p
+                          id={`note-visibility-description`}
+                          className="text-muted-foreground text-xs"
+                        >
+                          {visibility === "public"
+                            ? "This note will be visible to everyone."
+                            : "This note will be private and only visible to your collaborators."}
+                        </p>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>

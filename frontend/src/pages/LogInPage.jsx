@@ -15,6 +15,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import { z } from "zod";
 import BaseHeader from "@/components/BaseHeader";
+import { LabledInput } from "@/components/ui/labeled-input";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Username or Email is required"),
@@ -41,8 +42,8 @@ const LogInPage = () => {
     e.preventDefault();
     try {
       loginSchema.parse(formData);
-      const success =  await login(formData);
-      if(success) navigate("/");
+      const success = await login(formData);
+      if (success) navigate("/");
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors = error.errors.reduce((acc, curr) => {
@@ -69,64 +70,32 @@ const LogInPage = () => {
             <form onSubmit={handleFormSubmit}>
               <div className="flex flex-col gap-5">
                 {/* Username/Email Field */}
-                <div className="flex flex-col gap-1 relative">
-                  <div className="flex gap-2 relative">
-                    <User2 className="absolute top-[50%] translate-y-[-50%] left-2 text-muted-foreground size-4" />
-                    <Input
-                      className={cn(
-                        "pl-8",
-                        errors.identifier && "ring-2 ring-red-500"
-                      )}
-                      id="identifier"
-                      type="text"
-                      placeholder="Username or Email"
-                      value={formData.identifier}
-                      onChange={handleChange}
-                      disabled={isLoggingIn}
-                    />
-                    {errors.identifier && (
-                      <p className="text-xs absolute left-2 px-1 bg-card -translate-y-1/2 -bottom-4 text-red-500">
-                        {errors.identifier}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <LabledInput
+                  id="identifier"
+                  label="Username or Email"
+                  type="text"
+                  placeholder="Enter username or email"
+                  value={formData.identifier}
+                  onChange={handleChange}
+                  disabled={isLoggingIn}
+                  error={errors.identifier}
+                  inputClassName={errors.identifier && "ring-2 ring-red-500"}
+                />
 
-                {/* Password Field */}
-                <div className="flex flex-col gap-2 relative">
-                  <div className="flex gap-2 relative">
-                    <Lock className="absolute top-[50%] translate-y-[-50%] left-2 text-muted-foreground size-4" />
-                    <Input
-                      className={cn(
-                        "px-8",
-                        errors.password && "ring-2 ring-red-500"
-                      )}
-                      id="password"
-                      placeholder="Password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                      disabled={isLoggingIn}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="p-1 text-muted-foreground hover:text-foreground h-full hover:bg-transparent aspect-square absolute top-[50%] translate-y-[-50%] right-0"
-                      onClick={() => setShowPassword(!showPassword)}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? (
-                        <Eye className="size-4" />
-                      ) : (
-                        <EyeOff className="size-4" />
-                      )}
-                    </Button>
-                    {errors.password && (
-                      <p className="text-xs absolute left-2 px-1 bg-card -translate-y-1/2 -bottom-4 text-red-500">
-                        {errors.password}
-                      </p>
-                    )}
-                  </div>
+                {/* Password Field with Forgot Password Link */}
+                <div className="flex flex-col gap-2">
+                  <LabledInput
+                    id="password"
+                    label="Password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    disabled={isLoggingIn}
+                    error={errors.password}
+                    showPasswordToggle
+                    inputClassName={errors.password && "ring-2 ring-red-500"}
+                  />
                   <Link
                     to="/forgot-password"
                     className="text-sm underline-offset-2 hover:underline w-min whitespace-nowrap"
@@ -161,7 +130,9 @@ const LogInPage = () => {
         </Card>
         <div className="text-muted-foreground mt-6 *:[a]:hover:text-primary text-center text-sm text-balance *:[a]:underline *:[a]:underline-offset-4">
           By clicking continue, you agree to our{" "}
-          <Link to={"/privacy-policy"} className="underline">Privacy Policy</Link>
+          <Link to={"/privacy-policy"} className="underline">
+            Privacy Policy
+          </Link>
         </div>
       </div>
     </div>

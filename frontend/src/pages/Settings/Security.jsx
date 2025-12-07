@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { axiosInstance } from "@/lib/axios";
 import { formatDeviceInfo, formatLocation } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { LabledInput } from "@/components/ui/labeled-input";
 
 const Security = () => {
   const { authUser, updatePassword, isResettingPassword } = useAuthStore();
@@ -114,125 +115,47 @@ function PasswordUpdateSection({ updatePassword, isResettingPassword }) {
   return (
     <div className="space-y-6">
       <h4 className="font-medium">Change Password</h4>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Current Password */}
-        <div className="space-y-2">
-          <label
-            htmlFor="currentPassword"
-            className="block text-sm font-medium"
-          >
-            Current Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="currentPassword"
-              type={showCurrentPassword ? "text" : "password"}
-              className="pl-10"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              disabled={isResettingPassword}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-            >
-              {showCurrentPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-              <span className="sr-only">
-                {showCurrentPassword ? "Hide password" : "Show password"}
-              </span>
-            </Button>
-          </div>
-          {errors.currentPassword && (
-            <p className="text-sm text-red-500">{errors.currentPassword}</p>
-          )}
-        </div>
+        <LabledInput
+          id="currentPassword"
+          label="Current Password"
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          disabled={isResettingPassword}
+          error={errors.currentPassword}
+          showPasswordToggle
+          inputClassName={errors.currentPassword && "ring-2 ring-red-500"}
+        />
 
         {/* New Password */}
-        <div className="space-y-2">
-          <label htmlFor="newPassword" className="block text-sm font-medium">
-            New Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="newPassword"
-              type={showNewPassword ? "text" : "password"}
-              className="pl-10"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={isResettingPassword}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-            >
-              {showNewPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-              <span className="sr-only">
-                {showNewPassword ? "Hide password" : "Show password"}
-              </span>
-            </Button>
-          </div>
-          {errors.newPassword && (
-            <p className="text-sm text-red-500">{errors.newPassword}</p>
-          )}
-        </div>
+        <LabledInput
+          id="newPassword"
+          label="New Password"
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          disabled={isResettingPassword}
+          error={errors.newPassword}
+          showPasswordToggle
+          inputClassName={errors.newPassword && "ring-2 ring-red-500"}
+        />
 
         {/* Confirm New Password */}
-        <div className="space-y-2">
-          <label
-            htmlFor="confirmPassword"
-            className="block text-sm font-medium"
-          >
-            Confirm New Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              className="pl-10"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={isResettingPassword}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-              <span className="sr-only">
-                {showConfirmPassword ? "Hide password" : "Show password"}
-              </span>
-            </Button>
-          </div>
-          {errors.confirmPassword && (
-            <p className="text-sm text-red-500">{errors.confirmPassword}</p>
-          )}
-        </div>
+        <LabledInput
+          id="confirmPassword"
+          label="Confirm New Password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={isResettingPassword}
+          error={errors.confirmPassword}
+          showPasswordToggle
+          inputClassName={errors.confirmPassword && "ring-2 ring-red-500"}
+        />
 
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <Link
             to="/forgot-password"
             className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline whitespace-nowrap"

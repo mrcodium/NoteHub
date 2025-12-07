@@ -63,7 +63,7 @@ export function ArticleCard({
   }, [api]);
 
   return (
-    <Card className="w-full rounded-none sm:rounded-2xl border-t border-border lg:border p-4 lg:p-6">
+    <Card className="w-full rounded-xl sm:rounded-2xl border-t border-border lg:border p-4 lg:p-6">
       <CardHeader className="p-0 pb-3 flex flex-row justify-between items-center">
         <Link
           to={`user/${author?.userName}`}

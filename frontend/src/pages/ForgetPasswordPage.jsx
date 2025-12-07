@@ -21,6 +21,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Skeleton } from "@/components/ui/skeleton";
 import BaseHeader from "@/components/BaseHeader";
+import { Label } from "@/components/ui/label";
+import { LabledInput } from "@/components/ui/labeled-input";
 
 const ForgotPasswordPage = () => {
   const {
@@ -144,7 +146,7 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
-      <BaseHeader/>
+      <BaseHeader />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Forgot Password</CardTitle>
@@ -176,101 +178,57 @@ const ForgotPasswordPage = () => {
             )}
 
             {/* Identifier Field */}
-            <div className="grid relative items-center gap-1">
-              <div className="flex gap-2 relative">
-                <UserRound className="absolute top-[50%] translate-y-[-50%] left-2 text-muted-foreground size-4" />
-                <Input
-                  type="text"
-                  placeholder="Username or email"
-                  className="pl-8"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value.trim())}
-                  disabled={isSendingOtp || isResettingPassword}
-                />
-                {isCheckingIdentifier && (
-                  <Loader2 className="absolute top-[10px] right-3 size-4 animate-spin" />
-                )}
-              </div>
-              {identifierError && (
-                <p className="text-xs text-red-500">{identifierError}</p>
-              )}
-            </div>
+            <LabledInput
+              id="identifier"
+              label="Username or Email"
+              type="text"
+              placeholder="Enter username or email"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value.trim())}
+              disabled={isSendingOtp || isResettingPassword}
+              loading={isCheckingIdentifier}
+              error={identifierError}
+            />
 
             {/* Password Field */}
-            <div className="grid relative items-center gap-1">
-              <div className="flex gap-2 relative">
-                <Lock className="absolute top-[50%] translate-y-[-50%] left-2 text-muted-foreground size-4" />
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter new password"
-                  className="px-8"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setPasswordError(
-                      validatePassword(e.target.value)
-                        ? ""
-                        : "Password must be at least 6 characters."
-                    );
-                  }}
-                  disabled={isResettingPassword}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="p-1 text-muted-foreground hover:text-foreground h-full hover:bg-transparent aspect-square absolute top-[50%] translate-y-[-50%] right-0"
-                  onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <Eye className="size-4" />
-                  ) : (
-                    <EyeOff className="size-4" />
-                  )}
-                </Button>
-              </div>
-              {passwordError && (
-                <p className="text-xs text-red-500">{passwordError}</p>
-              )}
-            </div>
+            <LabledInput
+              id="password"
+              label="New Password"
+              type="password"
+              placeholder="Enter new password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError(
+                  validatePassword(e.target.value)
+                    ? ""
+                    : "Password must be at least 6 characters."
+                );
+              }}
+              disabled={isResettingPassword}
+              error={passwordError}
+              showPasswordToggle
+            />
 
             {/* Confirm Password Field */}
-            <div className="grid relative items-center gap-1">
-              <div className="flex gap-2 relative">
-                <Lock className="absolute top-[50%] translate-y-[-50%] left-2 text-muted-foreground size-4" />
-                <Input
-                  type={showConfirmPassword ? "text" : "password"}
-                  className="px-8"
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    setConfirmPasswordError(
-                      validateConfirmPassword(password, e.target.value)
-                        ? ""
-                        : "Passwords do not match."
-                    );
-                  }}
-                  disabled={isResettingPassword}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="p-1 text-muted-foreground hover:text-foreground h-full hover:bg-transparent aspect-square absolute top-[50%] translate-y-[-50%] right-0"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? (
-                    <Eye className="size-4" />
-                  ) : (
-                    <EyeOff className="size-4" />
-                  )}
-                </Button>
-              </div>
-              {confirmPasswordError && (
-                <p className="text-xs text-red-500">{confirmPasswordError}</p>
-              )}
-            </div>
+            <LabledInput
+              id="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              placeholder="Confirm new password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setConfirmPasswordError(
+                  validateConfirmPassword(password, e.target.value)
+                    ? ""
+                    : "Passwords do not match."
+                );
+              }}
+              disabled={isResettingPassword}
+              error={confirmPasswordError}
+              showPasswordToggle
+            />
 
             {/* OTP Field */}
             <div className="space-y-2">
@@ -294,7 +252,6 @@ const ForgotPasswordPage = () => {
                     <InputOTPSlot index={5} />
                   </InputOTPGroup>
                 </InputOTP>
-                {/* Send OTP Button */}
                 <Button
                   variant="outline"
                   onClick={handleSendOtp}
@@ -302,14 +259,15 @@ const ForgotPasswordPage = () => {
                     !user || cooldown > 0 || isSendingOtp || !isValidIdentifier
                   }
                 >
-                  {
-                    isSendingOtp 
-                    ? <Loader2 className="animate-spin mr-2 size-4" />
-                    : cooldown > 0 ? cooldown : "Get OTP"
-                  }
+                  {isSendingOtp ? (
+                    <Loader2 className="animate-spin mr-2 size-4" />
+                  ) : cooldown > 0 ? (
+                    cooldown
+                  ) : (
+                    "Get OTP"
+                  )}
                 </Button>
               </div>
-
               <p className="text-xs text-muted-foreground">
                 Enter the 6-digit OTP sent to your email
               </p>

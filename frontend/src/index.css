@@ -791,6 +791,26 @@
 }
 
 @layer base {
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    box-shadow: 0 0 0px 1000px transparent inset !important;
+
+    /* Your color here */
+    -webkit-text-fill-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary)) !important;
+
+    caret-color: hsl(var(--primary));
+
+    transition: background-color 9999s ease-in-out 0s;
+  }
   * {
     font-family: "Roboto", sans-serif;
     @apply border-border;
@@ -812,7 +832,7 @@
   }
 }
 
-.katex-display::-webkit-scrollbar{
+.katex-display::-webkit-scrollbar {
   width: 3px;
   height: 3px;
   display: none;
@@ -1032,7 +1052,12 @@ div:has(> .tiptap.ProseMirror) {
     @apply mt-0;
   }
 
-  h1 code, h2 code, h3 code, h4 code, h5 code, h6 code,
+  h1 code,
+  h2 code,
+  h3 code,
+  h4 code,
+  h5 code,
+  h6 code,
   p code {
     @apply font-mono bg-black/10 dark:bg-accent/50 py-[2.4px] px-[4.8px] rounded whitespace-pre-wrap;
   }

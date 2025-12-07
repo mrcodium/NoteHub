@@ -22,6 +22,7 @@ import {
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import validator from "validator";
 import BaseHeader from "@/components/BaseHeader";
+import { LabledInput } from "@/components/ui/labeled-input";
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -236,96 +237,50 @@ const SignupPage = () => {
             <form onSubmit={handleFormSubmit}>
               <div className="flex flex-col gap-5">
                 {/* Name Field */}
-                <div className="flex flex-col gap-1 relative">
-                  <div className="flex gap-2 relative">
-                    <User2 className="absolute top-[50%] translate-y-[-50%] left-2 text-muted-foreground size-4" />
-                    <Input
-                      className={cn(
-                        "pl-8",
-                        errors.name && "ring-2 ring-red-500"
-                      )}
-                      id="fullName"
-                      type="text"
-                      placeholder="Full name"
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      disabled={isSigningUp}
-                    />
-                    {errors.name && (
-                      <p className="text-xs absolute left-2 px-1 bg-card -translate-y-1/2 -bottom-4 text-red-500">
-                        {errors.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <LabledInput
+                  id="fullName"
+                  label="Full Name"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  disabled={isSigningUp}
+                  error={errors.name}
+                  inputClassName={errors.name && "ring-2 ring-red-500"}
+                />
 
                 {/* Email Field */}
-                <div className="flex flex-col gap-1 relative">
-                  <div className="flex gap-2 relative">
-                    <Mail className="absolute top-[50%] translate-y-[-50%] left-2 text-muted-foreground size-4" />
-                    <Input
-                      className={cn(
-                        "pl-8 pr-10",
-                        errors.email && "ring-2 ring-red-500",
-                        emailStatus === "available" && ""
-                      )}
-                      id="email"
-                      placeholder="Email address"
-                      value={formData.email}
-                      onChange={handleChange}
-                      disabled={isSigningUp}
-                    />
-                    <div className="absolute right-2 top-[50%] translate-y-[-50%]">
-                      {isCheckingEmail ? (
-                        <Loader2 className="animate-spin size-4" />
-                      ) : emailStatus === "available" ? (
-                        <Check className="size-4" />
-                      ) : null}
-                    </div>
-                  </div>
-                  {errors.email && (
-                    <p className="text-xs absolute left-2 px-1 bg-card -translate-y-1/2 -bottom-4 text-red-500">
-                      {errors.email}
-                    </p>
-                  )}
-                </div>
+                <LabledInput
+                  id="email"
+                  label="Email Address"
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={isSigningUp}
+                  error={errors.email}
+                  inputClassName={errors.email && "ring-2 ring-red-500"}
+                  loading={isCheckingEmail}
+                  rightElement={
+                    !isCheckingEmail && emailStatus === "available" ? (
+                      <Check className="size-4 text-green-500" />
+                    ) : null
+                  }
+                />
 
                 {/* Password Field */}
-                <div className="flex flex-col gap-1 relative">
-                  <div className="flex gap-2 relative">
-                    <Lock className="absolute top-[50%] translate-y-[-50%] left-2 text-muted-foreground size-4" />
-                    <Input
-                      className={cn(
-                        "pl-8",
-                        errors.password && "ring-2 ring-red-500"
-                      )}
-                      id="password"
-                      placeholder="Password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                      disabled={isSigningUp}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="p-1 text-muted-foreground hover:text-foreground h-full hover:bg-transparent aspect-square absolute top-[50%] translate-y-[-50%] right-0"
-                      onClick={() => setShowPassword(!showPassword)}
-                      tabIndex={-1}
-                    >
-                      {showPassword ? (
-                        <Eye className="size-4" />
-                      ) : (
-                        <EyeOff className="size-4" />
-                      )}
-                    </Button>
-                    {errors.password && (
-                      <p className="text-xs absolute left-2 px-1 bg-card -translate-y-1/2 -bottom-4 text-red-500">
-                        {errors.password}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <LabledInput
+                  id="password"
+                  label="Password"
+                  type="password"
+                  placeholder="Create a secure password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  disabled={isSigningUp}
+                  error={errors.password}
+                  showPasswordToggle
+                  inputClassName={errors.password && "ring-2 ring-red-500"}
+                />
 
                 {/* OTP Input */}
                 <div className="flex flex-col gap-1">

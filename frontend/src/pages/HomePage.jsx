@@ -2,7 +2,6 @@ import React, { useEffect, useCallback, useRef } from "react";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { ArticleCard } from "@/components/ArticleCard";
 import { noteToArticle} from "@/lib/utils";
-import HomePageNotesSkeleton from "@/components/sekeletons/HomePageNotesSkeleton";
 import { ArticleCardSkeleton } from "@/components/ArticleCardSkeleton";
 
 const HomePage = () => {
@@ -47,11 +46,10 @@ const HomePage = () => {
       getPublicNotes({ page: 1, limit: 10 });
     }
   }, []);
-  console.log(articles[0]);
 
   return (
     <div className="p-2 sm:p-4 h-full overflow-y-auto bg-[#f5f5f5] dark:bg-background">
-      <div className="space-y-8 max-w-screen-lg mx-auto">
+      <div className="space-y-2 sm:space-y-4 md:space-y-8 max-w-screen-lg mx-auto">
         {/* Render transformed notes */}
         {articles.map((note) => (
           <ArticleCard
