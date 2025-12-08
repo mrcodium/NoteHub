@@ -811,6 +811,14 @@
 
     transition: background-color 9999s ease-in-out 0s;
   }
+  footer{
+    a {
+      @apply !text-primary hover:underline;
+    }
+    p {
+      @apply !m-auto;
+    }
+  }
   * {
     font-family: "Roboto", sans-serif;
     @apply border-border;
@@ -928,7 +936,7 @@ div:has(> .tiptap.ProseMirror) {
 
 .tiptap {
   tab-size: 4;
-  @apply relative whitespace-pre-wrap w-full border-none outline-none mx-auto bg-background text-foreground font-sans leading-relaxed overflow-x-hidden p-4 pb-[25vh];
+  @apply relative whitespace-pre-wrap w-full border-none outline-none mx-auto bg-background text-foreground font-sans leading-relaxed overflow-x-hidden p-4;
 
   img {
     @apply max-h-[50vh] my-4 rounded-xl;

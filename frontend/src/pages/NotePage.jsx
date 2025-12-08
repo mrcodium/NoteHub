@@ -13,6 +13,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import TooltipWrapper from "@/components/TooltipWrapper";
+import Footer from "@/components/Footer";
 
 const NotePage = () => {
   const { id } = useParams();
@@ -195,6 +196,7 @@ const NotePage = () => {
         </TooltipWrapper>
         {parse(content)}
       </div>
+      <Footer />
     </div>
   );
 };

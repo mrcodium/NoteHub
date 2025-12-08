@@ -14,19 +14,20 @@ import TooltipWrapper from "@/components/TooltipWrapper";
 import { axiosInstance } from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useImageStore } from "@/stores/useImageStore";
+import Footer from "@/components/Footer";
 
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
   const navigate = useNavigate();
-  const {authUser} = useAuthStore();
-  
+  const { authUser } = useAuthStore();
+
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isPrivate, setIsPrivate] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
-  const [noteId, setNoteId] = useState('');
-  const {getImages} = useImageStore();
+  const [noteId, setNoteId] = useState("");
+  const { getImages } = useImageStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,7 +36,7 @@ const NotePagePublic = () => {
         const response = await axiosInstance.get(
           `/note/${username}/${collectionSlug}/${noteSlug}`
         );
-        
+
         const { note } = response.data;
         setContent(note.content || "");
         setNoteId(note._id);
@@ -81,8 +82,8 @@ const NotePagePublic = () => {
       document.querySelectorAll(".pre-wrapper").forEach((pre) => {
         if (!pre.querySelector(".pre-header")) {
           const codeElement = pre.querySelector("code");
-          const languageClass = Array.from(codeElement?.classList || []).find((cls) =>
-            cls.startsWith("language-")
+          const languageClass = Array.from(codeElement?.classList || []).find(
+            (cls) => cls.startsWith("language-")
           );
           const language = languageClass
             ? languageClass.replace("language-", "")
@@ -134,7 +135,9 @@ const NotePagePublic = () => {
       const images = [...document.querySelectorAll(".tiptap img")];
       images.forEach((img) => {
         img.style.cursor = "pointer";
-        img.addEventListener("click", () => setSelectedImage(img.getAttribute("src") || ""));
+        img.addEventListener("click", () =>
+          setSelectedImage(img.getAttribute("src") || "")
+        );
       });
 
       return () => {
@@ -157,12 +160,15 @@ const NotePagePublic = () => {
         </div>
         <h2 className="text-2xl font-bold">This note is private</h2>
         <p className="text-muted-foreground max-w-md text-center">
-          The owner of this note has set it to private. You need permission to view it.
+          The owner of this note has set it to private. You need permission to
+          view it.
         </p>
         {authUser ? (
           <Button onClick={() => navigate("/")}>Browse your notes</Button>
         ) : (
-          <Button onClick={() => navigate("/login")}>Sign in to view your notes</Button>
+          <Button onClick={() => navigate("/login")}>
+            Sign in to view your notes
+          </Button>
         )}
       </div>
     );
@@ -230,6 +236,7 @@ const NotePagePublic = () => {
         )}
 
         {parse(content)}
+        <Footer />
       </div>
     </div>
   );
