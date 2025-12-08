@@ -57,7 +57,6 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
       <CardHeader className="p-4 pb-2">
         <div className="flex justify-between items-start gap-2">
           <div className="flex items-center gap-2">
-            <File className="size-4 text-muted-foreground flex-shrink-0" />
             {isRenaming ? (
               <Input
                 ref={inputRef}
@@ -69,6 +68,7 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
               />
             ) : (
               <>
+                <File className="size-4 text-muted-foreground flex-shrink-0" />
                 <TooltipWrapper message={note.name}>
                   <Link
                     to={`/user/${username}/${collectionSlug}/${note.slug}`}
@@ -111,18 +111,12 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
                 size="sm"
               />
             )}
-            {isOwner && (
+            {isOwner && note.visibility === "private" && (
               <Badge
-                variant={
-                  note.visibility === "public" ? "secondary" : "destructive"
-                }
+                variant={"destructive"}
                 className="flex items-center gap-1 h-auto"
               >
-                {note.visibility === "public" ? (
-                  <Eye className="size-3.5" />
-                ) : (
-                  <Lock className="size-3.5" />
-                )}
+                <Lock className="size-3.5" />
                 {note.visibility}
               </Badge>
             )}

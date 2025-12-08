@@ -387,7 +387,7 @@ export const useNoteStore = create((set, get) => ({
         noteId,
         collaborators,
       });
-      const { note : updatedNote, message } = res.data;
+      const { note: updatedNote, message } = res.data;
 
       // Replace note with updated note
       get().replaceNoteFromCollection(updatedNote);
@@ -408,10 +408,21 @@ export const useNoteStore = create((set, get) => ({
       });
       const { note: updatedNote, message } = res.data;
 
-      // Replace note with updated note
-      get().replaceNoteFromCollection(updatedNote);
+      // only update visibility of the matched note
+      set((state) => ({
+        collections: state.collections.map((collection) => ({
+          ...collection,
+          notes: collection.notes.map((note) =>
+            note._id === updatedNote._id
+              ? { ...note, visibility: updatedNote.visibility }
+              : note
+          ),
+        })),
+      }));
 
       toast.success(message);
+
+      return updatedNote.visibility;
     } catch (error) {
       console.log(error);
       toast.error(error.response.data.message);

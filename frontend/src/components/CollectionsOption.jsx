@@ -115,7 +115,7 @@ const CollectionsOption = ({
       {
         id: "insert-note",
         icon: <FilePlus2 className="size-4 text-muted-foreground" />,
-        label: "Create new note",
+        label: "Insert new note",
         onClick: () => {
           setIsInsertNoteDialogOpen(true);
           setDropdownOpen(false);
@@ -165,7 +165,7 @@ const CollectionsOption = ({
           }
         }}
       >
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px]" >
           <DialogHeader>
             <DialogTitle className="text-destructive">
               Delete Collection
@@ -239,7 +239,7 @@ const CollectionsOption = ({
       >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Create New Note</DialogTitle>
+            <DialogTitle>Insert New Note</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Add a new note to{" "}
               <span className="font-medium">{collection.name}</span>
@@ -265,7 +265,7 @@ const CollectionsOption = ({
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className={""}>
               <Button
                 type="button"
                 variant="outline"
@@ -301,8 +301,7 @@ const CollectionsOption = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className="w-56 rounded-lg shadow-lg border border-border"
-          align="start"
-          sideOffset={4}
+          align="end"
           onCloseAutoFocus={(e) => e.preventDefault()} // Prevent focus issues
         >
           <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">

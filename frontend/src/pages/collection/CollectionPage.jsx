@@ -64,7 +64,6 @@ const CollectionPage = () => {
           slug,
         },
       });
-      console.log(res.data);
       const { collection } = res.data;
       return collection;
     } catch (error) {

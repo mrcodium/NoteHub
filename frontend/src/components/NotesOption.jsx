@@ -191,7 +191,7 @@ const NotesOption = React.memo(({ trigger, note, setIsRenaming, className }) => 
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="w-48">
+        <DropdownMenuContent align="end" className="w-48">
           {dropdownItems.slice(0, 4).map((item) => (
             <DropdownMenuItem
               key={item.id}

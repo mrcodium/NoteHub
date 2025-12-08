@@ -1,4 +1,4 @@
-import { Bookmark, MoreVertical } from "lucide-react";
+import { Bookmark, Lock, MoreVertical } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { Input } from "./ui/input";
 import { Link } from "react-router-dom";
@@ -134,15 +134,12 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                     size="sm"
                   />
                 )}
-                {isOwner && (
+                {isOwner && collection.visibility === "private" && (
                   <Badge
-                    variant={
-                      collection.visibility === "public"
-                        ? "secondary"
-                        : "destructive"
-                    }
-                    className="text-xs flex-shrink-0"
+                    variant={"destructive"}
+                    className="flex items-center gap-1 h-auto"
                   >
+                    <Lock className="size-3.5" />
                     {collection.visibility}
                   </Badge>
                 )}
