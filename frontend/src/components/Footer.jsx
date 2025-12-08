@@ -1,18 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { Github, Linkedin, Mail, MessageSquare, Twitter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 const Footer = () => {
   const footerLinks = [
     { href: "/privacy-policy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms of Service" },
+    { href: "https://github.com/abhijeetSinghRajput/NoteHub-Production/issues/new", label: "Report an issue" },
   ];
 
   return (
