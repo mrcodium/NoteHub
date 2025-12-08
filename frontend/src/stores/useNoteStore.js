@@ -106,7 +106,6 @@ export const useNoteStore = create((set, get) => ({
       }
     }
     set({ noteNotFound: true });
-    console.log("not found");
     return null;
   },
 

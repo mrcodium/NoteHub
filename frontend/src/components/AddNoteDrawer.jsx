@@ -56,39 +56,6 @@ const AddNoteDrawer = ({ trigger }) => {
     isCreatingNote,
   } = useNoteStore();
 
-  // Debounced user search
-  const fetchUsers = useCallback(
-    debounce(async (query) => {
-      if (!query.trim()) {
-        setSearchResults([]);
-        return;
-      }
-
-      try {
-        setIsSearching(true);
-        const response = await getAllUsers({
-          page: 1,
-          limit: 10,
-          filter: "all",
-          search: query,
-        });
-        const users = response.users?.filter((u) => u._id != authUser._id);
-        setSearchResults(users || []);
-      } catch (error) {
-        console.error("Failed to search users:", error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300),
-    []
-  );
-
-  useEffect(() => {
-    fetchUsers(searchQuery);
-    return () => fetchUsers.cancel();
-  }, [searchQuery, fetchUsers]);
-
   const handleAddNote = async () => {
     const noteId = await createNote({
       name: noteName,
