@@ -10,15 +10,15 @@ A modern note-taking app with rich editing, collaboration, and cloud sync.
 
 ## ✨ Editor Features
 
-| Feature | Visual | Description |
-|---------|--------|-------------|
-| **Rich Text Formatting** | ![Rich Text](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777133/Screenshot_2025-07-18_000149_yvaarv.png) | Bold, italic, headings, lists, blockquotes, and more |
-| **Code Blocks** | ![Code](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776757/Screenshot_2025-07-17_233033_nbxykt.png) | Syntax highlighting for 100+ programming languages |
-| **LaTeX Math** | ![Math](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776746/Screenshot_2025-07-17_233300_wrm65f.png) | Beautiful mathematical equations with KaTeX rendering |
-| **Todo Lists** | ![Todo](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776723/Screenshot_2025-07-17_233856_ze2irj.png) | Interactive checklists with progress tracking |
-| **Real-time Collaboration** | ![Collab](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752778393/Screenshot_2025-07-18_002236_xqme0u.png) | Co-edit documents with live presence indicators |
-| **Version History** | ![History](https://img.icons8.com/ios/50/000000/time-machine.png) | View and restore previous versions of your notes |
-| **Dark/Light Mode** | ![Theme](https://img.icons8.com/ios/50/000000/contrast.png) | Full theme customization with system preference detection |
+| Feature | Visual |
+|---------|--------|
+| **Rich Text Formatting** | ![Rich Text](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777133/Screenshot_2025-07-18_000149_yvaarv.png) |
+| **Code Blocks** | ![Code](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776757/Screenshot_2025-07-17_233033_nbxykt.png) |
+| **LaTeX Math** | ![Math](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776746/Screenshot_2025-07-17_233300_wrm65f.png) |
+| **Todo Lists** | ![Todo](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776723/Screenshot_2025-07-17_233856_ze2irj.png) |
+| **Real-time Collaboration** | ![Collab](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752778393/Screenshot_2025-07-18_002236_xqme0u.png) |
+| **Version History** | ![History](https://img.icons8.com/ios/50/000000/time-machine.png) |
+| **Dark/Light Mode** | ![Theme](https://img.icons8.com/ios/50/000000/contrast.png) |
 
 ## 🖼️ App Screenshots
 
