@@ -33,21 +33,9 @@ import SidebarSkeleton from "../sekeletons/SidebarSkeleton";
 import NotesOption from "../NotesOption";
 import CollectionsOption from "../CollectionsOption";
 import { useLocalStorage } from "@/stores/useLocalStorage";
+import { HighlightMatch } from "../HighlightMatch";
 
-const highlightMatch = (text, query) => {
-  if (!query) return text;
 
-  const parts = text.split(new RegExp(`(${query})`, "gi"));
-  return parts.map((part, i) =>
-    part.toLowerCase() === query.toLowerCase() ? (
-      <span key={i} className="bg-yellow-200 text-black">
-        {part}
-      </span>
-    ) : (
-      part
-    )
-  );
-};
 
 const NoteItem = ({ note }) => {
   const {closeSidebar, isMobile} = useSidebar();
@@ -261,7 +249,7 @@ const NavMain = ({ collections, searchQuery }) => {
             )
             .map((note) => ({
               ...note,
-              name: highlightMatch(note.name, searchQuery),
+              name: HighlightMatch(note.name, searchQuery),
             }))
         : collection.notes; // Return all notes when not searching
 
