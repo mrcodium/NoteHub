@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import TooltipWrapper from "./TooltipWrapper";
 import ChooseCollection from "./addNote/ChooseCollection";
 import CreateCollection from "./addNote/CreateCollection";
 import AddNote from "./addNote/AddNote";
+import { motion, AnimatePresence } from "framer-motion";
 
 const AddNoteDrawer = ({ trigger }) => {
   const [open, setOpen] = useState(false);
