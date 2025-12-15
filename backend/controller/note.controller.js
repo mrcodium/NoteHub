@@ -27,7 +27,7 @@ export const createNote = async (req, res) => {
             content,
             collectionId, 
             visibility,
-            collaborators,
+            collaborators : collaborators || [],
             userId: user._id 
         });
         return res.status(201).json({ 

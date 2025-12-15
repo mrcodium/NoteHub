@@ -28,7 +28,7 @@ export const createCollection = async (req, res) => {
       name,
       userId: user._id,
       visibility,
-      collaborators,
+      collaborators: collaborators || [],
     });
 
     res.status(201).json({
