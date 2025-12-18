@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "./ui/button";
 import { generatePKCE } from "@/lib/auth";
 
-const GoogleLoginButton = ({ className }) => {
+const GoogleLoginButton = ({ className, ...props }) => {
   const handleGoogleLogin = async () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     const redirectUri = encodeURIComponent(`${window.location.origin}/oauth/callback`);
@@ -37,6 +37,7 @@ const GoogleLoginButton = ({ className }) => {
       variant="outline"
       onClick={handleGoogleLogin}
       className={`w-full ${className}`}
+      {...props}
     >
       {/* Google icon */}
       <svg

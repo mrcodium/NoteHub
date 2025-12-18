@@ -104,7 +104,7 @@ const LogInPage = () => {
                   </Link>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                <Button type="submit" className="w-full h-12 font-semibold rounded-xl" disabled={isLoggingIn}>
                   {isLoggingIn ? (
                     <>
                       <Loader2 className="animate-spin mr-2" />
@@ -116,7 +116,7 @@ const LogInPage = () => {
                 </Button>
               </div>
             </form>
-            <GoogleLoginButton className={"mt-4"} />
+            <GoogleLoginButton className={"mt-4 h-12 font-semibold rounded-xl"} />
             <div className="mt-4 text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link

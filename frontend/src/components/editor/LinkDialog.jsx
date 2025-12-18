@@ -60,14 +60,16 @@ export function LinkDialog({ editor }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={() => setIsOpen(true)}
-          disabled={!editor.can().setLink({ href: "" })}
-        >
-          <LinkIcon />
-        </Button>
+        <TooltipWrapper message="Insert Link">
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => setIsOpen(true)}
+            disabled={!editor.can().setLink({ href: "" })}
+          >
+            <LinkIcon />
+          </Button>
+        </TooltipWrapper>
       </DialogTrigger>
       <DialogContent>
         <DialogTitle>Add Link</DialogTitle>

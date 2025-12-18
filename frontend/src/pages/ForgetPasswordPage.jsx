@@ -276,6 +276,7 @@ const ForgotPasswordPage = () => {
             {/* Reset Password Button */}
             <Button
               onClick={handleResetPassword}
+              className="h-12 font-semibold rounded-xl"
               disabled={
                 isResettingPassword ||
                 passwordError ||

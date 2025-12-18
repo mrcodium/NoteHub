@@ -337,7 +337,7 @@ const SignupPage = () => {
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full h-12 font-semibold rounded-xl"
                   disabled={isSigningUp || emailStatus === "taken"}
                 >
                   {isSigningUp ? (
@@ -351,7 +351,7 @@ const SignupPage = () => {
                 </Button>
               </div>
             </form>
-            <GoogleLoginButton className={"mt-4"} />
+            <GoogleLoginButton className={"mt-4 h-12 font-semibold rounded-xl"} />
             <div className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link

@@ -6,6 +6,7 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import NoteSkeleton from "../sekeletons/NoteSkeleton";
 import { MenuBar } from "./MenuBar";
 import { useImageStore } from "@/stores/useImageStore";
+import { migrateMathStrings } from "@tiptap/extension-mathematics";
 
 const Tiptap = () => {
   const { getNoteContent, isContentLoading } = useNoteStore();
@@ -68,6 +69,9 @@ const Tiptap = () => {
       slotBefore={<MenuBar noteId={noteId} />}
       extensions={extensions}
       content={content}
+      onCreate={({editor})=>{
+        migrateMathStrings(editor)
+      }}
       onUpdate={({ editor }) => handleUpdate(editor.getHTML())}
       editorProps={{
         attributes: {

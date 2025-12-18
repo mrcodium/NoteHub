@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const CollectionHeader = ({ user, collection, isOwner }) => {
+  if(!user) return null;
   const { openDialog } = useCollaboratorManager();
 
   const hasCollaborators = collection?.collaborators?.length > 0;

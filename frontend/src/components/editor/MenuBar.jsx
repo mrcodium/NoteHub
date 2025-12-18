@@ -37,6 +37,7 @@ import {
 } from "./config/menu.config";
 import FileDropZone from "../FileDropZone";
 import { LinkDialog } from "./LinkDialog";
+import MathDialog from "./MathDialog";
 
 export const MenuBar = ({ noteId }) => {
   const { editor } = useCurrentEditor();
@@ -228,7 +229,7 @@ export const MenuBar = ({ noteId }) => {
             <FileDropZone editor={editor} />
           </DialogContent>
         </Dialog>
-        
+        <MathDialog editor={editor} />
         <LinkDialog editor={editor} />
 
         <TooltipWrapper message={"Save Content"}>

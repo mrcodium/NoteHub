@@ -65,18 +65,21 @@ const NotePagePublic = () => {
       });
 
       // Render KaTeX
-      document.querySelectorAll("span[data-latex]").forEach((element) => {
-        try {
-          const latex = element.getAttribute("data-latex");
-          const isBlock = element.getAttribute("data-display") === "yes";
-          katex.render(latex, element, {
-            displayMode: isBlock,
-            throwOnError: false,
-          });
-        } catch (error) {
-          console.error("KaTeX render error:", error);
-        }
-      });
+      document
+        .querySelectorAll('[data-type="inline-math"], [data-type="block-math"]')
+        .forEach((element) => {
+          try {
+            const latex = element.getAttribute("data-latex");
+            const isBlock = element.getAttribute("data-type") === "block-math";
+
+            katex.render(latex, element, {
+              displayMode: isBlock, // true for block, false for inline
+              throwOnError: false,
+            });
+          } catch (error) {
+            console.error("KaTeX render error:", error);
+          }
+        });
 
       // Add header with copy button to each pre tag
       document.querySelectorAll(".pre-wrapper").forEach((pre) => {

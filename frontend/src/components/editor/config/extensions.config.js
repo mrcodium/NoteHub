@@ -1,18 +1,24 @@
 import { Color } from "@tiptap/extension-color";
-import ListItem from "@tiptap/extension-list-item";
-import TextStyle from "@tiptap/extension-text-style";
+import { TextStyleKit } from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import Underline from "@tiptap/extension-underline";
-import ListKeymap from "@tiptap/extension-list-keymap";
 import TextAlign from "@tiptap/extension-text-align";
-import TaskItem from "@tiptap/extension-task-item";
-import TaskList from "@tiptap/extension-task-list";
-import Table from "@tiptap/extension-table";
-import TableCell from "@tiptap/extension-table-cell";
-import TableHeader from "@tiptap/extension-table-header";
-import TableRow from "@tiptap/extension-table-row";
-import Placeholder from "@tiptap/extension-placeholder";
+import {
+  BulletList,
+  OrderedList,
+  ListItem,
+  TaskList,
+  TaskItem,
+  ListKeymap,
+} from "@tiptap/extension-list";
+import {
+  Table,
+  TableRow,
+  TableCell,
+  TableHeader,
+} from "@tiptap/extension-table";
+import { Placeholder } from "@tiptap/extensions";
 import Image from "@tiptap/extension-image";
 import { SlashCommand } from "@/components/SlashCommand";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
@@ -20,11 +26,10 @@ import { createLowlight } from "lowlight";
 import { all } from "lowlight";
 import CodeBlockComponent from "@/components/CodeBlockComponent";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { MathExtension } from "@aarkue/tiptap-math-extension";
 import { Extension } from "@tiptap/core";
-import { dropCursor } from "@tiptap/pm/dropcursor";
-import { gapCursor } from "@tiptap/pm/gapcursor";
+import { Dropcursor, Gapcursor } from "@tiptap/extensions";
 import Link from "@tiptap/extension-link";
+import Math, { migrateMathStrings } from "@tiptap/extension-mathematics";
 
 const lowlight = createLowlight(all);
 
@@ -124,8 +129,8 @@ const CustomCodeBlock = CodeBlockLowlight.extend({
 }).configure({ lowlight });
 
 export const extensions = [
-  Color.configure({ types: [TextStyle.name, ListItem.name] }),
-  TextStyle.configure({ types: [ListItem.name] }),
+  Color.configure({ types: [TextStyleKit.name, ListItem.name] }),
+  TextStyleKit.configure({ types: [ListItem.name] }),
   StarterKit.configure({
     bulletList: {
       keepMarks: true,
@@ -158,18 +163,34 @@ export const extensions = [
     placeholder: "Type / for options",
   }),
   Image,
-  SlashCommand,
-  MathExtension.configure({
-    evaluation: true,
-    katexOptions: {
-      macros: { "\\B": "\\mathbb{B}" },
+  // ...keep your existing imports and code above
+  Math.configure({
+    blockOptions: {
+      onClick: (node, pos) => {
+        // dispatch an event so the dialog can open and receive data
+        window.dispatchEvent(
+          new CustomEvent("open-math-dialog", {
+            detail: { latex: node.attrs.latex, pos, mode: "block" },
+          })
+        );
+      },
     },
-    delimiters: "dollar",
+    inlineOptions: {
+      onClick: (node, pos) => {
+        window.dispatchEvent(
+          new CustomEvent("open-math-dialog", {
+            detail: { latex: node.attrs.latex, pos, mode: "inline" },
+          })
+        );
+      },
+    },
   }),
+
+  SlashCommand,
   TabExtension,
   AutoPairExtension,
-  dropCursor(),
-  gapCursor(),
+  Dropcursor,
+  Gapcursor,
   Link.configure({
     openOnClick: false,
     autolink: true,
