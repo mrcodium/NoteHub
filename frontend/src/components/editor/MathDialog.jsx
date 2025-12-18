@@ -149,7 +149,7 @@ export default function MathDialog({ editor }) {
           </Button>
         </TooltipWrapper>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl" closeButtonClassName="hidden">
         <DialogHeader
           className={"flex flex-row w-full gap-4 justify-between items-center"}
         >
@@ -163,7 +163,7 @@ export default function MathDialog({ editor }) {
 
         <math-field
           onInput={(evt) => setLatex(evt.target.value)}
-          class="w-full border rounded-md overflow-x-auto px-3 py-2 text-2xl bg-muted/30 text-primary focus-visible:ring-1"
+          class="w-full border border-border rounded-md overflow-x-auto px-3 py-2 text-2xl bg-muted/30 text-primary ring-offset-2 ring-offset-background focus-within::outline-none focus-within::ring-2 focus-within::ring-ring focus:outline-none focus:ring-2 focus:ring-ring"
           value={latex}
         >
           {latex}
