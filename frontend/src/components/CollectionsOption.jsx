@@ -33,11 +33,7 @@ import { Label } from "./ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const CollectionsOption = ({
-  trigger,
-  collection,
-  onRenameStart,
-}) => {
+const CollectionsOption = ({ trigger, collection, onRenameStart }) => {
   const [noteName, setNoteName] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isInsertNoteDialogOpen, setIsInsertNoteDialogOpen] = useState(false);
@@ -74,7 +70,7 @@ const CollectionsOption = ({
 
     setNoteName("");
     setIsInsertNoteDialogOpen(false);
-    setDropdownOpen(false); 
+    setDropdownOpen(false);
     navigate(`/note/${noteId}/editor`);
   }, [noteName, collection._id, createNote, navigate]);
 
@@ -165,7 +161,7 @@ const CollectionsOption = ({
           }
         }}
       >
-        <DialogContent className="sm:max-w-[425px]" >
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="text-destructive">
               Delete Collection
@@ -176,56 +172,67 @@ const CollectionsOption = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="confirmation">
-                Type{" "}
-                <span className="font-mono bg-muted px-1.5 py-0.5 rounded">
-                  {collection.name}
-                </span>{" "}
-                to confirm:
-              </Label>
-              <Input
-                id="confirmation"
-                value={deleteConfirmationText}
-                onChange={(e) => setDeleteConfirmationText(e.target.value)}
-                placeholder={collection.name}
-                autoFocus
-              />
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="size-4 flex items-center justify-center bg-destructive/10 text-destructive rounded-full">
-                !
-              </div>
-              <span>All notes in this collection will be deleted</span>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={
-                deleteConfirmationText !== collection.name ||
-                isDeletingCollection
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (deleteConfirmationText === collection.name) {
+                handleDelete();
               }
-            >
-              {isDeletingCollection ? (
-                <>
-                  <Loader2 className="animate-spin mr-2" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
-            </Button>
-          </DialogFooter>
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="confirmation">
+                  Type{" "}
+                  <span className="font-mono bg-muted px-1.5 py-0.5 rounded">
+                    {collection.name}
+                  </span>{" "}
+                  to confirm:
+                </Label>
+                <Input
+                  id="confirmation"
+                  value={deleteConfirmationText}
+                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                  placeholder={collection.name}
+                  autoFocus
+                />
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="size-4 flex items-center justify-center bg-destructive/10 text-destructive rounded-full">
+                  !
+                </div>
+                <span>All notes in this collection will be deleted</span>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="destructive"
+                disabled={
+                  deleteConfirmationText !== collection.name ||
+                  isDeletingCollection
+                }
+              >
+                {isDeletingCollection ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -265,7 +272,7 @@ const CollectionsOption = ({
               />
             </div>
 
-            <DialogFooter className={""}>
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -292,13 +299,8 @@ const CollectionsOption = ({
       </Dialog>
 
       {/* Dropdown Menu */}
-      <DropdownMenu 
-        open={dropdownOpen} 
-        onOpenChange={setDropdownOpen}
-      >
-        <DropdownMenuTrigger asChild>
-          {trigger}
-        </DropdownMenuTrigger>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+        <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
         <DropdownMenuContent
           className="w-56 rounded-lg shadow-lg border border-border"
           align="end"

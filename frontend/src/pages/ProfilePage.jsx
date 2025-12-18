@@ -191,7 +191,7 @@ const ProfilePage = () => {
                       : user?.cover) || "/avatar.svg"
                   }
                   alt={`user ${currentImageType}`}
-                  className="max-w-[100vw] max-h-[80vh] object-contain"
+                  className="max-w-[100vw] max-h-[80vh] min-h-[300px] object-contain"
                   style={{
                     width:
                       currentImageType === "avatar"
