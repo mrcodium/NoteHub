@@ -980,7 +980,7 @@ div:has(> .tiptap.ProseMirror) {
     }
 
     input[type="checkbox"] {
-      @apply cursor-pointer overflow-hidden relative appearance-none w-4 h-4 border border-primary rounded-sm;
+      @apply cursor-pointer mt-1.5 overflow-hidden relative appearance-none w-4 h-4 border border-primary rounded-sm;
     }
 
     li {
@@ -1008,15 +1008,15 @@ div:has(> .tiptap.ProseMirror) {
   }
 
   h1 {
-    @apply text-4xl font-bold mb-8 leading-relaxed;
+    @apply text-[2rem] font-semibold mb-8 leading-snug;
   }
 
   h2 {
-    @apply text-2xl font-semibold mt-8 mb-4 leading-relaxed;
+    @apply text-[1.57rem] font-semibold mt-8 mb-4 leading-snug;
   }
 
   h3 {
-    @apply text-xl font-semibold mt-6 mb-2 leading-relaxed;
+    @apply text-[1.35rem] font-semibold mt-6 mb-2 leading-snug;
   }
 
   h4 {
@@ -1155,17 +1155,14 @@ div:has(> .tiptap.ProseMirror) {
     cursor: ew-resize;
     cursor: col-resize;
   }
-  *.is-editor-empty::before {
-    @apply text-muted-foreground/40 float-left h-0 pointer-events-none;
-    content: attr(data-placeholder);
-  }
 
-  /* Placeholder (on every new line) */
-  *.is-empty::before {
+  :is(p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote).is-editor-empty::before,
+  :is(p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote).is-empty::before {
     @apply text-muted-foreground/40 float-left h-0 pointer-events-none;
     content: attr(data-placeholder);
   }
 }
+
 .tippy-arrow::before {
   @apply hidden;
 }

@@ -12,15 +12,12 @@ import {
     Heading1,
     Heading2,
     Heading3,
-    Heading4,
-    Heading5,
-    Heading6,
     Heading
 } from 'lucide-react';
 
 
 export const SelectHeading = ({ editor }) => {
-    const headers = [1, 2, 3, 4, 5, 6];
+    const headers = [1, 2, 3];
 
     return (
         <Select>
@@ -29,9 +26,6 @@ export const SelectHeading = ({ editor }) => {
                     editor.isActive('heading', { level: 1 }) ? <Heading1 className='size-5' /> :
                     editor.isActive('heading', { level: 2 }) ? <Heading2 className='size-5' /> :
                     editor.isActive('heading', { level: 3 }) ? <Heading3 className='size-5' /> :
-                    editor.isActive('heading', { level: 4 }) ? <Heading4 className='size-5' /> :
-                    editor.isActive('heading', { level: 5 }) ? <Heading5 className='size-5' /> :
-                    editor.isActive('heading', { level: 6 }) ? <Heading6 className='size-5' /> :
                     editor.isActive('paragraph') ? <Pilcrow className='size-4' /> :
                     <Heading className='size-4' />
                 } />
@@ -40,6 +34,7 @@ export const SelectHeading = ({ editor }) => {
                 {headers.map((level, index) => (
                     <TooltipWrapper key={index} message={`Heading ${level}`}>
                         <Button
+                            disabled={editor.isActive('heading', { level })}
                             onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
                             variant={editor.isActive('heading', { level }) ? 'secondary' : 'ghost'}
                         >

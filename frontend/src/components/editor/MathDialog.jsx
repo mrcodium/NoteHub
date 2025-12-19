@@ -152,7 +152,7 @@ export default function MathDialog({ editor }) {
         <DialogHeader
           className={"flex flex-row w-full gap-4 justify-between items-center"}
         >
-          <DialogTitle>{editMode ? "Edit" : "Insert"} Equation</DialogTitle>
+          <DialogTitle className="text-left">{editMode ? "Edit" : "Insert"} Equation</DialogTitle>
           <ToggleSwitch
             options={displayModes}
             value={editMode || "inline"}

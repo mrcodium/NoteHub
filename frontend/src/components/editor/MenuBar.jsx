@@ -1,14 +1,8 @@
-import React, { useRef } from "react";
+import React from "react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useNavigate } from "react-router-dom";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
 import {
   UploadCloudIcon,
   Loader2,
@@ -17,7 +11,7 @@ import {
   TableIcon,
   Ellipsis,
   EllipsisVertical,
-  ImageIcon,
+  CloudDownloadIcon,
 } from "lucide-react";
 import TooltipWrapper from "../TooltipWrapper";
 import { SelectHeading } from "./SelectHeading";
@@ -35,7 +29,6 @@ import {
   TABLE_COLUMN_CONTROLS,
   COLORS,
 } from "./config/menu.config";
-import FileDropZone from "../FileDropZone";
 import { LinkDialog } from "./LinkDialog";
 import MathDialog from "./MathDialog";
 import AddImageDialog from "./AddImageDialog";
@@ -43,8 +36,7 @@ import AddImageDialog from "./AddImageDialog";
 export const MenuBar = ({ noteId }) => {
   const { editor } = useCurrentEditor();
   const navigate = useNavigate();
-  const { updateContent, isContentUploading } = useNoteStore();
-  const imageTrigger = useRef(null);
+  const { updateContent, isContentUploading,getNoteContent } = useNoteStore();
 
   if (!editor) {
     return null;
@@ -79,6 +71,21 @@ export const MenuBar = ({ noteId }) => {
       <div className="controll-group mb-2 sticky top-0 z-10 bg-background border-b border-input" />
     );
   }
+
+  const handleRevert = async () => {
+    if (!noteId) return;
+
+    // 1. Clear the local storage for this note
+    localStorage.removeItem("noteContent");
+
+    // 2. Fetch fresh content from store (server or store cache)
+    const freshContent = await getNoteContent(noteId); // use your store function
+    if (freshContent !== null) {
+      editor.commands.setContent(freshContent, false); // replace editor content
+    } else {
+      editor.commands.clearContent(); // fallback if note not found
+    }
+  };
 
   return (
     <div className="controll-group mb-2 sticky top-0 z-10 bg-background border-b border-input">
@@ -219,7 +226,7 @@ export const MenuBar = ({ noteId }) => {
           />
         </div>
 
-        <AddImageDialog editor={editor}/>
+        <AddImageDialog editor={editor} />
         <MathDialog editor={editor} />
         <LinkDialog editor={editor} />
 
@@ -236,6 +243,15 @@ export const MenuBar = ({ noteId }) => {
                 Save
               </>
             )}
+          </Button>
+        </TooltipWrapper>
+        <TooltipWrapper message={"Revert Back"}>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={handleRevert}
+          >
+            <CloudDownloadIcon />
           </Button>
         </TooltipWrapper>
       </div>

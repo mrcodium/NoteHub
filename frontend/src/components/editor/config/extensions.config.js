@@ -164,6 +164,9 @@ export const extensions = [
       if (node.type.name === "heading") {
         return "Heading " + node.attrs.level;
       }
+      else if(node.type.name === "bulletList") return "List"
+      else if(node.type.name === "orderedList") return "List"
+      else if(node.type.name === "blockquote") return "Empty quote"
 
       return "Type / for options";
     },

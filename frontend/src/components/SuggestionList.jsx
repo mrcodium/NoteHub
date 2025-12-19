@@ -78,15 +78,20 @@ const SuggestionList = forwardRef(
           <Button
             key={index}
             variant="ghost"
-            className={`w-full hover:bg-accent/50 justify-start py-[6px] px-2 h-8 text-muted-foreground ${
+            className={`w-full hover:bg-accent/50 justify-between py-[6px] px-2 h-8 text-muted-foreground ${
               index === selectedIndex
                 ? "bg-accent hover:bg-accent text-accent-foreground"
                 : ""
             }`}
             onClick={() => selectItem(index)} // Using selectItem here
           >
-            {item.icon}
-            <span>{item.label}</span>
+            <div className="flex items-center gap-2">
+              {item.icon}
+              <span>{item.label}</span>
+            </div>
+            {item.shortcut && (
+              <span className="font-mono">{item.shortcut}</span>
+            )}
           </Button>
         ))}
       </div>
