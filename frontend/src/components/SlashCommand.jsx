@@ -11,36 +11,17 @@ import {
     Heading5,
     Heading6,
     Image,
+    LinkIcon,
     List,
     ListOrdered,
     ListTodo,
     Minus,
     Pilcrow,
     Quote,
+    Sigma,
     Table
 } from "lucide-react";
-
-const shortcut = {
-    'heading 1': 'h1',
-    'heading 2': 'h2',
-    'heading 3': 'h3',
-    'heading 4': 'h4',
-    'heading 5': 'h5',
-    'heading 6': 'h6',
-    'image': 'img',
-    'Horizontal Rule': 'hr',
-};
-
-const filterSuggestions = (query, suggestions) => {
-    const queryLower = query.toLowerCase();
-
-    return suggestions.filter(item => {
-        if(shortcut[item.label.toLowerCase()] === query.toLowerCase()){
-            return true;
-        }
-        return item.label.toLowerCase().startsWith(query.toLowerCase());
-    });
-};
+import { fuzzyFilter } from "@/lib/utils.js";
 
 export const SlashCommand = Extension.create({
     name: 'slashCommand',
@@ -65,10 +46,14 @@ export const SlashCommand = Extension.create({
                         { icon: <Quote />, label: 'Blockquote', command: 'toggleBlockquote' },
                         { icon: <CodeSquare />, label: 'Code Block', command: 'toggleCodeBlock' },
                         { icon: <Table />, label: 'Table', command: 'insertTable' },
-                        { icon: <Image />, label: 'Image', command: 'setImage', props: {src: 'https://placehold.co/600x400'} },
                         { icon: <Minus />, label: 'Horizontal Rule', command: 'setHorizontalRule' },
+
+                        { icon: <LinkIcon />, label: 'Link', command: 'custom', dialog: "openLinkDialog"},
+                        { icon: <Image />, label: 'Image', command: 'custom', dialog: "openImageDialog" },
+                        { icon: <Sigma />, label: 'Math Equation', command: 'custom', dialog: "openMathDialog"},
                     ];
-                    return filterSuggestions(query, suggestions);
+                    
+                    return fuzzyFilter(query, suggestions);
                 },
                 render: () => {
                     let component;

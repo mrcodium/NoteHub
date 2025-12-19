@@ -180,3 +180,51 @@ export const noteToArticle = (note) => {
   };
 };
 
+/**
+ * Basic fuzzy match + scoring
+ * Returns -1 if no match
+ */
+export function fuzzyScore(query, target) {
+  query = query.toLowerCase();
+  target = target.toLowerCase();
+
+  let score = 0;
+  let qIndex = 0;
+  let tIndex = 0;
+  let consecutive = 0;
+
+  while (qIndex < query.length && tIndex < target.length) {
+    if (query[qIndex] === target[tIndex]) {
+      qIndex++;
+      consecutive++;
+      score += 10 + consecutive * 5; // reward consecutive matches
+    } else {
+      consecutive = 0;
+      score -= 1; // small penalty for gaps
+    }
+    tIndex++;
+  }
+
+  if (qIndex !== query.length) return -1; // not all chars matched
+
+  // bonus for prefix match
+  if (target.startsWith(query)) score += 20;
+
+  return score;
+}
+
+/**
+ * Fuzzy filter & sort
+ */
+export function fuzzyFilter(query, items, key = "label") {
+  if (!query) return items;
+
+  return items
+    .map((item) => ({
+      item,
+      score: fuzzyScore(query, item[key]),
+    }))
+    .filter((result) => result.score > -1)
+    .sort((a, b) => b.score - a.score)
+    .map((result) => result.item);
+}

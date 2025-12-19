@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import TooltipWrapper from "../TooltipWrapper";
 import ToggleSwitch from "../ToggleSwitch";
-import { DialogDescription } from "@radix-ui/react-dialog";
+import { useEditorStore } from "@/stores/useEditorStore";
 
 const displayModes = [
   { label: "inline", value: "inline", icon: AlignHorizontalSpaceAround },
@@ -26,7 +26,7 @@ const displayModes = [
 ];
 
 export default function MathDialog({ editor }) {
-  const [open, setOpen] = useState(false);
+  const { openMathDialog, closeDialog, openDialog } = useEditorStore();
   const [latex, setLatex] = useState("");
   const [editMode, setEditMode] = useState("inline"); // 'inline' or 'block'
   const [pos, setPos] = useState(null);
@@ -42,7 +42,7 @@ export default function MathDialog({ editor }) {
       setLatex(initialLatex);
       setPos(nodePos);
       setEditMode(mode);
-      setOpen(true);
+      openDialog("openMathDialog");
     };
 
     window.addEventListener("open-math-dialog", handler);
@@ -102,7 +102,7 @@ export default function MathDialog({ editor }) {
       }
     }
 
-    setOpen(false);
+    closeDialog("openMathDialog");
   };
 
   const deleteMath = () => {
@@ -117,21 +117,20 @@ export default function MathDialog({ editor }) {
       editor.chain().setNodeSelection(pos).deleteInlineMath().focus().run();
     }
 
-    setOpen(false);
+    closeDialog("openMathDialog");
   };
 
-  const handleOpenChange = (newOpen) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      // reset after close
-      setLatex("");
-      setEditMode(null);
-      setPos(null);
-    }
+  const handleCancel = () => {
+    closeDialog("openMathDialog");
+
+    // reset after close
+    setLatex("");
+    setEditMode(null);
+    setPos(null);
   };
 
   return (
-    <Dialog open={open}>
+    <Dialog open={openMathDialog}>
       <DialogTrigger asChild>
         <TooltipWrapper message="Equation">
           <Button
@@ -142,7 +141,7 @@ export default function MathDialog({ editor }) {
               setEditMode(null);
               setPos(null);
               setLatex("");
-              setOpen(true);
+              openDialog("openMathDialog");
             }}
           >
             <Sigma />
@@ -174,7 +173,7 @@ export default function MathDialog({ editor }) {
             <Trash2 /> Delete
           </Button>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => handleOpenChange(false)}>
+            <Button variant="secondary" onClick={handleCancel}>
               Cancel
             </Button>
             <Button onClick={insertMath}>

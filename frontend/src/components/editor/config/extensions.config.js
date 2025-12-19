@@ -160,7 +160,13 @@ export const extensions = [
   TableHeader,
   TableCell,
   Placeholder.configure({
-    placeholder: "Type / for options",
+    placeholder: ({ node }) => {
+      if (node.type.name === "heading") {
+        return "Heading " + node.attrs.level;
+      }
+
+      return "Type / for options";
+    },
   }),
   Image,
   // ...keep your existing imports and code above

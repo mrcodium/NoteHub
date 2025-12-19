@@ -1,8 +1,17 @@
 import { create } from "zustand";
-import { axiosInstance } from "@/lib/axios";
-
 
 export const useEditorStore = create((set, get) => ({
-    imageTrigger: null,
-    setImageTrigger: (imageTrigger) => set({ imageTrigger }),
-}))
+  openImageDialog: false,
+  openMathDialog: false,
+  openLinkDialog: false,
+
+  openDialog: (dialog) => set({ [dialog]: true }),
+  closeDialog: (dialog) => set({ [dialog]: false }),
+
+  closeAllDialogs: () =>
+    set({
+      openImageDialog: false,
+      openMathDialog: false,
+      openLinkDialog: false,
+    }),
+}));

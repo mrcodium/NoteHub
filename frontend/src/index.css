@@ -1155,13 +1155,13 @@ div:has(> .tiptap.ProseMirror) {
     cursor: ew-resize;
     cursor: col-resize;
   }
-  p.is-editor-empty::before {
+  *.is-editor-empty::before {
     @apply text-muted-foreground/40 float-left h-0 pointer-events-none;
     content: attr(data-placeholder);
   }
 
   /* Placeholder (on every new line) */
-  p.is-empty::before {
+  *.is-empty::before {
     @apply text-muted-foreground/40 float-left h-0 pointer-events-none;
     content: attr(data-placeholder);
   }

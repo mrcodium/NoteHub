@@ -38,6 +38,7 @@ import {
 import FileDropZone from "../FileDropZone";
 import { LinkDialog } from "./LinkDialog";
 import MathDialog from "./MathDialog";
+import AddImageDialog from "./AddImageDialog";
 
 export const MenuBar = ({ noteId }) => {
   const { editor } = useCurrentEditor();
@@ -218,17 +219,7 @@ export const MenuBar = ({ noteId }) => {
           />
         </div>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button size="icon" ref={imageTrigger} variant="outline">
-              <ImageIcon />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogTitle style={{ display: "none" }}>Add Image</DialogTitle>
-            <FileDropZone editor={editor} />
-          </DialogContent>
-        </Dialog>
+        <AddImageDialog editor={editor}/>
         <MathDialog editor={editor} />
         <LinkDialog editor={editor} />
 

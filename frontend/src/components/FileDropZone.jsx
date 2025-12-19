@@ -8,7 +8,6 @@ import { toast } from "sonner";
 
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -18,7 +17,7 @@ import {
   AlertDialogAction,
 } from "./ui/alert-dialog";
 
-const FileDropZone = ({ editor }) => {
+const FileDropZone = ({ onImageSelect }) => {
   const {
     getImages,
     galleryImages,
@@ -55,14 +54,6 @@ const FileDropZone = ({ editor }) => {
     e.target.value = null;
   };
 
-  const handleSetImage = useCallback(
-    (url) => {
-      if (editor) {
-        editor.chain().focus().setImage({ src: url }).run();
-      }
-    },
-    [editor]
-  );
 
   const imageCount = localStorage.getItem("imageCount") || 3;
   const skeletons = [];
@@ -115,7 +106,7 @@ const FileDropZone = ({ editor }) => {
               >
                 <img
                   src={url}
-                  onClick={() => handleSetImage(url)}
+                  onClick={() => onImageSelect(url)}
                   className="w-full h-full object-cover"
                   alt="note"
                 />

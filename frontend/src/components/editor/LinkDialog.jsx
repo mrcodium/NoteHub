@@ -9,20 +9,22 @@ import { Button } from "../ui/button";
 import { ExternalLink, LinkIcon, Trash2 } from "lucide-react";
 import { Input } from "../ui/input";
 import TooltipWrapper from "../TooltipWrapper";
+import { useEditorStore } from "@/stores/useEditorStore";
 
 export function LinkDialog({ editor }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const { openLinkDialog, closeDialog, openDialog } = useEditorStore();
+
   const [linkUrl, setLinkUrl] = useState("");
   const inputRef = useRef(null);
 
   // Set initial link value when dialog opens
   useEffect(() => {
-    if (isOpen && editor) {
+    if (openLinkDialog && editor) {
       const currentLink = editor.getAttributes("link").href || "";
       setLinkUrl(currentLink);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
-  }, [isOpen, editor]);
+  }, [openLinkDialog, editor]);
 
   const handleSetLink = () => {
     if (!editor) return;
@@ -38,7 +40,7 @@ export function LinkDialog({ editor }) {
     } else {
       editor.chain().focus().unsetLink().run();
     }
-    setIsOpen(false);
+    closeDialog("openLinkDialog");
   };
 
   const handleRemoveLink = () => {
@@ -46,7 +48,7 @@ export function LinkDialog({ editor }) {
 
     editor.chain().focus().unsetLink().run();
     setLinkUrl("");
-    setIsOpen(false);
+    closeDialog("openLinkDialog");
   };
 
   const handleOpenLink = () => {
@@ -58,13 +60,18 @@ export function LinkDialog({ editor }) {
   if (!editor) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={openLinkDialog}
+      onOpenChange={(open) =>
+        open ? openDialog("openLinkDialog") : closeDialog("openLinkDialog")
+      }
+    >
       <DialogTrigger asChild>
         <TooltipWrapper message="Insert Link">
           <Button
             size="icon"
             variant="outline"
-            onClick={() => setIsOpen(true)}
+            onClick={() => openDialog("openLinkDialog")}
             disabled={!editor.can().setLink({ href: "" })}
           >
             <LinkIcon />
@@ -82,7 +89,7 @@ export function LinkDialog({ editor }) {
             onChange={(e) => setLinkUrl(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSetLink();
-              if (e.key === "Escape") setIsOpen(false);
+              if (e.key === "Escape") closeDialog("openLinkDialog");
             }}
             onBlur={handleSetLink}
           />
