@@ -446,7 +446,7 @@ export const useNoteStore = create((set, get) => {
         }));
 
         // Update the note in notes array (if present)
-        updateNoteInNotesArray(updatedNote);
+        updateNoteInNotesArray(updatedNote._id, {visibility: updatedNote._id});
 
         toast.success(message);
 
