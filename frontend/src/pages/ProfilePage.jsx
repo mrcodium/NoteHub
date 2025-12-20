@@ -363,7 +363,7 @@ const ProfilePage = () => {
             <p className="text-muted-foreground">No collections found</p>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-0">
             {filteredCollections.map((collection) => (
               <CollectionCard
                 key={collection._id}

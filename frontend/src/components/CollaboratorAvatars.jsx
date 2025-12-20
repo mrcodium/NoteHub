@@ -60,7 +60,7 @@ const AvatarStack = ({ collaborators = [], maxVisible = 5, size = "md" }) => {
       {collaborators.slice(0, visibleAvatars).reverse().map((collaborator) => (
         <TooltipWrapper
           key={collaborator._id}
-          message={`${collaborator.fullName} (@${collaborator.userName})`}
+          message={`@${collaborator.userName}`}
         >
           <Avatar className={cn(
             "shadow-md",

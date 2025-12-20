@@ -1,4 +1,4 @@
-import { Bookmark, Lock, MoreVertical } from "lucide-react";
+import { Bookmark, Lock, MoreVertical, Pin } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { Input } from "./ui/input";
 import { Link } from "react-router-dom";
@@ -60,19 +60,23 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
   return (
     <Card
       key={collection._id}
-      className={cn("group hover:shadow-md transition-all")}
+      className={cn(
+        "group rounded-none bg-transparent border-0 border-b hover:shadow-md hover:bg-muted/30 transition-all"
+      )}
     >
       <div className="flex items-center gap-2 justify-between p-4">
-        <div className="flex items-start gap-3 flex-1">
+        <div className="flex items-start gap-4 flex-1">
           <div className="relative">
-            <Bookmark
-              className={cn(
-                "h-5 w-5 mt-1",
-                isPinned(collection._id)
-                  ? "text-foreground fill-foreground"
-                  : "text-muted-foreground"
-              )}
-            />
+            {isPinned(collection._id) && (
+              <Bookmark className={cn("h-5 w-5 mt-1 absolute -bottom-1 -right-1 fill-primary stroke-primary")} />
+            )}
+            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
+              <img
+                src="/folder.svg"
+                alt="folder"
+                className="size-8 dark:invert grayscale"
+              />
+            </div>
           </div>
           <div className="w-full space-y-2">
             <div className="flex items-center justify-between gap-2 w-full">
@@ -90,7 +94,7 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                   <TooltipWrapper message={collection.name}>
                     <Link
                       to={`${collection.slug}`}
-                      className="hover:underline font-medium"
+                      className="hover:underline font-medium line-clamp-2"
                     >
                       {collection.name}
                     </Link>
