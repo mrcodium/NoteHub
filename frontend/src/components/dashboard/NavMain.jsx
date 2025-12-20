@@ -34,11 +34,10 @@ import NotesOption from "../NotesOption";
 import CollectionsOption from "../CollectionsOption";
 import { useLocalStorage } from "@/stores/useLocalStorage";
 import { HighlightMatch } from "../HighlightMatch";
-
-
+import { cn } from "@/lib/utils";
 
 const NoteItem = ({ note }) => {
-  const {closeSidebar, isMobile} = useSidebar();
+  const { closeSidebar, isMobile } = useSidebar();
   const [isNoteRenaming, setIsNoteRenaming] = useState(false);
   const inputRef = useRef(null);
   const { selectedNote, setselectedNote, renameNote } = useNoteStore();
@@ -80,7 +79,7 @@ const NoteItem = ({ note }) => {
     <SidebarMenuSubItem className="group/note h-auto">
       <SidebarMenuSubButton
         asChild
-        className="p-0 h-auto"
+        className={cn("p-0 h-auto", note.visibility === "private" && "bg-destructive/10 hover:bg-destructive/20")}
         onClick={() => !isNoteRenaming && setselectedNote(note._id)}
       >
         <div
@@ -100,7 +99,7 @@ const NoteItem = ({ note }) => {
           ) : (
             <Link
               to={`/note/${note._id}`}
-              onClick={()=>isMobile && closeSidebar()}
+              onClick={() => isMobile && closeSidebar()}
               className="truncate px-2.5 py-2 flex-1 text-sidebar-foreground/70"
             >
               {note.name}
@@ -123,11 +122,7 @@ const NoteItem = ({ note }) => {
   );
 };
 
-const FolderCollapsible = ({
-  collection,
-  pinnedCollections,
-  searchQuery,
-}) => {
+const FolderCollapsible = ({ collection, pinnedCollections, searchQuery }) => {
   const [isCollectionRenaming, setIsCollectionRenaming] = useState(false);
   const inputRef = useRef(null);
   const { renameCollection } = useNoteStore();
@@ -200,11 +195,12 @@ const FolderCollapsible = ({
                     onClick={handleInputClick}
                   />
                 ) : (
-                  <span className="font-semibold truncate p-1">
+                  <span className="block truncate font-semibold px-1">
                     {collection.name}
                   </span>
                 )}
               </div>
+
               {pinnedCollections.includes(collection._id) && (
                 <Pin className="ml-auto size-4" />
               )}
@@ -236,7 +232,7 @@ const FolderCollapsible = ({
 };
 
 const NavMain = ({ collections, searchQuery }) => {
-  const { isCollectionsLoading } = useNoteStore();
+  const { status } = useNoteStore();
   const { pinnedCollections } = useLocalStorage();
 
   const filteredCollections = collections
@@ -269,7 +265,7 @@ const NavMain = ({ collections, searchQuery }) => {
       return 0;
     });
 
-  if (isCollectionsLoading) {
+  if (status.collection.state === "loading") {
     return <SidebarSkeleton />;
   }
 

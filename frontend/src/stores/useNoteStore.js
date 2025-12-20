@@ -3,37 +3,45 @@ import { axiosInstance } from "../lib/axios";
 import { toast } from "sonner";
 
 export const useNoteStore = create((set, get) => {
-  // Helper to wrap async functions with loading state and error handling
-  const withLoading = (key, fn) => async (...args) => {
-    set({ [key]: true });
-    try {
-      return await fn(...args);
-    } catch (error) {
-      console.error(`Error in ${key}:`, error);
-      toast.error(error?.response?.data?.message || "Something went wrong");
-      throw error;
-    } finally {
-      set({ [key]: false });
-    }
+  const setStatus = (key, value) =>
+    set((state) => ({
+      status: { ...state.status, [key]: value },
+    }));
+
+  const updateNoteInNotesArray = (noteId, updates) => {
+    set((state) => {
+      const index = state.notes.findIndex((note) => note._id === noteId);
+      if (index === -1) return state;
+
+      const newNotes = [...state.notes];
+      newNotes[index] = {
+        ...newNotes[index],
+        ...updates,
+      };
+      return { notes: newNotes };
+    });
   };
 
   return {
-    // BOOLEANS
-    isCollectionsLoading: false,
-    isCreatingCollection: false,
-    isDeletingCollection: false,
-    isCreatingNote: false,
+    // 'idle' | 'loading' | 'saving' | 'error'
+    status: {
+      note: { state: "idle", error: null },
+      collection: { state: "idle", error: null },
+      noteContent: { state: "idle", error: null },
+      collaborator: { state: "idle", error: null },
+    },
+
     selectedNote: null,
-    isContentLoading: false,
-    isContentUploading: false,
     noteNotFound: false,
     setNoteNotFound: false,
+
+    // Stores
     collections: [],
     notesContent: {
       //noteId : 'content'
     },
-    isNotesLoading: false,
     notes: [],
+
     pagination: {
       currentPage: 1,
       totalPages: 0,
@@ -41,39 +49,32 @@ export const useNoteStore = create((set, get) => {
       notesPerPage: 10,
       hasMore: false,
     },
-    updatingCollaborators: false,
-    noteById: {},
 
-    getPublicNotes: withLoading("isNotesLoading", async ({ page, limit, user }) => {
-      const res = await axiosInstance.get("/note", {
-        params: {
-          page,
-          limit,
-          user: user ? "true" : undefined,
-        },
-      });
+    getPublicNotes: async ({ page, limit, user }) => {
+      setStatus("note", { state: "loading", error: null });
+      try {
+        const res = await axiosInstance.get("/note", {
+          params: {
+            page,
+            limit,
+            user: user ? "true" : undefined,
+          },
+        });
 
-      const { data } = res;
-      const newNotes = data.data.notes;
-      set({
-        notes: page === 1 ? newNotes : [...get().notes, ...newNotes],
-        pagination: data.data.pagination,
-      });
+        const { data } = res;
+        const newNotes = data.data.notes;
+        set({
+          notes: page === 1 ? newNotes : [...get().notes, ...newNotes],
+          pagination: data.data.pagination, // Use pagination directly from API
+        });
 
-      return data.data;
-    }),
-
-    resetNotes: () =>
-      set({
-        notes: [],
-        pagination: {
-          currentPage: 1,
-          totalPages: 0,
-          totalNotes: 0,
-          notesPerPage: 10,
-          hasMore: false,
-        },
-      }),
+        return data.data;
+      } catch (error) {
+        throw error;
+      } finally {
+        setStatus("note", { state: "idle", error: null });
+      }
+    },
 
     getNoteContent: async (noteId) => {
       const { notesContent } = get();
@@ -81,8 +82,9 @@ export const useNoteStore = create((set, get) => {
         return notesContent[noteId] || "";
       }
 
-      // ondemand loading with withLoading helper
-      return withLoading("isContentLoading", async () => {
+      // ondemand loading.
+      setStatus("noteContent", { state: "loading", error: null });
+      try {
         const res = await axiosInstance.get(`note/${noteId}`);
         const { content } = res.data.note;
         set({
@@ -90,13 +92,18 @@ export const useNoteStore = create((set, get) => {
             ...notesContent,
             [noteId]: content,
           },
-          noteNotFound: false,
         });
+
+        set({ noteNotFound: false });
         return content || "";
-      })().catch(() => {
+      } catch (error) {
+        console.error("Error fetching note content", error);
+        console.log("not found");
         set({ noteNotFound: true });
         return null;
-      });
+      } finally {
+        setStatus("noteContent", { state: "idle", error: null });
+      }
     },
 
     getNoteName: (noteId) => {
@@ -112,25 +119,32 @@ export const useNoteStore = create((set, get) => {
       return null;
     },
 
-    updateContent: withLoading("isContentUploading", async (data) => {
-      const now = new Date();
-      const offsetMinutes = now.getTimezoneOffset();
+    updateContent: async (data) => {
+      setStatus("noteContent", { state: "saving", error: null });
+      try {
+        const res = await axiosInstance.put("/note/", data);
 
-      const res = await axiosInstance.put("/note/", {
-        ...data,
-        userLocalDateTime: now.toISOString(),
-        offsetMinutes,
-      });
+        const { note, message } = res.data;
+        set((state) => ({
+          notesContent: {
+            ...state.notesContent,
+            [note._id]: note.content,
+          },
+        }));
 
-      const { note, message } = res.data;
-      set((state) => ({
-        notesContent: {
-          ...state.notesContent,
-          [note._id]: note.content,
-        },
-      }));
-      toast.success(message);
-    }),
+        // Update the note in collections (for updatedAt)
+        get().replaceNoteFromCollection(note);
+        // Update the note in notes array (if present)
+        updateNoteInNotesArray(note._id, { content: note.content });
+
+        toast.success(message);
+      } catch (error) {
+        console.log("Error in updating content", error);
+        toast.error(error.response.data.message);
+      } finally {
+        setStatus("noteContent", { state: "idle", error: null });
+      }
+    },
 
     setselectedNote: (noteId) => {
       set({ selectedNote: noteId });
@@ -168,55 +182,66 @@ export const useNoteStore = create((set, get) => {
       }));
     },
 
-    // ======= Collection CRUD operations =======
+    // ======= Utility methods for collections =======
 
-    createCollection: withLoading("isCreatingCollection", async (data) => {
-      const res = await axiosInstance.post("/collection", data);
-      const { collection, message } = res.data;
-      set((state) => ({
-        collections: [...state.collections, collection],
-      }));
-      toast.success(message);
-      return collection;
-    }),
+    createCollection: async (data) => {
+      setStatus("collection", { state: "creating", error: null });
+      try {
+        const res = await axiosInstance.post("/collection", data);
+        const { collection, message } = res.data;
+        set((state) => ({
+          collections: [...state.collections, collection],
+        }));
+        toast.success(message);
+        return collection;
+      } catch (error) {
+        toast.error(error.response.data.message);
+      } finally {
+        setStatus("collection", { state: "idle", error: null });
+      }
+    },
 
-    deleteCollection: withLoading("isDeletingCollection", async (collectionId) => {
-      const res = await axiosInstance.delete(`/collection/${collectionId}`);
-      set((state) => ({
-        collections: state.collections.filter(
-          (collection) => collection._id !== collectionId
-        ),
-      }));
-      toast.success(res.data.message);
-    }),
+    deleteCollection: async (collectionId) => {
+      setStatus("collection", { state: "deleting", error: null });
+      try {
+        const res = await axiosInstance.delete(`/collection/${collectionId}`);
+        set((state) => ({
+          collections: state.collections.filter(
+            (collection) => collection._id !== collectionId
+          ),
+        }));
+        toast.success(res.data.message);
+      } catch (error) {
+        toast.error(error.response.data.message);
+      } finally {
+        setStatus("collection", { state: "idle", error: null });
+      }
+    },
 
     getAllCollections: async ({ userId, guest = false }) => {
-      if (guest) {
-        // Skip loading state for guest requests
-        try {
-          const res = await axiosInstance.get("collection/all-collections", {
-            params: { userId },
-          });
-          return res.data.collections;
-        } catch (error) {
-          console.error("Error fetching collections:", error);
-          toast.error(error?.response?.data?.message || "Failed to fetch collections");
-          return null;
-        }
-      }
+      if (!guest) setStatus("collection", { state: "loading", error: null });
 
-      return withLoading("isCollectionsLoading", async () => {
+      try {
         const res = await axiosInstance.get("collection/all-collections", {
           params: { userId },
         });
         const { collections } = res.data;
-        set({ collections });
-        localStorage.setItem(
-          "collectionLength",
-          JSON.stringify(collections.length)
-        );
+        if (!guest) {
+          set({ collections });
+          // count no of notes
+          localStorage.setItem(
+            "collectionLength",
+            JSON.stringify(collections.length)
+          );
+        }
         return collections;
-      })().catch(() => null);
+      } catch (error) {
+        console.log(error);
+        toast.error(error.response.data.message);
+        return null;
+      } finally {
+        setStatus("collection", { state: "idle", error: null });
+      }
     },
 
     renameCollection: async (data) => {
@@ -237,61 +262,87 @@ export const useNoteStore = create((set, get) => {
         }));
         toast.success(message);
       } catch (error) {
-        console.error("Error renaming collection:", error);
-        toast.error(error?.response?.data?.message || "Failed to rename collection");
+        console.log(error);
+        toast.error(error.response.data.message);
       }
     },
 
-    // ======= Note CRUD operations =======
-
-    createNote: withLoading("isCreatingNote", async (data) => {
+    createNote: async (data) => {
+      setStatus("note", { state: "creating", error: null });
       const { collectionId } = data;
-      const res = await axiosInstance.post("note/", data);
-      const { note, message } = res.data;
+      try {
+        const res = await axiosInstance.post("note/", data);
+        const { note, message } = res.data;
 
-      get().insertNoteInCollection(collectionId, note);
-      toast.success(message);
-      return note._id;
-    }),
+        // Add note to the appropriate collection
+        get().insertNoteInCollection(collectionId, note);
+
+        toast.success(message);
+        return note._id;
+      } catch (error) {
+        console.log(error);
+        toast.error(error.response.data.message);
+        return null;
+      } finally {
+        setStatus("note", { state: "idle", error: null });
+      }
+    },
 
     deleteNote: async (noteId) => {
       try {
         const res = await axiosInstance.delete(`note/${noteId}`);
+
+        // Remove the deleted note from collections
         get().deleteNoteFromCollection(noteId);
+        // Remove the deleted note from notes array (if present)
+        set((state) => ({
+          notes: state.notes.filter((note) => note._id !== noteId),
+        }));
+
         toast.success(res.data.message);
       } catch (error) {
-        console.error("Error deleting note:", error);
-        toast.error(error?.response?.data?.message || "Failed to delete note");
+        console.log(error);
+        toast.error(error.response.data.message);
       }
     },
 
     renameNote: async (data) => {
       try {
         const res = await axiosInstance.put("note/rename", data);
-        const { note: updatedNote, message } = res.data;
-        get().replaceNoteFromCollection(updatedNote);
+        const { note, message } = res.data;
+
+        // Replace note with updated note in collections
+        get().replaceNoteFromCollection(note);
+        // Update the note in notes array (if present)
+        updateNoteInNotesArray(note._id, { slug: note.slug, name: note.name });
+
         toast.success(message);
       } catch (error) {
-        console.error("Error renaming note:", error);
-        toast.error(error?.response?.data?.message || "Failed to rename note");
+        console.log(error);
+        toast.error(error.response.data.message);
       }
     },
 
     moveTo: async (data) => {
       try {
+        setStatus("note", { state: "moving", error: null });
         const res = await axiosInstance.post("/note/move-to", data);
-        const { note: updatedNote, message } = res.data;
+        const { collection, note, message } = res.data;
+        // Remove the note from the old collection and add it to the new collection
+        get().deleteNoteFromCollection(note._id);
+        get().insertNoteInCollection(collection._id, note);
 
-        get().deleteNoteFromCollection(updatedNote._id);
-        get().insertNoteInCollection(updatedNote.collectionId, updatedNote);
+        // Update the note in notes array (if present) because the note's collectionId changed
+        updateNoteInNotesArray(note._id, { collectionId: collection });
+
         toast.success(message);
       } catch (error) {
-        console.error("Error moving note:", error);
-        toast.error(error?.response?.data?.message || "Failed to move note");
+        console.log(error);
+        toast.error(error.response.data.message);
+      } finally {
+        setStatus("note", { state: "idle", error: null });
       }
     },
-
-    // ======= Visibility and Collaboration =======
 
     updateCollectionVisibility: async ({ visibility, collectionId }) => {
       try {
@@ -314,20 +365,23 @@ export const useNoteStore = create((set, get) => {
         }));
         toast.success(message);
       } catch (error) {
-        console.error("Error updating visibility:", error);
-        toast.error(error?.response?.data?.message || "Failed to update visibility");
+        console.log(error);
+        toast.error(
+          error.response.data.message || "Failed to update visibility"
+        );
       }
     },
 
-    updateCollectionCollaborators: withLoading(
-      "updatingCollaborators",
-      async ({ collectionId, collaborators }) => {
+    updateCollectionCollaborators: async ({ collectionId, collaborators }) => {
+      setStatus("collaborator", { state: "saving", error: null });
+      try {
         const res = await axiosInstance.put("collection/update-collaborators", {
           collectionId,
           collaborators,
         });
         const { collection, message } = res.data;
 
+        // Replace note with updated note
         set((state) => ({
           collections: state.collections.map((c) => {
             if (c._id === collection._id) {
@@ -342,22 +396,34 @@ export const useNoteStore = create((set, get) => {
         }));
 
         toast.success(message);
+      } catch (error) {
+        console.log(error);
+        toast.error(error.response.data.message);
+      } finally {
+        setStatus("collaborator", { state: "idle", error: null });
       }
-    ),
+    },
 
-    updateNoteCollaborators: withLoading(
-      "updatingCollaborators",
-      async ({ noteId, collaborators }) => {
+    updateNoteCollaborators: async ({ noteId, collaborators }) => {
+      setStatus("collaborator", { state: "saving", error: null });
+      try {
         const res = await axiosInstance.put("note/update-collaborators", {
           noteId,
           collaborators,
         });
         const { note: updatedNote, message } = res.data;
-
+        // Replace note with updated note in collections
         get().replaceNoteFromCollection(updatedNote);
+        // no need to update note array beacuse there is no collabs in note array schema.
+
         toast.success(message);
+      } catch (error) {
+        console.log(error);
+        toast.error(error.response.data.message);
+      } finally {
+        setStatus("collaborator", { state: "idle", error: null });
       }
-    ),
+    },
 
     updateNoteVisibility: async ({ noteId, visibility }) => {
       try {
@@ -367,6 +433,7 @@ export const useNoteStore = create((set, get) => {
         });
         const { note: updatedNote, message } = res.data;
 
+        // only update visibility of the matched note in collections
         set((state) => ({
           collections: state.collections.map((collection) => ({
             ...collection,
@@ -378,11 +445,15 @@ export const useNoteStore = create((set, get) => {
           })),
         }));
 
+        // Update the note in notes array (if present)
+        updateNoteInNotesArray(updatedNote);
+
         toast.success(message);
+
         return updatedNote.visibility;
       } catch (error) {
-        console.error("Error updating note visibility:", error);
-        toast.error(error?.response?.data?.message || "Failed to update visibility");
+        console.log(error);
+        toast.error(error.response.data.message);
       }
     },
   };

@@ -44,7 +44,7 @@ export const CollaboratorsDialog = () => {
   const {
     updateNoteCollaborators,
     updateCollectionCollaborators,
-    updatingCollaborators,
+    status,
   } = useNoteStore();
   const [workingCollaborators, setWorkingCollaborators] = useState([]);
   const [removedIds, setRemovedIds] = useState(new Set());
@@ -123,7 +123,7 @@ export const CollaboratorsDialog = () => {
           return newSet;
         });
       }}
-      isSaving={updatingCollaborators}
+      isSaving={status.collaborator.state === "saving"}
       hasChanges={hasChanges}
     />
   );

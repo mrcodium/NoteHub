@@ -43,8 +43,7 @@ const CollectionsOption = ({ trigger, collection, onRenameStart }) => {
   const {
     deleteCollection,
     createNote,
-    isDeletingCollection,
-    isCreatingNote,
+    status,
     updateCollectionVisibility,
   } = useNoteStore();
   const navigate = useNavigate();
@@ -219,10 +218,10 @@ const CollectionsOption = ({ trigger, collection, onRenameStart }) => {
                 variant="destructive"
                 disabled={
                   deleteConfirmationText !== collection.name ||
-                  isDeletingCollection
+                  status.collection.state === "deleting"
                 }
               >
-                {isDeletingCollection ? (
+                {status.collection.state === "deleting" ? (
                   <>
                     <Loader2 className="animate-spin mr-2" />
                     Deleting...
@@ -282,9 +281,9 @@ const CollectionsOption = ({ trigger, collection, onRenameStart }) => {
               </Button>
               <Button
                 type="submit"
-                disabled={!noteName.trim() || isCreatingNote}
+                disabled={!noteName.trim() || status.note.state === "creating"}
               >
-                {isCreatingNote ? (
+                {status.note.state === "creating" ? (
                   <>
                     <Loader2 className="animate-spin mr-2" />
                     Creating...

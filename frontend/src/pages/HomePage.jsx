@@ -6,7 +6,7 @@ import { ArticleCardSkeleton } from "@/components/ArticleCardSkeleton";
 
 const HomePage = () => {
   const loaderRef = useRef(null);
-  const { notes, isNotesLoading, pagination, getPublicNotes } = useNoteStore();
+  const { notes, pagination, getPublicNotes, status } = useNoteStore();
 
   // Transform notes with proper fallbacks
   const articles = notes.map(noteToArticle);
@@ -15,14 +15,14 @@ const HomePage = () => {
   const handleObserver = useCallback(
     (entries) => {
       const [entry] = entries;
-      if (entry.isIntersecting && !isNotesLoading && pagination.hasMore) {
+      if (entry.isIntersecting && !status.note.state !== "loading" && pagination.hasMore) {
         getPublicNotes({
           page: pagination.currentPage + 1,
           limit: 10,
         });
       }
     },
-    [isNotesLoading, pagination, getPublicNotes]
+    [pagination, getPublicNotes]
   );
 
   // Set up intersection observer
@@ -66,7 +66,7 @@ const HomePage = () => {
           />
         ))}
 
-        {((isNotesLoading )) && 
+        {(status.note.state === "loading" ) && 
           (
             [...Array(5)].map((_, i) => <ArticleCardSkeleton key={i} />)
           )

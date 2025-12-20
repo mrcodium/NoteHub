@@ -11,10 +11,10 @@ import { useNoteStore } from "@/stores/useNoteStore";
 const CreateCollection = ({ setSelectedCollection, setActiveTab }) => {
   const [collectionName, setCollectionName] = useState("");
   const [visibility, setVisibility] = useState("private");
-  const { createCollection, isCreatingCollection } = useNoteStore();
+  const { createCollection, status } = useNoteStore();
 
   const handleAddCollection = async () => {
-    if(!collectionName.trim() || isCreatingCollection) return;
+    if(!collectionName.trim() || status.collection.state === "creating") return;
     
     const collection = await createCollection({
       name: collectionName,
@@ -29,7 +29,7 @@ const CreateCollection = ({ setSelectedCollection, setActiveTab }) => {
 
   // Handle Enter key press
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && collectionName.trim() && !isCreatingCollection) {
+    if (e.key === "Enter" && collectionName.trim() && !status.collection.state === "creating") {
       e.preventDefault();
       handleAddCollection();
     }
@@ -126,9 +126,9 @@ const CreateCollection = ({ setSelectedCollection, setActiveTab }) => {
           <Button
             className="flex-1 gap-2 h-12 rounded-xl"
             onClick={handleAddCollection}
-            disabled={!collectionName.trim() || isCreatingCollection}
+            disabled={!collectionName.trim() || status.collection.state === "creating"}
           >
-            {isCreatingCollection && (
+            {status.collection.state === "creating" && (
               <Loader2 className="h-4 w-4 animate-spin" />
             )}
             Create Collection

@@ -52,7 +52,7 @@ function App() {
   }, [checkAuth]);
 
   const { setRoutes } = useRouteStore();
-  const { getNoteName, collections, isCollectionsLoading, setselectedNote } =
+  const { getNoteName, collections, status, setselectedNote } =
     useNoteStore();
   const location = useLocation();
 
@@ -81,7 +81,7 @@ function App() {
       }
     }
     setRoutes(routes);
-  }, [location, collections, isCollectionsLoading]);
+  }, [location, collections]);
 
   if (isCheckingAuth) {
     return (

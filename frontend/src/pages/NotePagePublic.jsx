@@ -15,6 +15,7 @@ import { axiosInstance } from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useImageStore } from "@/stores/useImageStore";
 import Footer from "@/components/Footer";
+import { cn } from "@/lib/utils";
 
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
@@ -201,7 +202,7 @@ const NotePagePublic = () => {
   }
 
   return (
-    <div className={`tiptap ${!content.trim() ? "empty" : ""}`}>
+    <div className={cn("tiptap", !content.trim() && "empty")}>
       <div className="max-w-screen-md m-auto">
         <Dialog
           open={selectedImage}
@@ -239,8 +240,8 @@ const NotePagePublic = () => {
         )}
 
         {parse(content)}
-        <Footer />
       </div>
+      <Footer />
     </div>
   );
 };

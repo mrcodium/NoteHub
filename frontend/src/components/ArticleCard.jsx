@@ -126,7 +126,11 @@ export function ArticleCard({
                     {note.visibility === "public" ? (
                       <Globe size={16} strokeWidth={3} />
                     ) : (
-                      <Lock size={16} strokeWidth={3} className="fill-destructive/20 stroke-destructive" />
+                      <Lock
+                        size={16}
+                        strokeWidth={3}
+                        className="fill-destructive/20 stroke-destructive"
+                      />
                     )}
                   </Badge>
                 )}

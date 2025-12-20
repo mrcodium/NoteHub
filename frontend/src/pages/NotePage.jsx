@@ -17,8 +17,7 @@ import Footer from "@/components/Footer";
 
 const NotePage = () => {
   const { id } = useParams();
-  const { getNoteContent, isContentLoading, noteNotFound, setNoteNotFound } =
-    useNoteStore();
+  const { getNoteContent, notesContent, status, noteNotFound } = useNoteStore();
   const [content, setContent] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
@@ -126,7 +125,7 @@ const NotePage = () => {
     }
   }, [content]);
 
-  if (isContentLoading) {
+  if (status.noteContent.state === "loading") {
     return <NoteSkeleton />;
   }
 

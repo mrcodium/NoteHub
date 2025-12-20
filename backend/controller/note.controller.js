@@ -315,40 +315,46 @@ export const renameNote = async (req, res) => {
 }
 
 export const moveTo = async (req, res) => {
-    const { noteId, collectionId } = req.body;
-    const { user } = req;
-    
-    if (!noteId || !collectionId) {
-        return res.status(400).json({ 
-            message: "Note ID and collection ID are required" 
-        });
+  const { noteId, collectionId } = req.body;
+  const { user } = req;
+
+  if (!noteId || !collectionId) {
+    return res.status(400).json({
+      message: "Note ID and collection ID are required",
+    });
+  }
+
+  try {
+    // 1️⃣ Move the note
+    const note = await Note.findOneAndUpdate(
+      { _id: noteId, userId: user._id },
+      { collectionId },
+      { new: true }
+    );
+
+    if (!note) {
+      return res.status(404).json({
+        message: "Note not found or you don't have permission to move it",
+      });
     }
 
-    try {
-        const note = await Note.findOneAndUpdate(
-            { _id: noteId, userId: user._id },
-            { collectionId },
-            { new: true }
-        );
-        
-        if (!note) {
-            return res.status(404).json({ 
-                message: "Note not found or you don't have permission to move it" 
-            });
-        }
-        
-        return res.status(200).json({ 
-            message: "Note moved to new collection successfully",
-             note 
-        });
-    } catch (error) {
-        console.error("Error in moveTo note controller:", error);
-        return res.status(500).json({ 
-            message: "Failed to move note",
-            error: error.message 
-        });
-    }
-}
+    // 2️⃣ Fetch ONLY required collection fields
+    const collection = await Collection.findById(collectionId)
+
+    return res.status(200).json({
+      message: "Note moved to new collection successfully",
+      collection,
+      note,
+    });
+  } catch (error) {
+    console.error("Error in moveTo note controller:", error);
+    return res.status(500).json({
+      message: "Failed to move note",
+      error: error.message,
+    });
+  }
+};
+
 
 export const updateVisibility = async (req, res) => {
     const {noteId, visibility} = req.body;

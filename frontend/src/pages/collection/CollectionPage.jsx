@@ -21,7 +21,7 @@ const CollectionPage = () => {
   const [errorStatus, setErrorStatus] = useState(null); // Track error status
   const [sortBy, setSortBy] = useState("created");
   const [sortDirection, setSortDirection] = useState("desc");
-  const { isCollectionsLoading, collections: ownerCollections } =
+  const { status, collections: ownerCollections } =
     useNoteStore();
   const { authUser } = useAuthStore();
   const isOwner = authUser?.userName.toLowerCase() === username.toLowerCase();
@@ -108,7 +108,7 @@ const CollectionPage = () => {
     fetchData();
   }, [username, collectionSlug, isOwner, authUser]);
 
-  if (isCollectionsLoading || isLoading) return <CollectionPageSkeleton />;
+  if (status.collection.state === "loading" || isLoading) return <CollectionPageSkeleton />;
 
   return (
     <div className="px-4 py-8 h-full overflow-y-auto bg-[#f5f5f5] dark:bg-background">

@@ -9,7 +9,7 @@ import { useImageStore } from "@/stores/useImageStore";
 import { migrateMathStrings } from "@tiptap/extension-mathematics";
 
 const Tiptap = () => {
-  const { getNoteContent, isContentLoading } = useNoteStore();
+  const { getNoteContent, status } = useNoteStore();
   const {getImages} = useImageStore();
   const { id: noteId } = useParams();
   const [content, setContent] = useState("");
@@ -59,7 +59,7 @@ const Tiptap = () => {
     );
   }
 
-  if (isContentLoading || loading) {
+  if (status.noteContent.state === "loading" || loading) {
     return <NoteSkeleton />;
   }
 
@@ -76,7 +76,7 @@ const Tiptap = () => {
       editorProps={{
         attributes: {
           class:
-            "prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none min-h-full",
+            "prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none min-h-full",
           spellcheck: "false",
         },
       }}

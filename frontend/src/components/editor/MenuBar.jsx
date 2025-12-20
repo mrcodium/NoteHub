@@ -36,7 +36,7 @@ import AddImageDialog from "./AddImageDialog";
 export const MenuBar = ({ noteId }) => {
   const { editor } = useCurrentEditor();
   const navigate = useNavigate();
-  const { updateContent, isContentUploading,getNoteContent } = useNoteStore();
+  const { updateContent, status, getNoteContent } = useNoteStore();
 
   if (!editor) {
     return null;
@@ -232,10 +232,10 @@ export const MenuBar = ({ noteId }) => {
 
         <TooltipWrapper message={"Save Content"}>
           <Button
-            disabled={!noteId || isContentUploading}
+            disabled={!noteId || status.noteContent.state === "saving"}
             onClick={handleContentSave}
           >
-            {isContentUploading ? (
+            {status.noteContent.state === "saving" ? (
               <Loader2 className="animate-spin" />
             ) : (
               <>
@@ -246,11 +246,7 @@ export const MenuBar = ({ noteId }) => {
           </Button>
         </TooltipWrapper>
         <TooltipWrapper message={"Revert Back"}>
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={handleRevert}
-          >
+          <Button size="icon" variant="outline" onClick={handleRevert}>
             <CloudDownloadIcon />
           </Button>
         </TooltipWrapper>

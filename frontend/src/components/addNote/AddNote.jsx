@@ -18,8 +18,9 @@ const AddNote = ({
   const navigate = useNavigate();
   const [noteName, setNoteName] = useState("");
   const [visibility, setVisibility] = useState("private");
-  const { createNote, isCreatingNote } = useNoteStore();
+  const { createNote, status } = useNoteStore();
 
+  const isCreatingNote = status.note.state === "creating";
   const handleAddNote = async () => {
     if(!noteName.trim() || isCreatingNote) return;
     

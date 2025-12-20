@@ -42,7 +42,7 @@ const ProfilePage = () => {
   const {
     getAllCollections,
     collections: ownerCollections,
-    isCollectionsLoading: isOwnerCollectionsLoading,
+    status,
   } = useNoteStore();
   const [user, setUser] = useState(null);
   const [collections, setCollections] = useState([]);
@@ -356,7 +356,7 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {isOwnerCollectionsLoading ? (
+        {status.collection.state === "loading" ? (
           <CollectionSkeleton />
         ) : collections.length === 0 ? (
           <Card className="py-12 text-center">
