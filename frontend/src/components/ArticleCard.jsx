@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -9,7 +9,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "./ui/carousel";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Globe,
+  Lock,
+  MoreVertical,
+} from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -18,8 +25,14 @@ import {
 } from "./ui/accordion";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
+import { useNoteStore } from "@/stores/useNoteStore";
+import NotesOption from "./NotesOption";
+import { formatTimeAgo } from "@/lib/utils";
+import { Badge } from "./ui/badge";
+import { Input } from "./ui/input";
 
 export function ArticleCard({
+  note,
   author,
   title,
   description,
@@ -33,25 +46,42 @@ export function ArticleCard({
   const [current, setCurrent] = useState(0);
   const [openImageIndex, setOpenImageIndex] = useState(null);
 
-  // Time formatter
-  const formatTimeAgo = (date) => {
-    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-    const intervals = {
-      year: 31536000,
-      month: 2592000,
-      week: 604800,
-      day: 86400,
-      hour: 3600,
-      minute: 60,
-    };
+  const isOwner = true;
+  const inputRef = useRef(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const { renameNote } = useNoteStore();
 
-    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-      const interval = Math.floor(seconds / secondsInUnit);
-      if (interval >= 1) {
-        return `${interval}${unit.charAt(0)} ago`;
-      }
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      const timeout = setTimeout(() => {
+        inputRef.current.focus();
+        inputRef.current.select();
+      }, 300);
+      return () => clearTimeout(timeout);
     }
-    return "Just now";
+  }, [isRenaming]);
+
+  const handleSaveRename = () => {
+    const newName = inputRef.current?.value.trim();
+    if (newName && newName !== note.name) {
+      renameNote({
+        noteId: note._id,
+        newName: newName,
+      });
+    }
+    setIsRenaming(false);
+  };
+
+  const handleKeyDown = (e) => {
+    e.stopPropagation();
+    if (e.key === "Enter") {
+      handleSaveRename();
+    } else if (e.key === "Escape") {
+      if (inputRef.current) {
+        inputRef.current.value = note.name;
+      }
+      setIsRenaming(false);
+    }
   };
 
   useEffect(() => {
@@ -64,24 +94,57 @@ export function ArticleCard({
 
   return (
     <Card className="w-full rounded-xl sm:rounded-2xl border-t border-border lg:border p-4 lg:p-6">
-      <CardHeader className="p-0 pb-3 flex flex-row justify-between items-center">
-        <Link
-          to={`user/${author?.userName}`}
-          className="flex flex-row items-center w-max gap-3"
-        >
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={author?.avatar} alt={author?.fullName} />
-            <AvatarFallback>
-              {(author?.fullName || "U").charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="font-semibold text-sm">{author?.fullName}</span>
-            <span className="text-sm text-muted-foreground">
-              {`@${author?.userName}`} • {formatTimeAgo(updatedAt)}
-            </span>
-          </div>
-        </Link>
+      <CardHeader className="p-0 mb-3 flex flex-row justify-between items-center">
+        {isRenaming ? (
+          <Input
+            ref={inputRef}
+            defaultValue={note.name}
+            className="font-bold h-8 flex-1"
+            onBlur={handleSaveRename}
+            onKeyDown={handleKeyDown}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <Link
+            to={`user/${author?.userName}`}
+            className="flex flex-row items-center w-max gap-3"
+          >
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={author?.avatar} alt={author?.fullName} />
+              <AvatarFallback>
+                {(author?.fullName || "U").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <div className="font-semibold flex gap-2 items-center text-sm">
+                <span>{author?.fullName}</span>
+                {isOwner && (
+                  <Badge
+                    variant="ghost"
+                    className={"p-1 border-none text-muted-foreground"}
+                  >
+                    {note.visibility === "public" ? (
+                      <Globe size={16} strokeWidth={3} />
+                    ) : (
+                      <Lock size={16} strokeWidth={3} className="fill-destructive/20 stroke-destructive" />
+                    )}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {`@${author?.userName}`} • {formatTimeAgo(updatedAt)}
+              </span>
+            </div>
+          </Link>
+        )}
+        {isOwner && (
+          <NotesOption
+            trigger={<MoreVertical className="size-4" />}
+            className="size-10 rounded-full"
+            note={note}
+            setIsRenaming={setIsRenaming}
+          />
+        )}
       </CardHeader>
 
       <CardContent className="p-0">

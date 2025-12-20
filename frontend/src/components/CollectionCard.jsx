@@ -107,7 +107,7 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                       className="size-8 p-0 text-muted-foreground hover:text-foreground"
                     >
                       <MoreVertical className="size-4" />
-                      <span className="sr-only">More</span>
+                      <span className="sr-only">Collection Option</span>
                     </Button>
                   }
                   collection={collection}

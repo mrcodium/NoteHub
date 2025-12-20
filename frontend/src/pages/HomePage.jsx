@@ -53,6 +53,7 @@ const HomePage = () => {
         {/* Render transformed notes */}
         {articles.map((note) => (
           <ArticleCard
+            note={note}
             key={note._id}
             title={note.name}
             noteSlug={note.slug}
