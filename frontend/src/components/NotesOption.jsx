@@ -8,6 +8,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import {
+  ChevronRight,
   Folder,
   FolderOutput,
   Lock,
@@ -37,6 +38,8 @@ import {
 import { Separator } from "./ui/separator";
 import { useCollaboratorManager } from "@/contex/CollaboratorManagerContext";
 import { cn } from "@/lib/utils";
+import AvatarStack from "./CollaboratorAvatars";
+import { Badge } from "./ui/badge";
 
 const NotesOption = React.memo(
   ({ trigger, note, setIsRenaming, className }) => {
@@ -153,10 +156,43 @@ const NotesOption = React.memo(
                         key={collection._id}
                         value={collection.name}
                         onSelect={() => handleMove(collection._id)}
-                        className="gap-2 h-10 hover:bg-primary/30 border border-transparent hover:border-border rounded-lg"
+                        className="group flex cursor-pointer items-center gap-4 border-b p-3 rounded-none transition-all hover:bg-muted/50 hover:shadow-sm"
                       >
-                        <Folder className="size-4 text-muted-foreground" />
-                        {collection.name}
+                        <div className="flex size-10 p-1 items-center justify-center rounded-xl bg-primary/10">
+                          <img
+                            src="/folder.svg"
+                            alt="folder"
+                            className="h-full w-full object-contain dark:invert grayscale"
+                          />
+                        </div>
+
+                        <div className="flex-1">
+                          <h4 className="font-semibold group-hover:text-primary">
+                            {collection.name}
+                          </h4>
+                          <div className="mt-1 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs text-muted-foreground">
+                                {collection.notes.length} notes
+                              </Badge>
+                              {collection.visibility === "private" && (
+                                <Badge
+                                  variant="destructive"
+                                  className="size-5 p-0 flex items-center justify-center"
+                                >
+                                  <Lock strokeWidth={3} size={15} />
+                                </Badge>
+                              )}
+                            </div>
+                            {collection.collaborators?.length > 0 && (
+                              <AvatarStack
+                                size="sm"
+                                collaborators={collection.collaborators}
+                              />
+                            )}
+                          </div>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-2 transition-transform" />
                       </CommandItem>
                     ))}
                   </CommandGroup>
