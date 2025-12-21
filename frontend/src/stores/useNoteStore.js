@@ -135,7 +135,7 @@ export const useNoteStore = create((set, get) => {
         // Update the note in collections (for updatedAt)
         get().replaceNoteFromCollection(note);
         // Update the note in notes array (if present)
-        updateNoteInNotesArray(note._id, { content: note.content });
+        updateNoteInNotesArray(note._id, { content: note.content, updatedAt: note.updatedAt });
 
         toast.success(message);
       } catch (error) {
@@ -314,7 +314,7 @@ export const useNoteStore = create((set, get) => {
         // Replace note with updated note in collections
         get().replaceNoteFromCollection(note);
         // Update the note in notes array (if present)
-        updateNoteInNotesArray(note._id, { slug: note.slug, name: note.name });
+        updateNoteInNotesArray(note._id, { slug: note.slug, name: note.name, updatedAt: note.updatedAt });
 
         toast.success(message);
       } catch (error) {
@@ -333,7 +333,7 @@ export const useNoteStore = create((set, get) => {
         get().insertNoteInCollection(collection._id, note);
 
         // Update the note in notes array (if present) because the note's collectionId changed
-        updateNoteInNotesArray(note._id, { collectionId: collection });
+        updateNoteInNotesArray(note._id, { collectionId: collection, updatedAt: note.updatedAt});
 
         toast.success(message);
       } catch (error) {
@@ -446,7 +446,7 @@ export const useNoteStore = create((set, get) => {
         }));
 
         // Update the note in notes array (if present)
-        updateNoteInNotesArray(updatedNote._id, {visibility: updatedNote._id});
+        updateNoteInNotesArray(updatedNote._id, {visibility: updatedNote.visibility, updatedAt: updatedNote.updatedAt});
 
         toast.success(message);
 

@@ -79,7 +79,11 @@ const NoteItem = ({ note }) => {
     <SidebarMenuSubItem className="group/note h-auto">
       <SidebarMenuSubButton
         asChild
-        className={cn("p-0 h-auto", note.visibility === "private" && "bg-destructive/10 hover:bg-destructive/20")}
+        className={cn(
+          "p-0 h-auto",
+          note.visibility === "private" &&
+            "bg-destructive/10 hover:bg-destructive/20"
+        )}
         onClick={() => !isNoteRenaming && setselectedNote(note._id)}
       >
         <div
@@ -179,10 +183,10 @@ const FolderCollapsible = ({ collection, pinnedCollections, searchQuery }) => {
           <CollapsibleTrigger asChild>
             <SidebarMenuButton tooltip={collection.name}>
               <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 size-4" />
-              {searchQuery || openedCollections[collection._id] || false ? (
-                <FolderOpen className="size-4" />
+              {searchQuery || openedCollections[collection._id] ? (
+                <FolderOpen className={collection.visibility === "private" && "text-destructive fill-destructive/30"} />
               ) : (
-                <Folder className="size-4" />
+                <Folder className={collection.visibility === "private" && "text-destructive fill-destructive/30"} />
               )}
               <div className="flex-1 min-w-0">
                 {isCollectionRenaming ? (
