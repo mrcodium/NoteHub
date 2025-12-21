@@ -42,9 +42,17 @@ export const MenuBar = ({ noteId }) => {
     return null;
   }
 
-  const isEmptyContent = (htmlString) => {
-    const contentRegex = /<[^>]*>(\s*[^<]*\S\s*|<img\s+[^>]*>.*?)<\/[^>]*>/;
-    return !contentRegex.test(htmlString);
+  const isEmptyContent = (html) => {
+    // text
+    if (html.replace(/<[^>]*>/g, "").trim().length > 0) return false;
+
+    // images
+    if (/<img\s/i.test(html)) return false;
+
+    // latex (inline or block)
+    if (/data-type="(inline-math|block-math)"/.test(html)) return false;
+
+    return true;
   };
 
   const handleContentSave = async () => {
@@ -55,6 +63,8 @@ export const MenuBar = ({ noteId }) => {
       .replace(/<\/table>/g, "</table></div>")
       .replace(/<pre/g, "<div class='relative pre-wrapper'><pre")
       .replace(/<\/pre>/g, "</pre></div>");
+
+    console.log(content);
 
     if (isEmptyContent(content)) content = "";
     await updateContent({

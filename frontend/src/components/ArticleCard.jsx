@@ -123,7 +123,7 @@ export function ArticleCard({
                     variant="ghost"
                     className={"p-1 border-none text-muted-foreground"}
                   >
-                    {note.visibility === "public" ? (
+                    {note.visibility === "public" && collection.visibility === "public" ? (
                       <Globe size={16} strokeWidth={3} />
                     ) : (
                       <Lock

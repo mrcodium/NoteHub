@@ -22,12 +22,11 @@ const NotePagePublic = () => {
   const navigate = useNavigate();
   const { authUser } = useAuthStore();
 
-  const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isPrivate, setIsPrivate] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
-  const [noteId, setNoteId] = useState("");
+  const [note, setNote] = useState(null);
   const { getImages } = useImageStore();
 
   useEffect(() => {
@@ -37,10 +36,8 @@ const NotePagePublic = () => {
         const response = await axiosInstance.get(
           `/note/${username}/${collectionSlug}/${noteSlug}`
         );
-
         const { note } = response.data;
-        setContent(note.content || "");
-        setNoteId(note._id);
+        setNote(note);
         setIsOwner(authUser?._id === note.userId);
       } catch (error) {
         if (error.response?.status === 403) {
@@ -59,7 +56,7 @@ const NotePagePublic = () => {
   }, [username, collectionSlug, noteSlug, authUser]);
 
   useEffect(() => {
-    if (content) {
+    if (note?.content) {
       // Apply syntax highlighting
       document.querySelectorAll("pre code").forEach((block) => {
         hljs.highlightElement(block);
@@ -150,7 +147,7 @@ const NotePagePublic = () => {
         });
       };
     }
-  }, [content]);
+  }, [note]);
 
   if (isLoading) {
     return <NoteSkeleton />;
@@ -178,7 +175,7 @@ const NotePagePublic = () => {
     );
   }
 
-  if (!content.trim()) {
+  if (!note?.content.trim()) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
         {isOwner && (
@@ -202,7 +199,7 @@ const NotePagePublic = () => {
   }
 
   return (
-    <div className={cn("tiptap", !content.trim() && "empty")}>
+    <div className={cn("tiptap", !note?.content.trim() && "empty")}>
       <div className="max-w-screen-md m-auto">
         <Dialog
           open={selectedImage}
@@ -228,7 +225,7 @@ const NotePagePublic = () => {
         {isOwner && (
           <TooltipWrapper message="Edit Content">
             <Button
-              onClick={() => navigate(`/note/${noteId}/editor`)}
+              onClick={() => navigate(`/note/${note?._id}/editor`)}
               variant="secondary"
               size="lg"
               className="fixed right-2 rounded-full bottom-2 z-10 px-6 border bg-muted"
@@ -239,7 +236,7 @@ const NotePagePublic = () => {
           </TooltipWrapper>
         )}
 
-        {parse(content)}
+        {parse(note?.content || "")}
       </div>
       <Footer />
     </div>
