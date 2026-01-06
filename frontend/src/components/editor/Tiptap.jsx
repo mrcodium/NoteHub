@@ -69,14 +69,11 @@ const Tiptap = () => {
       slotBefore={<MenuBar noteId={noteId} />}
       extensions={extensions}
       content={content}
-      onCreate={({editor})=>{
-        migrateMathStrings(editor)
-      }}
       onUpdate={({ editor }) => handleUpdate(editor.getHTML())}
       editorProps={{
         attributes: {
           class:
-            "prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none min-h-full",
+            "prose dark:prose-invert mx-auto prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none min-h-full",
           spellcheck: "false",
         },
       }}
