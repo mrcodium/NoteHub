@@ -8,7 +8,17 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { axiosInstance } from "@/lib/axios";
 import { Forbidden, NotFound } from "./ErrorStates";
-import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowUpAZ, Type } from "lucide-react";
+import SortSelector from "./SortSelector";
 
 const CollectionPage = () => {
   const { username, collectionSlug: rawSlug } = useParams();
@@ -19,10 +29,9 @@ const CollectionPage = () => {
   const [guestCollection, setGuestCollection] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorStatus, setErrorStatus] = useState(null); // Track error status
-  const [sortBy, setSortBy] = useState("created");
-  const [sortDirection, setSortDirection] = useState("desc");
-  const { status, collections: ownerCollections } =
-    useNoteStore();
+  const [sortBy, setSortBy] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
+  const { status, collections: ownerCollections } = useNoteStore();
   const { authUser } = useAuthStore();
   const isOwner = authUser?.userName.toLowerCase() === username.toLowerCase();
   const collection = useMemo(() => {
@@ -108,30 +117,37 @@ const CollectionPage = () => {
     fetchData();
   }, [username, collectionSlug, isOwner, authUser]);
 
-  if (status.collection.state === "loading" || isLoading) return <CollectionPageSkeleton />;
+  if (status.collection.state === "loading" || isLoading)
+    return <CollectionPageSkeleton />;
+
+  if (errorStatus === 403) return <Forbidden />;
+  if (errorStatus === 404 || !collection) return <NotFound />;
 
   return (
-    <div className="px-4 py-8 h-full overflow-y-auto bg-[#f5f5f5] dark:bg-background">
+    <div className="px-4 py-8 min-h-svh overflow-y-auto bg-[#f5f5f5] dark:bg-background">
       <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
-        <CollectionHeader
-          user={user}
-          collection={collection}
-          isOwner={isOwner}
-        />
-        {errorStatus === 403 ? (
-          <Forbidden />
-        ) : errorStatus === 404 || !collection ? (
-          <NotFound />
-        ) : (
-          <CollectionNotesGrid
-            notes={notes}
-            sortedNotes={sortedNotes}
-            isOwner={isOwner}
-            username={username}
-            collectionSlug={collectionSlug}
+        <div className="flex justify-between items-end">
+          <CollectionHeader
+            user={user}
             collection={collection}
+            isOwner={isOwner}
           />
-        )}
+          <SortSelector
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            setSortBy={setSortBy}
+            toggleSortDirection={toggleSortDirection}
+          />
+        </div>
+
+        <CollectionNotesGrid
+          notes={notes}
+          sortedNotes={sortedNotes}
+          isOwner={isOwner}
+          username={username}
+          collectionSlug={collectionSlug}
+          collection={collection}
+        />
       </div>
     </div>
   );

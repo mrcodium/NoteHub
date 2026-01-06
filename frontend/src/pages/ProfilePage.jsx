@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CollectionCard from "@/components/CollectionCard";
 import TooltipWrapper from "@/components/TooltipWrapper";
+import SortSelector from "./collection/SortSelector";
 
 const ProfilePage = () => {
   const { username } = useParams();
@@ -52,6 +53,12 @@ const ProfilePage = () => {
   const [currentImageType, setCurrentImageType] = useState(null); // 'avatar' or 'cover'
   const [previewavatar, setPreviewavatar] = useState(null);
   const [previewCover, setPreviewCover] = useState(null);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
+
+  const toggleSortDirection = () => {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
 
   const isOwner = authUser?.userName === username;
 
@@ -123,14 +130,41 @@ const ProfilePage = () => {
     }
   };
 
-  const filteredCollections = collections.sort((a, b) => {
-    const aPinned = pinnedCollections.includes(a._id);
-    const bPinned = pinnedCollections.includes(b._id);
+  const pinnedSet = React.useMemo(
+    () => new Set(pinnedCollections),
+    [pinnedCollections]
+  );
 
-    if (aPinned && !bPinned) return -1;
-    if (!aPinned && bPinned) return 1;
-    return 0;
-  });
+  const sortedCollections = React.useMemo(() => {
+    if (!collections?.length) return [];
+
+    const dir = sortDirection === "asc" ? 1 : -1;
+
+    return [...collections].sort((a, b) => {
+      // 1️⃣ Pinned first
+      const ap = pinnedSet.has(a._id);
+      const bp = pinnedSet.has(b._id);
+      if (ap !== bp) return ap ? -1 : 1;
+
+      // 2️⃣ Sorting
+      switch (sortBy) {
+        case "name":
+          return dir * a.name.localeCompare(b.name);
+        case "created":
+          return (
+            dir *
+            (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+          );
+        case "updated":
+          return (
+            dir *
+            (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
+          );
+        default:
+          return 0;
+      }
+    });
+  }, [collections, pinnedSet, sortBy, sortDirection]);
 
   if (isLoading) return <ProfilePageSkeleton />;
 
@@ -348,14 +382,6 @@ const ProfilePage = () => {
 
       {/* Collections Section */}
       <div className="max-w-screen-md mx-auto mt-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Collections</h2>
-          <div className="text-sm text-muted-foreground">
-            {collections.length}{" "}
-            {collections.length === 1 ? "collection" : "collections"}
-          </div>
-        </div>
-
         {status.collection.state === "loading" ? (
           <CollectionSkeleton />
         ) : collections.length === 0 ? (
@@ -363,16 +389,33 @@ const ProfilePage = () => {
             <p className="text-muted-foreground">No collections found</p>
           </Card>
         ) : (
-          <div className="space-y-0">
-            {filteredCollections.map((collection) => (
-              <CollectionCard
-                key={collection._id}
-                collection={collection}
-                isOwner={isOwner}
-                pinnedCollections={pinnedCollections}
+          <>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Collections</h2>
+                <div className="text-sm text-muted-foreground">
+                  {collections.length}{" "}
+                  {collections.length === 1 ? "collection" : "collections"}
+                </div>
+              </div>
+              <SortSelector
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                setSortBy={setSortBy}
+                toggleSortDirection={toggleSortDirection}
               />
-            ))}
-          </div>
+            </div>
+            <div className="space-y-0">
+              {sortedCollections.map((collection) => (
+                <CollectionCard
+                  key={collection._id}
+                  collection={collection}
+                  isOwner={isOwner}
+                  pinnedCollections={pinnedCollections}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

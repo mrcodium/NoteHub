@@ -6,24 +6,26 @@ const CollectionPageSkeleton = () => {
     <div className="container overflow-y-auto mx-auto px-4 py-8 max-w-7xl">
       <div className="flex flex-col gap-8 animate-pulse">
         {/* Header Section Skeleton */}
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-4">
-            {/* Avatar Skeleton */}
-            <div className="h-16 w-16 rounded-full bg-muted" />
+        <div className="flex justify-between items-end">
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+              {/* Avatar Skeleton */}
+              <div className="h-16 w-16 rounded-full bg-muted" />
 
-            {/* Name/Username Skeleton */}
-            <div className="space-y-2">
-              <div className="h-6 w-40 bg-muted rounded" />
-              <div className="h-4 w-24 bg-muted rounded" />
+              {/* Name/Username Skeleton */}
+              <div className="space-y-2">
+                <div className="h-6 w-40 bg-muted rounded" />
+                <div className="h-4 w-24 bg-muted rounded" />
+              </div>
             </div>
+
+            {/* Collection Title/Description Skeleton */}
+            <div className="h-8 w-48 bg-muted rounded" />
           </div>
 
-          {/* Collection Title/Description Skeleton */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="h-8 w-48 bg-muted rounded" />
-              <div className="h-6 w-16 bg-muted rounded" />
-            </div>
+          <div className="flex gap-2">
+            <div className="h-9 w-36 rounded-xl bg-muted" />
+            <div className="h-9 w-9 rounded-xl bg-muted" />
           </div>
         </div>
 

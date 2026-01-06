@@ -35,11 +35,13 @@ export const formatTimeAgo = (date) => {
   for (const [unit, secondsInUnit] of Object.entries(intervals)) {
     const interval = Math.floor(seconds / secondsInUnit);
     if (interval >= 1) {
-      return `${interval}${unit.charAt(0)} ago`;
+      const label = interval === 1 ? unit : `${unit}s`; // pluralize
+      return `${interval} ${label} ago`;
     }
   }
   return "Just now";
 };
+
 
 export const formatDate = (isoString) => {
   const date = new Date(isoString);
