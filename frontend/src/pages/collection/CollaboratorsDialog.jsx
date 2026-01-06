@@ -1,6 +1,4 @@
 // src > pages > collection > CollaboratorsDialog
-
-import TooltipWrapper from "@/components/TooltipWrapper";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter } from "@/components/ui/card";
@@ -41,11 +39,8 @@ export const CollaboratorsDialog = () => {
   const { currentCollaborators, targetId, type, isDialogOpen, closeDialog } =
     useCollaboratorManager();
 
-  const {
-    updateNoteCollaborators,
-    updateCollectionCollaborators,
-    status,
-  } = useNoteStore();
+  const { updateNoteCollaborators, updateCollectionCollaborators, status } =
+    useNoteStore();
   const [workingCollaborators, setWorkingCollaborators] = useState([]);
   const [removedIds, setRemovedIds] = useState(new Set());
 
@@ -240,21 +235,20 @@ const SearchBar = ({ onUserSelect, currentCollaborators }) => {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         {(searchQuery || isSearching) && (
-          <TooltipWrapper message="clear search">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-muted-foreground absolute size-8 p-0 hover:bg-transparent right-0 top-1/2 -translate-y-1/2"
-              disabled={isSearching}
-              onClick={handleClearSearch}
-            >
-              {isSearching ? (
-                <Loader2 className="animate-spin size-4" />
-              ) : (
-                <X className="size-4" />
-              )}
-            </Button>
-          </TooltipWrapper>
+          <Button
+            tooltip="clear search"
+            size="icon"
+            variant="ghost"
+            className="text-muted-foreground absolute size-8 p-0 hover:bg-transparent right-0 top-1/2 -translate-y-1/2"
+            disabled={isSearching}
+            onClick={handleClearSearch}
+          >
+            {isSearching ? (
+              <Loader2 className="animate-spin size-4" />
+            ) : (
+              <X className="size-4" />
+            )}
+          </Button>
         )}
       </div>
 

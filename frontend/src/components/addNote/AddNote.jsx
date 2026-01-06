@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import TooltipWrapper from "../TooltipWrapper";
 import { Button } from "../ui/button";
 import { ChevronLeft, Globe, Loader2, Lock } from "lucide-react";
 import { LabledInput } from "../ui/labeled-input";
@@ -22,8 +21,8 @@ const AddNote = ({
 
   const isCreatingNote = status.note.state === "creating";
   const handleAddNote = async () => {
-    if(!noteName.trim() || isCreatingNote) return;
-    
+    if (!noteName.trim() || isCreatingNote) return;
+
     const noteId = await createNote({
       name: noteName,
       collectionId: selectedCollection._id,
@@ -44,26 +43,25 @@ const AddNote = ({
   };
 
   const handleKeyDown = (e) => {
-  if (e.key === "Enter" && noteName.trim() && !isCreatingNote) {
-    e.preventDefault();
-    handleAddNote();
-  }
-};
+    if (e.key === "Enter" && noteName.trim() && !isCreatingNote) {
+      e.preventDefault();
+      handleAddNote();
+    }
+  };
 
   return (
     <div>
       <div className="sticky top-0 z-10 border-b bg-background px-6 py-4">
         <div className="flex items-center gap-4">
-          <TooltipWrapper message="Back to Collection">
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={handleBackToCollections}
-              className="h-10 w-10"
-            >
-              <ChevronLeft />
-            </Button>
-          </TooltipWrapper>
+          <Button
+            tooltip="Back to Collection"
+            variant="secondary"
+            size="icon"
+            onClick={handleBackToCollections}
+            className="h-10 w-10"
+          >
+            <ChevronLeft />
+          </Button>
           <div className="flex gap-2 items-center">
             <FileIcon className="size-12 opacity-70" />
 

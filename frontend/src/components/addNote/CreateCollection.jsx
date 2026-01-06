@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import TooltipWrapper from "../TooltipWrapper";
 import { Button } from "../ui/button";
 import { ChevronLeft, Globe, Loader2, Lock } from "lucide-react";
 import FolderIcon from "../ui/FolderIcon";
@@ -39,8 +38,8 @@ const CreateCollection = ({ setSelectedCollection, setActiveTab }) => {
     <div>
       <div className="sticky top-0 z-10 border-b bg-background px-6 py-4">
         <div className="flex items-center gap-4">
-          <TooltipWrapper message="Back">
             <Button
+            tooltip="Back"
               variant="secondary"
               size="icon"
               onClick={() => setActiveTab("choose-collection")}
@@ -48,7 +47,6 @@ const CreateCollection = ({ setSelectedCollection, setActiveTab }) => {
             >
               <ChevronLeft />
             </Button>
-          </TooltipWrapper>
           <div className="flex gap-2 items-center">
             <FolderIcon className="size-12 opacity-70" />
             <div>

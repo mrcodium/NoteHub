@@ -1,15 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Search,
-  Telescope,
-  User,
-  Clock,
-  X,
-  Trash2,
-  Ghost,
-} from "lucide-react";
+import { Search, Telescope, User, Clock, X, Trash2, Ghost } from "lucide-react";
 import { debounce } from "lodash";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -18,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import TooltipWrapper from "./TooltipWrapper";
 import { Separator } from "./ui/separator";
 
 export function SearchButton() {
@@ -86,17 +77,16 @@ export function SearchButton() {
   return (
     <>
       {/* Square search button */}
-      <TooltipWrapper message="Ctrl + K">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 rounded-md"
-          onClick={() => setOpen(true)}
-          aria-label="Search"
-        >
-          <Search className="h-4 w-4" />
-        </Button>
-      </TooltipWrapper>
+      <Button
+        toolip="Ctrl + K"
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 rounded-md"
+        onClick={() => setOpen(true)}
+        aria-label="Search"
+      >
+        <Search className="h-4 w-4" />
+      </Button>
 
       {/* Search Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -108,7 +98,7 @@ export function SearchButton() {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => {
-                  setSearchQuery(e.target.value)
+                  setSearchQuery(e.target.value);
                   setIsTyping(true);
                 }}
                 autoFocus
@@ -139,7 +129,7 @@ export function SearchButton() {
             {!isSearching && (
               <>
                 {searchResults.length === 0 ? (
-                  (searchQuery && !isTyping) ? (
+                  searchQuery && !isTyping ? (
                     <NotFound searchQuery={searchQuery} />
                   ) : searchHistory.length === 0 ? (
                     <EmptyState />

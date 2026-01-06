@@ -156,6 +156,7 @@ export const getNoteBySlug = async (req, res) => {
     return res.status(200).json({
       message: "Note fetched successfully",
       note,
+      author: user,
     });
   } catch (error) {
     console.error("Error fetching note by slug:", error);

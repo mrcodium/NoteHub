@@ -1,15 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
-const Footer = () => {
+const Footer = ({className}) => {
   const footerLinks = [
     { href: "/privacy-policy", label: "Privacy Policy" },
     { href: "https://github.com/abhijeetSinghRajput/NoteHub-Production/issues/new", label: "Report an issue" },
   ];
 
   return (
-    <footer className="mt-10 mb-5 flex w-full flex-col items-center justify-center gap-6">
+    <footer className={cn("py-10 flex w-full flex-col items-center justify-center gap-6", className)}>
       {/* Separator */}
       <Separator className="w-full max-w-6xl" />
 
@@ -46,7 +47,7 @@ const Footer = () => {
           width="48"
           height="48"
           className="hidden size-12 rounded-2xl border-2 border-muted transition-all duration-300 group-hover:border-primary md:block"
-          src="https://mrcodium.netlify.app/assets/avatar.jpg"
+          src="/owner.jpg"
         />
         <div className="text-center md:text-left">
           <p className="text-sm text-muted-foreground">

@@ -16,7 +16,6 @@ import {
   Sigma,
   Trash2,
 } from "lucide-react";
-import TooltipWrapper from "../TooltipWrapper";
 import ToggleSwitch from "../ToggleSwitch";
 import { useEditorStore } from "@/stores/useEditorStore";
 
@@ -132,27 +131,28 @@ export default function MathDialog({ editor }) {
   return (
     <Dialog open={openMathDialog}>
       <DialogTrigger asChild>
-        <TooltipWrapper message="Equation">
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => {
-              // If user manually opens the dialog via button, we treat it as insert (no edit)
-              setEditMode(null);
-              setPos(null);
-              setLatex("");
-              openDialog("openMathDialog");
-            }}
-          >
-            <Sigma />
-          </Button>
-        </TooltipWrapper>
+        <Button
+          tooltip="Equation"
+          size="icon"
+          variant="outline"
+          onClick={() => {
+            // If user manually opens the dialog via button, we treat it as insert (no edit)
+            setEditMode(null);
+            setPos(null);
+            setLatex("");
+            openDialog("openMathDialog");
+          }}
+        >
+          <Sigma />
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-xl" closeButtonClassName="hidden">
         <DialogHeader
           className={"flex flex-row w-full gap-4 justify-between items-center"}
         >
-          <DialogTitle className="text-left">{editMode ? "Edit" : "Insert"} Equation</DialogTitle>
+          <DialogTitle className="text-left">
+            {editMode ? "Edit" : "Insert"} Equation
+          </DialogTitle>
           <ToggleSwitch
             options={displayModes}
             value={editMode || "inline"}

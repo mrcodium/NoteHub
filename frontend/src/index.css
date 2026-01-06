@@ -45,18 +45,18 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 .scrollbar-sm::-webkit-scrollbar {
   @apply w-1 h-1;
 }
-*::-webkit-scrollbar {
+body *::-webkit-scrollbar {
   @apply w-2 h-2;
 }
 
-*::-webkit-scrollbar-track {
+body *::-webkit-scrollbar-track {
   @apply bg-accent;
 }
-*::-webkit-scrollbar-thumb {
+body *::-webkit-scrollbar-thumb {
   @apply bg-muted-foreground/50;
 }
 @media (max-width: 640px) {
-  *::-webkit-scrollbar {
+  body *::-webkit-scrollbar {
     width: 4px;
     height: 4px;
   }
@@ -68,10 +68,6 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   overflow: hidden;
   -webkit-line-clamp: 2;
   line-clamp: 2;
-}
-
-.tiptap::-webkit-scrollbar {
-  @apply hidden;
 }
 
 .ProseMirror {
@@ -103,10 +99,11 @@ div:has(> .tiptap.ProseMirror) {
   @apply max-w-screen-md;
 }
 
+
 .tiptap {
   tab-size: 4;
-
-  @apply relative whitespace-pre-wrap w-full border-none outline-none my-5 mx-auto bg-background text-foreground font-sans leading-relaxed overflow-x-hidden p-4;
+  @apply p-4;
+  /* @apply relative whitespace-pre-wrap w-full border-none outline-none mx-auto bg-background text-foreground font-sans leading-relaxed overflow-x-hidden p-4; */
 
   img {
     @apply max-h-[50vh] my-4 rounded-xl;
@@ -135,17 +132,21 @@ div:has(> .tiptap.ProseMirror) {
       @apply text-muted-foreground line-through;
     }
 
-    input[type="checkbox"]:checked {
+    li[data-checked="true"] input[type="checkbox"] {
       @apply bg-primary;
     }
-    input[type="checkbox"]:checked::before {
+    li[data-checked="true"] input[type="checkbox"]::before {
       content: "";
-      /* Unicode for check mark */
-      @apply absolute inset-0 flex items-center justify-center text-black;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check h-4 w-4"><path d="M20 6 9 17l-5-5"></path></svg>');
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: contain;
+      position: absolute;
+      inset: 0;
+
+      background-color: hsl(var(--primary-foreground));
+
+      -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>')
+        center / contain no-repeat;
+
+      mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>')
+        center / contain no-repeat;
     }
 
     input[type="checkbox"] {
@@ -230,10 +231,10 @@ div:has(> .tiptap.ProseMirror) {
     @apply mt-0;
   }
 
-  :is(h1, h2, h3, h4, h5, h6, p) code  {
+  :is(h1, h2, h3, h4, h5, h6, p) code {
     @apply font-mono bg-black/10 dark:bg-accent/50 py-[2.4px] px-[4.8px] rounded whitespace-pre-wrap;
   }
-  
+
   pre {
     @apply bg-input/30 text-primary dark:text-primary p-4 overflow-x-auto;
 

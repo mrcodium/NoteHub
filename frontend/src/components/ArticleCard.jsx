@@ -30,6 +30,7 @@ import NotesOption from "./NotesOption";
 import { formatTimeAgo } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export function ArticleCard({
   note,
@@ -42,11 +43,12 @@ export function ArticleCard({
   collection,
   headings,
 }) {
+  const {authUser} = useAuthStore();
   const [api, setApi] = useState();
   const [current, setCurrent] = useState(0);
   const [openImageIndex, setOpenImageIndex] = useState(null);
 
-  const isOwner = true;
+  const isOwner = author?.userName === authUser?.userName;
   const inputRef = useRef(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const { renameNote } = useNoteStore();

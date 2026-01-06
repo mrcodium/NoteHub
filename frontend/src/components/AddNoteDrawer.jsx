@@ -45,9 +45,7 @@ const AddNoteDrawer = ({ trigger }) => {
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <TooltipWrapper message="Create Notes" asChild={false}>
         <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-      </TooltipWrapper>
       <DrawerContent className="h-[80vh]">
         <div className="mx-auto w-full max-w-2xl overflow-y-auto">
           <AnimatePresence mode="wait" custom={direction}>

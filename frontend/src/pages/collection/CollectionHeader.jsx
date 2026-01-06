@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const CollectionHeader = ({ user, collection, isOwner }) => {
-  if(!user) return null;
+  if (!user) return null;
   const { openDialog } = useCollaboratorManager();
 
   const hasCollaborators = collection?.collaborators?.length > 0;
@@ -65,21 +65,20 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
                   Collaborators
                 </h4>
                 {isOwner && (
-                  <TooltipWrapper message="Add collaborators">
-                    <Button
-                      size="sm"
-                      className="rounded-full h-8 w-8 p-0"
-                      onClick={() =>
-                        openDialog(
-                          collection?.collaborators || [],
-                          collection?._id,
-                          "collection"
-                        )
-                      }
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </TooltipWrapper>
+                  <Button
+                    tooltip="Add collaborators"
+                    size="sm"
+                    className="rounded-full h-8 w-8 p-0"
+                    onClick={() =>
+                      openDialog(
+                        collection?.collaborators || [],
+                        collection?._id,
+                        "collection"
+                      )
+                    }
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
 

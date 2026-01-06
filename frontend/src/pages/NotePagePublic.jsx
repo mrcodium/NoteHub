@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Copy, CopyCheck, Pencil, Lock } from "lucide-react";
+import { Copy, CopyCheck, Pencil, Lock, Globe, ChevronUp } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import parse from "html-react-parser";
 import NoteSkeleton from "@/components/sekeletons/NoteSkeleton";
 import hljs from "highlight.js";
@@ -10,12 +10,14 @@ import { toast } from "sonner";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import TooltipWrapper from "@/components/TooltipWrapper";
 import { axiosInstance } from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useImageStore } from "@/stores/useImageStore";
 import Footer from "@/components/Footer";
-import { cn } from "@/lib/utils";
+import { cn, formatTimeAgo } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import ScrollTopButton from "@/components/ScrollTopButton";
 
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
@@ -27,6 +29,7 @@ const NotePagePublic = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [note, setNote] = useState(null);
+  const [author, setAuthor] = useState(null);
   const { getImages } = useImageStore();
 
   useEffect(() => {
@@ -36,8 +39,9 @@ const NotePagePublic = () => {
         const response = await axiosInstance.get(
           `/note/${username}/${collectionSlug}/${noteSlug}`
         );
-        const { note } = response.data;
+        const { note, author } = response.data;
         setNote(note);
+        setAuthor(author);
         setIsOwner(authUser?._id === note.userId);
       } catch (error) {
         if (error.response?.status === 403) {
@@ -199,8 +203,68 @@ const NotePagePublic = () => {
   }
 
   return (
-    <div className={cn("tiptap", !note?.content.trim() && "empty")}>
-      <div className="max-w-screen-md m-auto">
+    <div
+      className={cn(
+        "h-full flex flex-col justify-between",
+        !note?.content.trim() && "empty"
+      )}
+    >
+      <div className="max-w-screen-md w-full mx-auto relative">
+        <div className="flex px-4 py-8 border-b border-dashed mb-12 items-center justify-between">
+          <Link
+            to={`/user/${author?.userName}`}
+            className="flex flex-row items-center w-max gap-3"
+          >
+            <Avatar className="size-12 bg-muted">
+              <AvatarImage
+                className="w-full h-full object-cover !m-0"
+                src={author?.avatar}
+                alt={author?.fullName}
+              />
+              <AvatarFallback>
+                {(author?.fullName || "U").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
+                <span>{author?.fullName}</span>
+                {isOwner && (
+                  <Badge
+                    variant="ghost"
+                    className={"p-1 border-none text-muted-foreground"}
+                  >
+                    {note.visibility === "public" &&
+                    note.visibility === "public" ? (
+                      <Globe size={16} strokeWidth={3} />
+                    ) : (
+                      <Lock
+                        size={16}
+                        strokeWidth={3}
+                        className="fill-destructive/20 stroke-destructive"
+                      />
+                    )}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {`@${author?.userName}`} • {formatTimeAgo(note?.updatedAt)}
+              </span>
+            </div>
+          </Link>
+          {isOwner && (
+            <Button
+              tooltip="Edit Content"
+              onClick={() => navigate(`/note/${note?._id}/editor`)}
+              variant="secondary"
+              size="lg"
+              className="rounded-full px-6 border bg-muted"
+            >
+              <Pencil />
+              <span>Edit</span>
+            </Button>
+          )}
+        </div>
+
         <Dialog
           open={selectedImage}
           onOpenChange={(open) => !open && setSelectedImage(null)}
@@ -222,23 +286,10 @@ const NotePagePublic = () => {
           </DialogContent>
         </Dialog>
 
-        {isOwner && (
-          <TooltipWrapper message="Edit Content">
-            <Button
-              onClick={() => navigate(`/note/${note?._id}/editor`)}
-              variant="secondary"
-              size="lg"
-              className="fixed right-2 rounded-full bottom-2 z-10 px-6 border bg-muted"
-            >
-              <Pencil />
-              <span>Edit</span>
-            </Button>
-          </TooltipWrapper>
-        )}
-
-        {parse(note?.content || "")}
+        <div className="tiptap">{parse(note?.content || "")}</div>
       </div>
-      <Footer />
+      <ScrollTopButton/>
+      <Footer className={"pb-28"} />
     </div>
   );
 };

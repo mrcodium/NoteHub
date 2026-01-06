@@ -18,7 +18,6 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import { Button } from "../ui/button";
 import { Link } from "react-router-dom";
 import { SidebarSearch } from "./SidebarSearch";
-import TooltipWrapper from "../TooltipWrapper";
 import { useLocalStorage } from "@/stores/useLocalStorage";
 import SettingSidebar from "./SettingSidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -54,22 +53,19 @@ const AppSidebar = (props) => {
               inputRef={searchRef}
               onSearch={setSearchQuery}
             />
-            <TooltipWrapper message="Close Searchbar">
-              <Button
-                variant="ghost"
-                className="size-8"
-                onClick={handleCloseSearch}
-              >
-                <X />
-              </Button>
-            </TooltipWrapper>
+            <Button
+              tooltip="Close Searchbar"
+              variant="ghost"
+              className="size-8"
+              onClick={handleCloseSearch}
+            >
+              <X />
+            </Button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <div className="flex gap-2 items-center">
-              <TooltipWrapper message={"Close Sidebar Ctrl M"}>
-                <SidebarCloseTrigger />
-              </TooltipWrapper>
+              <SidebarCloseTrigger tooltip={"Close Sidebar Ctrl M"} />
               <Link to="/" className="logo truncate font">
                 NoteHub
               </Link>
@@ -78,18 +74,17 @@ const AppSidebar = (props) => {
             <div className="flex buttons-container">
               {!location.pathname.startsWith("/settings") && (
                 <>
-                  <TooltipWrapper message="Collapse All">
                     <Button
+                      message="Collapse All"
                       className="size-8 text-sidebar-accent-foreground/70"
                       variant="ghost"
                       onClick={collapseAll}
                     >
                       <CopyMinus />
                     </Button>
-                  </TooltipWrapper>
 
-                  <TooltipWrapper message="Search File">
                     <Button
+                      message="Search File"
                       className="size-8 text-sidebar-accent-foreground/70"
                       variant="ghost"
                       onClick={() => {
@@ -98,7 +93,6 @@ const AppSidebar = (props) => {
                     >
                       <Search />
                     </Button>
-                  </TooltipWrapper>
                 </>
               )}
               <ModeToggleMini className={"text-accent-foreground/70"} />

@@ -101,92 +101,84 @@ export const MenuBar = ({ noteId }) => {
     <div className="controll-group mb-2 sticky top-0 z-10 bg-background border-b border-input">
       <div className="Button-group flex flex-wrap gap-1">
         {FORMATTING_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
-          <TooltipWrapper key={index} message={tooltip}>
-            <Button
-              size="icon"
-              onClick={() => editor.chain().focus()[command]().run()}
-              disabled={!editor.can().chain().focus()[command]().run()}
-              variant={editor.isActive(name) ? "secondary" : "ghost"}
-            >
-              {icon}
-            </Button>
-          </TooltipWrapper>
+          <Button
+            message={tooltip}
+            size="icon"
+            onClick={() => editor.chain().focus()[command]().run()}
+            disabled={!editor.can().chain().focus()[command]().run()}
+            variant={editor.isActive(name) ? "secondary" : "ghost"}
+          >
+            {icon}
+          </Button>
         ))}
         {BLOCK_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
-          <TooltipWrapper key={index} message={tooltip}>
-            <Button
-              size="icon"
-              onClick={() => editor.chain().focus()[command]().run()}
-              variant={editor.isActive(name) ? "secondary" : "ghost"}
-              disabled={
-                name === "code" &&
-                !editor.can().chain().focus()[command]().run()
-              }
-            >
-              {icon}
-            </Button>
-          </TooltipWrapper>
+          <Button
+            message={tooltip}
+            size="icon"
+            onClick={() => editor.chain().focus()[command]().run()}
+            variant={editor.isActive(name) ? "secondary" : "ghost"}
+            disabled={
+              name === "code" && !editor.can().chain().focus()[command]().run()
+            }
+          >
+            {icon}
+          </Button>
         ))}
 
         {LIST_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
-          <TooltipWrapper key={index} message={tooltip}>
-            <Button
-              size="icon"
-              onClick={() => editor.chain().focus()[command]().run()}
-              variant={editor.isActive(name) ? "secondary" : "ghost"}
-            >
-              {icon}
-            </Button>
-          </TooltipWrapper>
+          <Button
+            message={tooltip}
+            size="icon"
+            onClick={() => editor.chain().focus()[command]().run()}
+            variant={editor.isActive(name) ? "secondary" : "ghost"}
+          >
+            {icon}
+          </Button>
         ))}
 
         {LIST_CONTROL_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
-          <TooltipWrapper key={index} message={tooltip}>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                if (editor.can()[command](name[0])) {
-                  editor.chain().focus()[command](name[0]).run();
-                } else if (editor.can()[command](name[1])) {
-                  editor.chain().focus()[command](name[1]).run();
-                }
-              }}
-              disabled={
-                !editor.can()[command](name[0]) &&
-                !editor.can()[command](name[1])
+          <Button
+            message={tooltip}
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              if (editor.can()[command](name[0])) {
+                editor.chain().focus()[command](name[0]).run();
+              } else if (editor.can()[command](name[1])) {
+                editor.chain().focus()[command](name[1]).run();
               }
-            >
-              {icon}
-            </Button>
-          </TooltipWrapper>
+            }}
+            disabled={
+              !editor.can()[command](name[0]) && !editor.can()[command](name[1])
+            }
+          >
+            {icon}
+          </Button>
         ))}
 
         {CONTROL_BUTTONS.map(({ icon, command, tooltip }, index) => (
-          <TooltipWrapper key={index} message={tooltip}>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => editor.chain().focus()[command]().run()}
-              disabled={!editor.can().chain().focus()[command]().run()}
-            >
-              {icon}
-            </Button>
-          </TooltipWrapper>
+          <Button
+            message={tooltip}
+            size="icon"
+            variant="ghost"
+            onClick={() => editor.chain().focus()[command]().run()}
+            disabled={!editor.can().chain().focus()[command]().run()}
+          >
+            {icon}
+          </Button>
         ))}
 
         {ALIGNMENT_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
-          <TooltipWrapper key={index} message={tooltip}>
-            <Button
-              size="icon"
-              onClick={() => editor.chain().focus()[command](name).run()}
-              variant={
-                editor.isActive({ textAlign: name }) ? "secondary" : "ghost"
-              }
-            >
-              {icon}
-            </Button>
-          </TooltipWrapper>
+          <Button
+            message={tooltip}
+            size="icon"
+            onClick={() => editor.chain().focus()[command](name).run()}
+            variant={
+              editor.isActive({ textAlign: name }) ? "secondary" : "ghost"
+            }
+          >
+            {icon}
+          </Button>
         ))}
         <SelectHeading editor={editor} />
 
@@ -240,26 +232,28 @@ export const MenuBar = ({ noteId }) => {
         <MathDialog editor={editor} />
         <LinkDialog editor={editor} />
 
-        <TooltipWrapper message={"Save Content"}>
-          <Button
-            disabled={!noteId || status.noteContent.state === "saving"}
-            onClick={handleContentSave}
-          >
-            {status.noteContent.state === "saving" ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <>
-                <UploadCloudIcon />
-                Save
-              </>
-            )}
-          </Button>
-        </TooltipWrapper>
-        <TooltipWrapper message={"Revert Back"}>
-          <Button size="icon" variant="outline" onClick={handleRevert}>
-            <CloudDownloadIcon />
-          </Button>
-        </TooltipWrapper>
+        <Button
+          tooltip={"Save Content"}
+          disabled={!noteId || status.noteContent.state === "saving"}
+          onClick={handleContentSave}
+        >
+          {status.noteContent.state === "saving" ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <>
+              <UploadCloudIcon />
+              Save
+            </>
+          )}
+        </Button>
+        <Button
+          tooltip={"Revert Back"}
+          size="icon"
+          variant="outline"
+          onClick={handleRevert}
+        >
+          <CloudDownloadIcon />
+        </Button>
       </div>
     </div>
   );

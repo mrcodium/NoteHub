@@ -67,16 +67,15 @@ export function LinkDialog({ editor }) {
       }
     >
       <DialogTrigger asChild>
-        <TooltipWrapper message="Insert Link">
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => openDialog("openLinkDialog")}
-            disabled={!editor.can().setLink({ href: "" })}
-          >
-            <LinkIcon />
-          </Button>
-        </TooltipWrapper>
+        <Button
+          tooltip="Insert Link"
+          size="icon"
+          variant="outline"
+          onClick={() => openDialog("openLinkDialog")}
+          disabled={!editor.can().setLink({ href: "" })}
+        >
+          <LinkIcon />
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogTitle>Add Link</DialogTitle>
@@ -94,26 +93,24 @@ export function LinkDialog({ editor }) {
             onBlur={handleSetLink}
           />
           <div className="flex gap-1">
-            <TooltipWrapper message="Open Link">
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleOpenLink}
-                disabled={!linkUrl}
-              >
-                <ExternalLink />
-              </Button>
-            </TooltipWrapper>
-            <TooltipWrapper message="Remove Link">
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={handleRemoveLink}
-                disabled={!editor.getAttributes("link").href}
-              >
-                <Trash2 />
-              </Button>
-            </TooltipWrapper>
+            <Button
+              tooltip="Open Link"
+              variant="secondary"
+              size="icon"
+              onClick={handleOpenLink}
+              disabled={!linkUrl}
+            >
+              <ExternalLink />
+            </Button>
+            <Button
+              tooltip="Remove Link"
+              variant="secondary"
+              size="icon"
+              onClick={handleRemoveLink}
+              disabled={!editor.getAttributes("link").href}
+            >
+              <Trash2 />
+            </Button>
           </div>
         </div>
       </DialogContent>
