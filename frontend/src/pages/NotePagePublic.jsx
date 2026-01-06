@@ -1,5 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Copy, CopyCheck, Pencil, Lock, Globe, ChevronUp } from "lucide-react";
+import {
+  Copy,
+  CopyCheck,
+  Pencil,
+  Lock,
+  Globe,
+  ChevronUp,
+  Clock,
+  Calendar,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import parse from "html-react-parser";
@@ -14,10 +23,11 @@ import { axiosInstance } from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useImageStore } from "@/stores/useImageStore";
 import Footer from "@/components/Footer";
-import { cn, formatTimeAgo } from "@/lib/utils";
+import { cn, formatDate, formatTimeAgo } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import ScrollTopButton from "@/components/ScrollTopButton";
+import { format } from "date-fns";
 
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
@@ -210,59 +220,98 @@ const NotePagePublic = () => {
       )}
     >
       <div className="max-w-screen-md w-full mx-auto relative">
-        <div className="flex px-4 py-8 border-b border-dashed mb-12 items-center justify-between">
-          <Link
-            to={`/user/${author?.userName}`}
-            className="flex flex-row items-center w-max gap-3"
-          >
-            <Avatar className="size-12 bg-muted">
-              <AvatarImage
-                className="w-full h-full object-cover !m-0"
-                src={author?.avatar}
-                alt={author?.fullName}
-              />
-              <AvatarFallback>
-                {(author?.fullName || "U").charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
-                <span>{author?.fullName}</span>
-                {isOwner && (
-                  <Badge
-                    variant="ghost"
-                    className={"p-1 border-none text-muted-foreground"}
-                  >
-                    {note.visibility === "public" &&
-                    note.visibility === "public" ? (
-                      <Globe size={16} strokeWidth={3} />
-                    ) : (
-                      <Lock
-                        size={16}
-                        strokeWidth={3}
-                        className="fill-destructive/20 stroke-destructive"
-                      />
-                    )}
-                  </Badge>
-                )}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {`@${author?.userName}`} • {formatTimeAgo(note?.updatedAt)}
-              </span>
-            </div>
-          </Link>
-          {isOwner && (
-            <Button
-              tooltip="Edit Content"
-              onClick={() => navigate(`/note/${note?._id}/editor`)}
-              variant="secondary"
-              size="lg"
-              className="rounded-full px-6 border bg-muted"
+        <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
+          <div className="flex items-center justify-between">
+            <Link
+              to={`/user/${author?.userName}`}
+              className="flex flex-row items-center w-max gap-3"
             >
-              <Pencil />
-              <span>Edit</span>
-            </Button>
-          )}
+              <Avatar className="size-12 bg-muted">
+                <AvatarImage
+                  className="w-full h-full object-cover !m-0"
+                  src={author?.avatar}
+                  alt={author?.fullName}
+                />
+                <AvatarFallback>
+                  {(author?.fullName || "U").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
+                  <span>{author?.fullName}</span>
+                  {isOwner && (
+                    <Badge
+                      variant="ghost"
+                      className={"p-1 border-none text-muted-foreground"}
+                    >
+                      {note.visibility === "public" &&
+                      note.visibility === "public" ? (
+                        <Globe size={16} strokeWidth={3} />
+                      ) : (
+                        <Lock
+                          size={16}
+                          strokeWidth={3}
+                          className="fill-destructive/20 stroke-destructive"
+                        />
+                      )}
+                    </Badge>
+                  )}
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {`@${author?.userName}`}
+                </span>
+              </div>
+            </Link>
+            {isOwner && (
+              <Button
+                tooltip="Edit Content"
+                onClick={() => navigate(`/note/${note?._id}/editor`)}
+                variant="secondary"
+                size="lg"
+                className="rounded-full px-6 border bg-muted"
+              >
+                <Pencil />
+                <span>Edit</span>
+              </Button>
+            )}
+          </div>
+          <div className="flex justify-around gap-8">
+            {/* Created Date */}
+            <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
+              <div className="flex gap-2 items-center">
+                <Calendar className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Created
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span
+                  className="text-sm font-medium"
+                  title={formatDate(note?.createdAt)}
+                >
+                  {format(new Date(note?.createdAt), "MMM d, yyyy")}
+                </span>
+              </div>
+            </div>
+
+            {/* Last Modified */}
+            <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
+              <div className="flex gap-2 items-center">
+                <Clock className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Last Modified
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span
+                  className="text-sm font-medium"
+                  title={formatDate(note?.updatedAt)}
+                >
+                  {formatTimeAgo(new Date(note?.updatedAt), "MMM d, yyyy")}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <Dialog
@@ -288,7 +337,7 @@ const NotePagePublic = () => {
 
         <div className="tiptap">{parse(note?.content || "")}</div>
       </div>
-      <ScrollTopButton/>
+      <ScrollTopButton />
       <Footer className={"pb-28"} />
     </div>
   );

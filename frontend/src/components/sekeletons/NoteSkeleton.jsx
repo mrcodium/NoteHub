@@ -1,7 +1,5 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "../ui/badge";
-import { Lock } from "lucide-react";
 
 const getRandomWidth = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -14,18 +12,42 @@ const NoteSkeleton = () => {
   return (
     <div className="h-svh flex w-full justify-center">
       <div className="max-w-screen-md w-full">
-        <div className="p-4 flex border-b border-dashed mb-12 pb-8  items-center justify-between">
-          <div className="flex flex-row items-center w-max gap-3">
-            <Skeleton className={"size-12 rounded-full"} />
-            <div className="flex flex-col w-40 space-y-1">
-              <div className=" flex gap-2">
-                <Skeleton className={"h-4 w-full"} />
-                <Skeleton className={"h-4 w-8"} />
+        <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
+          <div className="flex  items-center justify-between">
+            <div className="flex flex-row items-center w-max gap-3">
+              <Skeleton className={"size-12 rounded-full"} />
+              <div className="flex flex-col w-40 space-y-1">
+                <div className=" flex gap-2">
+                  <Skeleton className={"h-4 w-full"} />
+                  <Skeleton className={"h-4 w-8"} />
+                </div>
+                <Skeleton className={"h-4 w-28"} />
               </div>
-              <Skeleton className={"h-4"} />
+            </div>
+            <Skeleton className={"h-10 w-24 rounded-full"} />
+          </div>
+
+          <div className="flex justify-around gap-8">
+            {/* Created Date */}
+            <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
+              <div className="flex gap-2 items-center">
+                <Skeleton className={"h-4 w-20"} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <Skeleton className={"h-4 w-24"} />
+              </div>
+            </div>
+
+            {/* Last Modified */}
+            <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
+              <div className="flex gap-2 items-center">
+                <Skeleton className={"h-4 w-20"} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <Skeleton className={"h-4 w-24"} />
+              </div>
             </div>
           </div>
-          <Skeleton className={"h-10 w-24 rounded-full"} />
         </div>
 
         <div className="p-4">
