@@ -1,6 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { useNoteStore } from "@/stores/useNoteStore";
-import { Calendar, Clock, Copy, CopyCheck, Globe, Pencil } from "lucide-react";
+import {
+  Calendar,
+  ChevronsUpDown,
+  Clock,
+  Copy,
+  CopyCheck,
+  Globe,
+  LucideChevronsLeft,
+  Pencil,
+  TextQuote,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import parse from "html-react-parser";
@@ -19,7 +29,13 @@ import { cn, formatDate, formatTimeAgo } from "@/lib/utils";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useEditorStore } from "@/stores/useEditorStore";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const NotePage = () => {
   const { id: noteId } = useParams();
@@ -28,6 +44,28 @@ const NotePage = () => {
   const [content, setContent] = useState("");
   const [note, setNote] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  
+  const [activeId, setActiveId] = useState(null);
+  const [toc, setToc] = useState([]);
+  const [tocOpen, setTocOpen] = useState(false);
+  const scrollRef = useEditorStore((s) => s.scrollRef);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const el = scrollRef?.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const percent = (scrollTop / (scrollHeight - clientHeight)) * 100;
+
+      setProgress(Math.min(100, Math.max(0, Math.round(percent))));
+    };
+
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [scrollRef]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,6 +82,23 @@ const NotePage = () => {
 
   useEffect(() => {
     if (content) {
+      // Generate Table of Contents
+      const headings = Array.from(
+        document.querySelectorAll(".tiptap h1, .tiptap h2, .tiptap h3")
+      );
+
+      const tocData = headings.map((h, index) => {
+        if (!h.id) h.id = `heading-${index}`;
+        return {
+          id: h.id,
+          text: h.innerText,
+          level: Number(h.tagName[1]),
+          element: h,
+        };
+      });
+
+      setToc(tocData);
+
       // Apply syntax highlighting
       document.querySelectorAll("pre code").forEach((block) => {
         hljs.highlightElement(block);
@@ -133,6 +188,31 @@ const NotePage = () => {
       };
     }
   }, [content]);
+
+  useEffect(() => {
+    const el = scrollRef?.current;
+    if (!el || toc.length === 0) return;
+
+    const onScroll = () => {
+      let current = null;
+
+      toc.forEach((item) => {
+        const rect = item.element.getBoundingClientRect();
+        const containerTop = el.getBoundingClientRect().top;
+
+        if (rect.top - containerTop <= 120) {
+          current = item.id;
+        }
+      });
+
+      setActiveId(current);
+    };
+
+    el.addEventListener("scroll", onScroll);
+    onScroll(); // run once initially
+
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [toc, scrollRef]);
 
   if (status.noteContent.state === "loading") {
     return <NoteSkeleton />;
@@ -289,6 +369,53 @@ const NotePage = () => {
         </Dialog>
 
         <div className="tiptap">{parse(content)}</div>
+        <Popover open={tocOpen} onOpenChange={setTocOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              className="fixed bottom-4 right-4 h-auto gap-4 rounded-full py-1.5 px-2.5 pl-4"
+              variant="outline"
+            >
+              <div className="flex items-center gap-2">
+                <TextQuote/>
+                Index <ChevronsUpDown className="text-primary/30"/>
+              </div>
+              <div className="bg-muted/50 p-2 py-1.5 rounded-full min-w-[50px]">
+                {progress}%
+              </div>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="bg-background rounded-2xl min-w-max pr-1"
+          >
+            <ScrollArea>
+              {toc.length > 1 && (
+                <div className="max-w-sm text-sm max-h-[60vh] pr-4">
+                  <ol className="space-y-2 ml-8">
+                    {toc.map((item) => (
+                      <li
+                        key={item.id}
+                        onClick={() => {
+                          document.getElementById(item.id)?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                          setTocOpen(false);
+                        }}
+                        className={cn(
+                          "cursor-pointer !pl-2 list-decimal text-base text-muted-foreground hover:text-primary",
+                          activeId === item.id && "text-primary font-semibold"
+                        )}
+                        style={{ paddingLeft: (item.level - 1) * 12 }}
+                      >
+                        {item.text}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
       </div>
       <ScrollTopButton />
       <Footer className={"pb-28"} />

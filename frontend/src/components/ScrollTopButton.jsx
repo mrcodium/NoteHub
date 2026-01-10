@@ -25,7 +25,7 @@ const ScrollTopButton = () => {
     <Button
       variant="secondary"
       size="icon"
-      className="fixed bottom-4 right-4 size-11 rounded-full"
+      className="fixed bottom-20 right-4 size-11 rounded-full"
       onClick={() => scrollRef.current.scrollTo({ top: 0, behavior: "smooth" })}
     >
       <ChevronUp className="!size-6" strokeWidth={3} />

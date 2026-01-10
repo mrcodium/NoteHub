@@ -8,6 +8,8 @@ import {
   ChevronUp,
   Clock,
   Calendar,
+  TextQuote,
+  ChevronsUpDown,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -28,6 +30,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import { format } from "date-fns";
+import { useEditorStore } from "@/stores/useEditorStore";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
@@ -41,6 +50,27 @@ const NotePagePublic = () => {
   const [note, setNote] = useState(null);
   const [author, setAuthor] = useState(null);
   const { getImages } = useImageStore();
+
+  const [activeId, setActiveId] = useState(null);
+  const [toc, setToc] = useState([]);
+  const [tocOpen, setTocOpen] = useState(false);
+  const scrollRef = useEditorStore((s) => s.scrollRef);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const el = scrollRef?.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const percent = (scrollTop / (scrollHeight - clientHeight)) * 100;
+
+      setProgress(Math.min(100, Math.max(0, Math.round(percent))));
+    };
+
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [scrollRef]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,6 +101,23 @@ const NotePagePublic = () => {
 
   useEffect(() => {
     if (note?.content) {
+      // Generate Table of Contents
+      const headings = Array.from(
+        document.querySelectorAll(".tiptap h1, .tiptap h2, .tiptap h3")
+      );
+
+      const tocData = headings.map((h, index) => {
+        if (!h.id) h.id = `heading-${index}`;
+        return {
+          id: h.id,
+          text: h.innerText,
+          level: Number(h.tagName[1]),
+          element: h,
+        };
+      });
+
+      setToc(tocData);
+
       // Apply syntax highlighting
       document.querySelectorAll("pre code").forEach((block) => {
         hljs.highlightElement(block);
@@ -162,6 +209,31 @@ const NotePagePublic = () => {
       };
     }
   }, [note]);
+
+  useEffect(() => {
+    const el = scrollRef?.current;
+    if (!el || toc.length === 0) return;
+
+    const onScroll = () => {
+      let current = null;
+
+      toc.forEach((item) => {
+        const rect = item.element.getBoundingClientRect();
+        const containerTop = el.getBoundingClientRect().top;
+
+        if (rect.top - containerTop <= 120) {
+          current = item.id;
+        }
+      });
+
+      setActiveId(current);
+    };
+
+    el.addEventListener("scroll", onScroll);
+    onScroll(); // run once initially
+
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [toc, scrollRef]);
 
   if (isLoading) {
     return <NoteSkeleton />;
@@ -336,6 +408,54 @@ const NotePagePublic = () => {
         </Dialog>
 
         <div className="tiptap">{parse(note?.content || "")}</div>
+
+        <Popover open={tocOpen} onOpenChange={setTocOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              className="fixed bottom-4 right-4 h-auto gap-4 rounded-full py-1.5 px-2.5 pl-4"
+              variant="outline"
+            >
+              <div className="flex items-center gap-2">
+                <TextQuote />
+                Index <ChevronsUpDown className="text-primary/30" />
+              </div>
+              <div className="bg-muted/50 p-2 py-1.5 rounded-full min-w-[50px]">
+                {progress}%
+              </div>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="bg-background rounded-2xl min-w-max pr-1"
+          >
+            <ScrollArea>
+              {toc.length > 1 && (
+                <div className="max-w-sm text-sm max-h-[60vh] pr-4">
+                  <ol className="space-y-2 ml-8">
+                    {toc.map((item) => (
+                      <li
+                        key={item.id}
+                        onClick={() => {
+                          document.getElementById(item.id)?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                          setTocOpen(false);
+                        }}
+                        className={cn(
+                          "cursor-pointer !pl-2 list-decimal text-base text-muted-foreground hover:text-primary",
+                          activeId === item.id && "text-primary font-semibold"
+                        )}
+                        style={{ paddingLeft: (item.level - 1) * 12 }}
+                      >
+                        {item.text}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
       </div>
       <ScrollTopButton />
       <Footer className={"pb-28"} />
