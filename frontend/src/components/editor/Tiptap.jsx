@@ -23,11 +23,11 @@ const Tiptap = () => {
         if (storedData && storedData.noteId === noteId) {
           setContent(storedData.content);
         } else {
-          const noteContent = await getNoteContent(noteId);
-          if (noteContent === null) {
+          const note = await getNoteContent(noteId);
+          if (note === null) {
             setNotFound(true);
           } else {
-            setContent(noteContent);
+            setContent(note.content);
           }
         }
         setLoading(false);

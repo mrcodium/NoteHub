@@ -35,7 +35,7 @@ export const ColorPicker = ({
             key={color}
             onClick={() => onColorSelect(color)}
             className={`relative w-8 h-8 ${
-              isActive(color) ? "bg-primary" : ""
+              isActive(color) ? "bg-primary" : "bg-primary/20"
             } hover:bg-accent rounded-md cursor-pointer`}
           >
             <div

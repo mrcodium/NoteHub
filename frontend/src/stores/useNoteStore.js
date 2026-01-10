@@ -52,8 +52,8 @@ export const useNoteStore = create((set, get) => {
 
     // Stores
     collections: [],
-    notesContent: {
-      //noteId : 'content'
+    notesCache: {
+      //noteId : {}
     },
     notes: [],
 
@@ -92,28 +92,29 @@ export const useNoteStore = create((set, get) => {
     },
 
     getNoteContent: async (noteId) => {
-      const { notesContent } = get();
-      if (noteId in notesContent) {
-        return notesContent[noteId] || "";
+      const { notesCache } = get();
+
+      if (noteId in notesCache) {
+        return notesCache[noteId];
       }
 
-      // ondemand loading.
       setStatus("noteContent", { state: "loading", error: null });
+
       try {
         const res = await axiosInstance.get(`note/${noteId}`);
-        const { content } = res.data.note;
+        const note = res.data.note;
+
         set({
-          notesContent: {
-            ...notesContent,
-            [noteId]: content,
+          notesCache: {
+            ...notesCache,
+            [noteId]: note,
           },
+          noteNotFound: false,
         });
 
-        set({ noteNotFound: false });
-        return content || "";
+        return note; 
       } catch (error) {
         console.error("Error fetching note content", error);
-        console.log("not found");
         set({ noteNotFound: true });
         return null;
       } finally {
@@ -376,7 +377,9 @@ export const useNoteStore = create((set, get) => {
           collectionId,
         });
         const { collection, message } = res.data;
-        updateCollectionInNotesArray(collection._id, {visibility: collection.visibility})
+        updateCollectionInNotesArray(collection._id, {
+          visibility: collection.visibility,
+        });
         set((state) => ({
           collections: state.collections.map((c) => {
             if (c._id === collection._id) {

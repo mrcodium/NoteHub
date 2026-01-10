@@ -247,9 +247,26 @@
     --code-number: 0 0.01% 45.61%;
     --selection: 0 0.02% 3.94%;
     --selection-foreground: 0 0% 100%;
+
+    
+    --highlight-destructive: 351 95% 29%; 
+    --highlight-warn: 31 97% 28%; 
+    --highlight-success: 81 88% 20%; 
+    --highlight-teal: 152 76% 20%; 
+    --highlight-sky: 186 94% 18%; 
+    --highlight-blue: 230 94% 18%; 
+    --highlight-muted: #808080;  
   }
 
   .dark {
+    --highlight-destructive: 351 95% 71%; 
+    --highlight-warn: 31 97% 72%; 
+    --highlight-success: 81 88% 80%; 
+    --highlight-teal: 152 76% 80%; 
+    --highlight-sky: 186 94% 82%; 
+    --highlight-blue: 230 94% 82%; 
+    --highlight-muted: #808080;  
+
     --background: 0 0.02% 3.94%;
     --foreground: 0 0.5% 98.03%;
     --card: 0 0.02% 9.06%;

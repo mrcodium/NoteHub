@@ -89,9 +89,9 @@ export const MenuBar = ({ noteId }) => {
     localStorage.removeItem("noteContent");
 
     // 2. Fetch fresh content from store (server or store cache)
-    const freshContent = await getNoteContent(noteId); // use your store function
-    if (freshContent !== null) {
-      editor.commands.setContent(freshContent, false); // replace editor content
+    const note = await getNoteContent(noteId); // use your store function
+    if (note !== null) {
+      editor.commands.setContent(note.content, false); // replace editor content
     } else {
       editor.commands.clearContent(); // fallback if note not found
     }

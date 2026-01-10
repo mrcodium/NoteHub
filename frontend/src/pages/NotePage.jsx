@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNoteStore } from "@/stores/useNoteStore";
-import { Copy, CopyCheck, Globe, Pencil } from "lucide-react";
+import { Calendar, Clock, Copy, CopyCheck, Globe, Pencil } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import parse from "html-react-parser";
@@ -15,22 +15,27 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Footer from "@/components/Footer";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn, formatDate, formatTimeAgo } from "@/lib/utils";
 import ScrollTopButton from "@/components/ScrollTopButton";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+
 
 const NotePage = () => {
   const { id: noteId } = useParams();
   const { authUser } = useAuthStore();
   const { getNoteContent, status, noteNotFound } = useNoteStore();
   const [content, setContent] = useState("");
+  const [note, setNote] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       if (noteId) {
-        let noteContent = await getNoteContent(noteId);
-        setContent(noteContent || "");
+        let note = await getNoteContent(noteId);
+        setNote(note);
+        setContent(note?.content || "");
       }
     };
 
@@ -173,40 +178,94 @@ const NotePage = () => {
       )}
     >
       <div className="max-w-screen-md w-full mx-auto relative">
-        <div className="flex px-4 py-8 border-b border-dashed mb-12 items-center justify-between">
-          <Link
-            to={`/user/${authUser?.userName}`}
-            className="flex flex-row items-center w-max gap-3"
-          >
-            <Avatar className="size-12 bg-muted">
-              <AvatarImage
-                className="w-full h-full object-cover !m-0"
-                src={authUser?.avatar}
-                alt={authUser?.fullName}
-              />
-              <AvatarFallback>
-                {(authUser?.fullName || "U").charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
-                <span>{authUser?.fullName}</span>
+        <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
+          <div className="flex items-center justify-between">
+            <Link
+              to={`/user/${authUser?.userName}`}
+              className="flex flex-row items-center w-max gap-3"
+            >
+              <Avatar className="size-12 bg-muted">
+                <AvatarImage
+                  className="w-full h-full object-cover !m-0"
+                  src={authUser?.avatar}
+                  alt={authUser?.fullName}
+                />
+                <AvatarFallback>
+                  {(authUser?.fullName || "U").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
+                  <span>{authUser?.fullName}</span>
+                  <Badge
+                    variant="ghost"
+                    className={"p-1 border-none text-muted-foreground"}
+                  >
+                    {note.visibility === "public" &&
+                    note.visibility === "public" ? (
+                      <Globe size={16} strokeWidth={3} />
+                    ) : (
+                      <Lock
+                        size={16}
+                        strokeWidth={3}
+                        className="fill-destructive/20 stroke-destructive"
+                      />
+                    )}
+                  </Badge>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {`@${authUser?.userName}`}
+                </span>
               </div>
-              <span className="text-sm text-muted-foreground">
-                {`@${authUser?.userName}`}
-              </span>
+            </Link>
+            <Button
+              tooltip="Edit Content"
+              onClick={() => navigate(`/note/${note?._id}/editor`)}
+              variant="secondary"
+              size="lg"
+              className="rounded-full px-6 border bg-muted"
+            >
+              <Pencil />
+              <span>Edit</span>
+            </Button>
+          </div>
+          <div className="flex justify-around gap-8">
+            {/* Created Date */}
+            <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
+              <div className="flex gap-2 items-center">
+                <Calendar className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Created
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span
+                  className="text-sm font-medium"
+                  title={formatDate(note?.createdAt)}
+                >
+                  {format(new Date(note?.createdAt), "MMM d, yyyy")}
+                </span>
+              </div>
             </div>
-          </Link>
-          <Button
-            tooltip="Edit Content"
-            onClick={() => navigate(`/note/${noteId}/editor`)}
-            variant="secondary"
-            size="lg"
-            className="rounded-full px-6 border bg-muted"
-          >
-            <Pencil />
-            <span>Edit</span>
-          </Button>
+
+            {/* Last Modified */}
+            <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
+              <div className="flex gap-2 items-center">
+                <Clock className="size-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Last Modified
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span
+                  className="text-sm font-medium"
+                  title={formatDate(note?.updatedAt)}
+                >
+                  {formatTimeAgo(new Date(note?.updatedAt), "MMM d, yyyy")}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
         <Dialog
           open={!!selectedImage}
@@ -230,7 +289,6 @@ const NotePage = () => {
         </Dialog>
 
         <div className="tiptap">{parse(content)}</div>
-
       </div>
       <ScrollTopButton />
       <Footer className={"pb-28"} />
