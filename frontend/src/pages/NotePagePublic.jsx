@@ -412,14 +412,14 @@ const NotePagePublic = () => {
         <Popover open={tocOpen} onOpenChange={setTocOpen}>
           <PopoverTrigger asChild>
             <Button
-              className="fixed bottom-4 right-4 h-auto gap-4 rounded-full py-1.5 px-2.5 pl-4"
-              variant="outline"
+              className="fixed bottom-4 right-4 hover:bg-primary h-12 gap-4 rounded-full py-1.5 px-2.5 pl-4"
+              variant="default"
             >
               <div className="flex items-center gap-2">
                 <TextQuote />
                 Index <ChevronsUpDown className="text-primary/30" />
               </div>
-              <div className="bg-muted/50 p-2 py-1.5 rounded-full min-w-[50px]">
+              <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
                 {progress}%
               </div>
             </Button>
@@ -430,10 +430,10 @@ const NotePagePublic = () => {
           >
             <ScrollArea>
               {toc.length > 1 && (
-                <div className="max-w-sm text-sm max-h-[60vh] pr-4">
-                  <ol className="space-y-2 ml-8">
+                <div className="max-w-[300px] sm:max-w-sm text-sm max-h-[60vh] pr-4">
+                  <div className="space-y-2">
                     {toc.map((item) => (
-                      <li
+                      <p
                         key={item.id}
                         onClick={() => {
                           document.getElementById(item.id)?.scrollIntoView({
@@ -442,15 +442,15 @@ const NotePagePublic = () => {
                           setTocOpen(false);
                         }}
                         className={cn(
-                          "cursor-pointer !pl-2 list-decimal text-base text-muted-foreground hover:text-primary",
+                          "cursor-pointer !pl-0 list-decimal text-base text-muted-foreground hover:text-primary",
                           activeId === item.id && "text-primary font-semibold"
                         )}
                         style={{ paddingLeft: (item.level - 1) * 12 }}
                       >
                         {item.text}
-                      </li>
+                      </p>
                     ))}
-                  </ol>
+                  </div>
                 </div>
               )}
             </ScrollArea>
