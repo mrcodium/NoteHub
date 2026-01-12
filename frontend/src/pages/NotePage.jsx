@@ -391,7 +391,7 @@ const NotePage = () => {
           >
             <ScrollArea>
               {toc.length > 1 && (
-                <div className="max-w-[300px] sm:max-w-sm text-sm max-h-[60vh] pr-4">
+                <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
                   <div className="space-y-2">
                     {toc.map((item) => (
                       <p
@@ -403,7 +403,7 @@ const NotePage = () => {
                           setTocOpen(false);
                         }}
                         className={cn(
-                          "cursor-pointer !pl-0 list-decimal text-base text-muted-foreground hover:text-primary",
+                          "cursor-pointer !pl-0 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
                           activeId === item.id && "text-primary font-semibold"
                         )}
                         style={{ paddingLeft: (item.level - 1) * 12 }}
