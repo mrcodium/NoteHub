@@ -7,6 +7,7 @@ import {
   Copy,
   CopyCheck,
   Globe,
+  Lock,
   LucideChevronsLeft,
   Pencil,
   TextQuote,
