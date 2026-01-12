@@ -828,12 +828,12 @@
     }
   }
   * {
-    font-family: "Roboto", sans-serif;
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Roboto", sans-serif;
   }
 
   .logo {

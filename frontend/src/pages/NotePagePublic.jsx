@@ -10,6 +10,7 @@ import {
   Calendar,
   TextQuote,
   ChevronsUpDown,
+  Type,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -38,6 +39,12 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+const fontMap = {
+  Roboto: "Roboto, sans-serif",
+  Merri: '"Merriweather", serif',
+  Source: '"Source Serif 4", serif',
+};
+
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
   const navigate = useNavigate();
@@ -54,7 +61,7 @@ const NotePagePublic = () => {
   const [activeId, setActiveId] = useState(null);
   const [toc, setToc] = useState([]);
   const [tocOpen, setTocOpen] = useState(false);
-  const scrollRef = useEditorStore((s) => s.scrollRef);
+  const { scrollRef, editorFontFamily, setFontFamily } = useEditorStore();
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -407,55 +414,90 @@ const NotePagePublic = () => {
           </DialogContent>
         </Dialog>
 
-        <div className="tiptap">{parse(note?.content || "")}</div>
+        <div className={"tiptap"} style={{ fontFamily: editorFontFamily }}>
+          {parse(note?.content || "")}
+        </div>
 
-        <Popover open={tocOpen} onOpenChange={setTocOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              className="fixed bottom-4 right-4 hover:bg-primary h-12 gap-4 rounded-full py-1.5 px-2.5 pl-4"
-              variant="default"
-            >
-              <div className="flex items-center gap-2">
-                <TextQuote />
-                Index <ChevronsUpDown className="text-primary/30" />
-              </div>
-              <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
-                {progress}%
-              </div>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            align="end"
-            className="bg-background rounded-2xl min-w-max pr-1"
-          >
-            <ScrollArea>
-              {toc.length > 1 && (
-                <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
-                  <div className="space-y-2">
-                    {toc.map((item) => (
-                      <p
-                        key={item.id}
-                        onClick={() => {
-                          document.getElementById(item.id)?.scrollIntoView({
-                            behavior: "smooth",
-                          });
-                          setTocOpen(false);
-                        }}
-                        className={cn(
-                          "cursor-pointer !pl-0 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
-                          activeId === item.id && "text-primary font-semibold"
-                        )}
-                        style={{ paddingLeft: (item.level - 1) * 12 }}
-                      >
-                        {item.text}
-                      </p>
-                    ))}
-                  </div>
+        <div className="flex gap-2 items-center fixed bottom-4 right-4">
+          <Popover open={tocOpen} onOpenChange={setTocOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                className="hover:bg-primary h-11 gap-4 rounded-full py-1.5 px-2 pl-4"
+                variant="default"
+              >
+                <div className="flex items-center gap-2">
+                  <TextQuote />
+                  Index <ChevronsUpDown className="text-primary/30" />
                 </div>
-              )}
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
+                <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
+                  {progress}%
+                </div>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              sideOffset={10}
+              alignOffset={-50}
+              className="bg-background rounded-2xl min-w-max pr-1"
+            >
+              <ScrollArea>
+                {toc.length > 1 && (
+                  <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
+                    <div className="space-y-2">
+                      {toc.map((item) => (
+                        <p
+                          key={item.id}
+                          onClick={() => {
+                            document.getElementById(item.id)?.scrollIntoView({
+                              behavior: "smooth",
+                            });
+                            setTocOpen(false);
+                          }}
+                          className={cn(
+                            "cursor-pointer !pl-0 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
+                            activeId === item.id && "text-primary font-semibold"
+                          )}
+                          style={{ paddingLeft: (item.level - 1) * 12 }}
+                        >
+                          {item.text}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button className="size-11 rounded-full">
+                <Type />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="rounded-2xl p-2" align="end">
+              <div className="grid grid-cols-3 gap-2">
+                {["Roboto", "Merri", "Source"].map((font) => (
+                  <Button
+                    key={font}
+                    onClick={() => setFontFamily(fontMap[font])}
+                    className={`h-full rounded-xl flex flex-col items-center justify-center gap-0 bg-primary/5 hover:bg-primary/10 text-primary aspect-square p-0
+                    ${
+                      editorFontFamily === fontMap[font] &&
+                      "bg-primary/20 ring-2 ring-ring"
+                    }
+                  `}
+                    style={{
+                      fontFamily: fontMap[font],
+                    }}
+                  >
+                    <div className="text-4xl leading-none">A</div>
+                    <p className="text-xs font-normal">{font}</p>
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
       <ScrollTopButton />
       <Footer className={"pb-28"} />

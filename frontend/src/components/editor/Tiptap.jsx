@@ -7,6 +7,7 @@ import NoteSkeleton from "../sekeletons/NoteSkeleton";
 import { MenuBar } from "./MenuBar";
 import { useImageStore } from "@/stores/useImageStore";
 import { migrateMathStrings } from "@tiptap/extension-mathematics";
+import { useEditorStore } from "@/stores/useEditorStore";
 
 const Tiptap = () => {
   const { getNoteContent, status } = useNoteStore();
@@ -15,6 +16,7 @@ const Tiptap = () => {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const { editorFontFamily } = useEditorStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,6 +76,7 @@ const Tiptap = () => {
         attributes: {
           class:
             "prose dark:prose-invert mx-auto prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none min-h-full",
+            style: "font-family: " + editorFontFamily + ", serif;",
           spellcheck: "false",
         },
       }}
