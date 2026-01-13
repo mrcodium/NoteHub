@@ -11,7 +11,7 @@ import { useEditorStore } from "@/stores/useEditorStore";
 
 const Tiptap = () => {
   const { getNoteContent, status } = useNoteStore();
-  const {getImages} = useImageStore();
+  const { getImages } = useImageStore();
   const { id: noteId } = useParams();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
@@ -73,10 +73,25 @@ const Tiptap = () => {
       content={content}
       onUpdate={({ editor }) => handleUpdate(editor.getHTML())}
       editorProps={{
+        transformPastedHTML(html) {
+          const doc = new DOMParser().parseFromString(html, "text/html");
+
+          doc.querySelectorAll("[style]").forEach((el) => {
+            el.style.removeProperty("font-family");
+            el.style.removeProperty("font-size");
+            el.style.removeProperty("line-height");
+
+            if (!el.getAttribute("style")?.trim()) {
+              el.removeAttribute("style");
+            }
+          });
+          console.count("hello");
+          return doc.body.innerHTML;
+        },
         attributes: {
           class:
             "prose dark:prose-invert mx-auto prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none min-h-full",
-            style: "font-family: " + editorFontFamily + ", serif;",
+          style: `font-family: ${editorFontFamily}, serif;`,
           spellcheck: "false",
         },
       }}
@@ -85,5 +100,3 @@ const Tiptap = () => {
 };
 
 export default Tiptap;
-
-
