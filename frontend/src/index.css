@@ -99,7 +99,6 @@ div:has(> .tiptap.ProseMirror) {
   @apply max-w-screen-md;
 }
 
-
 .tiptap {
   tab-size: 4;
   @apply p-4;
@@ -122,6 +121,9 @@ div:has(> .tiptap.ProseMirror) {
   }
   li {
     margin-bottom: 8px;
+  }
+  li p {
+    margin-bottom: 0;
   }
   ul[data-type="taskList"] {
     list-style: none;
@@ -178,27 +180,33 @@ div:has(> .tiptap.ProseMirror) {
   }
 
   h1 {
-    @apply text-[2rem] font-semibold mb-8 leading-snug;
+    font-size: 2em;
+    @apply font-semibold mb-8 leading-snug;
   }
 
   h2 {
-    @apply text-[1.57rem] font-semibold mt-8 mb-4 leading-snug;
+    font-size: 1.6em;
+    @apply font-semibold mt-8 mb-4 leading-snug;
   }
 
   h3 {
-    @apply text-[1.35rem] font-semibold mt-6 mb-2 leading-snug;
+    font-size: 1.35em;
+    @apply font-semibold mt-6 mb-2 leading-snug;
   }
 
   h4 {
-    @apply text-base font-semibold mt-4 mb-2;
+    font-size: 1.1em;
+    @apply font-semibold mt-4 mb-2;
   }
 
   h5 {
-    @apply text-base font-semibold m-0;
+    font-size: 1em;
+    @apply font-semibold m-0;
   }
 
   h6 {
-    @apply text-base font-semibold m-0;
+    font-size: 0.9em;
+    @apply font-semibold m-0;
   }
 
   p {

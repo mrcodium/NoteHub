@@ -103,6 +103,7 @@ export const MenuBar = ({ noteId }) => {
         {FORMATTING_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
           <Button
             message={tooltip}
+            key={index}
             size="icon"
             onClick={() => editor.chain().focus()[command]().run()}
             disabled={!editor.can().chain().focus()[command]().run()}
@@ -114,6 +115,7 @@ export const MenuBar = ({ noteId }) => {
         {BLOCK_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
           <Button
             message={tooltip}
+            key={index}
             size="icon"
             onClick={() => editor.chain().focus()[command]().run()}
             variant={editor.isActive(name) ? "secondary" : "ghost"}
@@ -128,6 +130,7 @@ export const MenuBar = ({ noteId }) => {
         {LIST_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
           <Button
             message={tooltip}
+            key={index}
             size="icon"
             onClick={() => editor.chain().focus()[command]().run()}
             variant={editor.isActive(name) ? "secondary" : "ghost"}
@@ -139,6 +142,7 @@ export const MenuBar = ({ noteId }) => {
         {LIST_CONTROL_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
           <Button
             message={tooltip}
+            key={index}
             size="icon"
             variant="ghost"
             onClick={() => {
@@ -159,6 +163,7 @@ export const MenuBar = ({ noteId }) => {
         {CONTROL_BUTTONS.map(({ icon, command, tooltip }, index) => (
           <Button
             message={tooltip}
+            key={index}
             size="icon"
             variant="ghost"
             onClick={() => editor.chain().focus()[command]().run()}
@@ -171,6 +176,7 @@ export const MenuBar = ({ noteId }) => {
         {ALIGNMENT_BUTTONS.map(({ icon, command, tooltip, name }, index) => (
           <Button
             message={tooltip}
+            key={index}
             size="icon"
             onClick={() => editor.chain().focus()[command](name).run()}
             variant={

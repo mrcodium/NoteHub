@@ -142,9 +142,9 @@ export const useNoteStore = create((set, get) => {
 
         const { note, message } = res.data;
         set((state) => ({
-          notesContent: {
-            ...state.notesContent,
-            [note._id]: note.content,
+          notesCache: {
+            ...state.notesCache,
+            [note._id]: note,
           },
         }));
 

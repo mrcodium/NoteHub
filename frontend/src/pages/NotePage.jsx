@@ -9,7 +9,9 @@ import {
   Globe,
   Lock,
   LucideChevronsLeft,
+  Minus,
   Pencil,
+  Plus,
   TextQuote,
   Type,
 } from "lucide-react";
@@ -36,14 +38,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useEditorStore } from "@/stores/useEditorStore";
+import {
+  FONT_PRESETS,
+  FONT_SIZE,
+  useEditorStore,
+} from "@/stores/useEditorStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-const fontMap = {
-  Roboto: "Roboto, sans-serif",
-  Merri: '"Merriweather", serif',
-  Source: '"Source Serif 4", serif',
-};
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import EditorTypographyControls from "@/components/editor/EditorTypographyControls";
 
 const NotePage = () => {
   const { id: noteId } = useParams();
@@ -56,7 +60,14 @@ const NotePage = () => {
   const [activeId, setActiveId] = useState(null);
   const [toc, setToc] = useState([]);
   const [tocOpen, setTocOpen] = useState(false);
-  const { scrollRef, editorFontFamily, setFontFamily } = useEditorStore();
+  const {
+    scrollRef,
+    editorFontFamily,
+    editorFontSizeIndex,
+    setFontSize,
+    setFontFamily,
+  } = useEditorStore();
+  const fontSize = FONT_SIZE[editorFontSizeIndex] || FONT_SIZE[1];
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -104,7 +115,6 @@ const NotePage = () => {
           element: h,
         };
       });
-
       setToc(tocData);
 
       // Apply syntax highlighting
@@ -289,8 +299,7 @@ const NotePage = () => {
                     variant="ghost"
                     className={"p-1 border-none text-muted-foreground"}
                   >
-                    {note.visibility === "public" &&
-                    note.visibility === "public" ? (
+                    {note.visibility === "public" ? (
                       <Globe size={16} strokeWidth={3} />
                     ) : (
                       <Lock
@@ -307,7 +316,6 @@ const NotePage = () => {
               </div>
             </Link>
             <Button
-              tooltip="Edit Content"
               onClick={() => navigate(`/note/${note?._id}/editor`)}
               variant="secondary"
               size="lg"
@@ -376,33 +384,40 @@ const NotePage = () => {
           </DialogContent>
         </Dialog>
 
-        <div className={"tiptap"} style={{ fontFamily: editorFontFamily }}>
-          {parse(content)}
+        <div
+          className="tiptap"
+          style={{
+            fontSize: fontSize.size,
+            fontFamily: editorFontFamily,
+            lineHeight: "1.7",
+          }}
+        >
+          {parse(note?.content || "")}
         </div>
         <div className="flex gap-2 items-center fixed bottom-4 right-4">
-          <Popover open={tocOpen} onOpenChange={setTocOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                className="hover:bg-primary h-11 gap-4 rounded-full py-1.5 px-2 pl-4"
-                variant="default"
+          {toc.length > 1 && (
+            <Popover open={tocOpen} onOpenChange={setTocOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  className="hover:bg-primary h-11 gap-4 rounded-full py-1.5 px-2 pl-4"
+                  variant="default"
+                >
+                  <div className="flex items-center gap-2">
+                    <TextQuote />
+                    Index <ChevronsUpDown className="text-primary/30" />
+                  </div>
+                  <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
+                    {Number(progress || 0)}%
+                  </div>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                sideOffset={10}
+                alignOffset={-50}
+                className=" rounded-2xl min-w-max pr-1"
               >
-                <div className="flex items-center gap-2">
-                  <TextQuote />
-                  Index <ChevronsUpDown className="text-primary/30" />
-                </div>
-                <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
-                  {progress}%
-                </div>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              sideOffset={10}
-              alignOffset={-50}
-              className="bg-background rounded-2xl min-w-max pr-1"
-            >
-              <ScrollArea>
-                {toc.length > 1 && (
+                <ScrollArea>
                   <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
                     <div className="space-y-2">
                       {toc.map((item) => (
@@ -425,37 +440,18 @@ const NotePage = () => {
                       ))}
                     </div>
                   </div>
-                )}
-              </ScrollArea>
-            </PopoverContent>
-          </Popover>
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button className="size-11 rounded-full">
                 <Type />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="rounded-2xl p-2" align="end">
-              <div className="grid grid-cols-3 gap-2">
-                {["Roboto", "Merri", "Source"].map((font) => (
-                  <Button
-                    key={font}
-                    onClick={() => setFontFamily(fontMap[font])}
-                    className={`h-full rounded-xl flex flex-col items-center justify-center gap-0 bg-primary/5 hover:bg-primary/10 text-primary aspect-square p-0
-                    ${
-                      editorFontFamily === fontMap[font] &&
-                      "bg-primary/20 ring-2 ring-ring"
-                    }
-                  `}
-                    style={{
-                      fontFamily: fontMap[font],
-                    }}
-                  >
-                    <div className="text-4xl leading-none">A</div>
-                    <p className="text-xs font-normal">{font}</p>
-                  </Button>
-                ))}
-              </div>
+            <PopoverContent className="rounded-2xl p-4 select-none" align="end">
+              <EditorTypographyControls />
             </PopoverContent>
           </Popover>
         </div>
