@@ -1,4 +1,4 @@
-# NoteHub 📝✨
+# NoteHub 
 
 ![NoteHub Banner](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776796/Screenshot_2025-07-17_232545_f0ucxh.png)
 
@@ -8,28 +8,39 @@ A modern note-taking app with rich editing, collaboration, and cloud sync.
 
 🌐 [https://notehub-38kp.onrender.com](https://notehub-38kp.onrender.com)
 
-## ✨ Editor Features
+## Editor Features
 
-| Feature | Visual |
-|---------|--------|
-| **Rich Text Formatting** | ![Rich Text](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777133/Screenshot_2025-07-18_000149_yvaarv.png) |
-| **Code Blocks** | ![Code](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776757/Screenshot_2025-07-17_233033_nbxykt.png) |
-| **LaTeX Math** | ![Math](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776746/Screenshot_2025-07-17_233300_wrm65f.png) |
-| **Todo Lists** | ![Todo](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776723/Screenshot_2025-07-17_233856_ze2irj.png) |
-| **Real-time Collaboration** | ![Collab](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752778393/Screenshot_2025-07-18_002236_xqme0u.png) |
-| **Version History** | ![History](https://img.icons8.com/ios/50/000000/time-machine.png) |
-| **Dark/Light Mode** | ![Theme](https://img.icons8.com/ios/50/000000/contrast.png) |
 
-## 🖼️ App Screenshots
+**Rich Text Formatting**
+![Rich Text](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777133/Screenshot_2025-07-18_000149_yvaarv.png) 
 
-<div align="center">
-  <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776833/Screenshot_2025-07-17_232528_sazanl.png" width="45%" alt="Profile Page">
-  <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776798/Screenshot_2025-07-17_232655_tzgfti.png" width="45%" alt="Settings Page">  
-  <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777921/profile-mobile-view_xbncnn.jpg" width="30%" alt="Mobile Profile">
-  <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777931/collection-dashboard_l7uf1y.jpg" width="30%" alt="Mobile Dashboard">
-</div>
+**Code Blocks**
+![Code](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776757/Screenshot_2025-07-17_233033_nbxykt.png) 
 
-## 🛠️ Tech Stack
+**LaTeX Math**
+![Math](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776746/Screenshot_2025-07-17_233300_wrm65f.png)
+
+**Todo Lists**
+![Todo](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776723/Screenshot_2025-07-17_233856_ze2irj.png)
+
+**Real-time Collaboration** 
+![Collab](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752778393/Screenshot_2025-07-18_002236_xqme0u.png)
+
+## App Screenshots
+
+**Profile Page**  
+![Profile](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776833/Screenshot_2025-07-17_232528_sazanl.png)
+
+**Settings Page**  
+![Settings](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776798/Screenshot_2025-07-17_232655_tzgfti.png)
+
+**Mobile Profile**  
+![Mobile Profile](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777921/profile-mobile-view_xbncnn.jpg)
+
+**Mobile Dashboard**  
+![Mobile Dashboard](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752777931/collection-dashboard_l7uf1y.jpg)
+
+## Tech Stack
 
 **Frontend:**
 - React 18 + TypeScript
@@ -52,7 +63,7 @@ A modern note-taking app with rich editing, collaboration, and cloud sync.
 - GitHub Actions (CI/CD)
 - ESLint + Prettier (Code quality)
 
-## ⚙️ Setup Guide
+## Setup Guide
 
 ### Backend Configuration
 
@@ -76,7 +87,7 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 NODE_ENV=development
 ```
 
-### 🛠️ Frontend Configuration
+### Frontend Configuration
 
 Create a `.env`  the `/frontend` 
 
