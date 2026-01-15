@@ -457,7 +457,7 @@ const NotePagePublic = () => {
                 align="end"
                 sideOffset={10}
                 alignOffset={-50}
-                className="bg-background rounded-2xl min-w-max pr-1"
+                className="rounded-2xl min-w-max pr-1"
               >
                 <ScrollArea>
                   <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
