@@ -92,17 +92,10 @@ const NoteCard = ({ note, isOwner, username, collectionSlug }) => {
 
       <CardFooter className="mt-auto p-4 pt-0 ">
         <div className="flex items-center justify-between w-full text-xs">
-          <TooltipWrapper
-            message={`Created on ${format(
-              new Date(note.createdAt),
-              "MMMM d, yyyy"
-            )}`}
-          >
-            <div className="flex gap-1 items-center text-muted-foreground">
-              <Calendar className="size-3" />
-              <span>{format(new Date(note.createdAt), "MMM d, yyyy")}</span>
-            </div>
-          </TooltipWrapper>
+          <div className="flex gap-1 items-center text-muted-foreground">
+            <Calendar className="size-3" />
+            <span>{format(new Date(note.createdAt), "MMM d, yyyy")}</span>
+          </div>
           <div className="flex justify-between items-center gap-4">
             {Array.isArray(note.collaborators) && (
               <AvatarStack

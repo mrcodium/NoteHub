@@ -48,11 +48,12 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import EditorTypographyControls from "@/components/editor/EditorTypographyControls";
+import ShareNotePopover from "@/components/ShareNotePopover";
 
 const NotePage = () => {
   const { id: noteId } = useParams();
   const { authUser } = useAuthStore();
-  const { getNoteContent, status, noteNotFound } = useNoteStore();
+  const { getNoteContent, status, noteNotFound, collections } = useNoteStore();
   const [content, setContent] = useState("");
   const [note, setNote] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -60,13 +61,7 @@ const NotePage = () => {
   const [activeId, setActiveId] = useState(null);
   const [toc, setToc] = useState([]);
   const [tocOpen, setTocOpen] = useState(false);
-  const {
-    scrollRef,
-    editorFontFamily,
-    editorFontSizeIndex,
-    setFontSize,
-    setFontFamily,
-  } = useEditorStore();
+  const { scrollRef, editorFontFamily, editorFontSizeIndex } = useEditorStore();
   const fontSize = FONT_SIZE[editorFontSizeIndex] || FONT_SIZE[1];
   const [progress, setProgress] = useState(0);
 
@@ -231,6 +226,11 @@ const NotePage = () => {
 
     return () => el.removeEventListener("scroll", onScroll);
   }, [toc, scrollRef]);
+
+  const generateSharableLink = () => {
+    const collection = collections.find((c) => c._id === note.collectionId);
+    return `https://notehub-38kp.onrender.com/user/${authUser?.userName}/${collection?.slug}/${note?.slug}`;
+  };
 
   if (status.noteContent.state === "loading") {
     return <NoteSkeleton />;
@@ -415,7 +415,7 @@ const NotePage = () => {
                 align="end"
                 sideOffset={10}
                 alignOffset={-50}
-                className=" rounded-2xl min-w-max pr-1"
+                className="rounded-2xl min-w-max pr-1"
               >
                 <ScrollArea>
                   <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
@@ -444,16 +444,8 @@ const NotePage = () => {
               </PopoverContent>
             </Popover>
           )}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button className="size-11 rounded-full">
-                <Type />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="rounded-2xl p-4 select-none" align="end">
-              <EditorTypographyControls />
-            </PopoverContent>
-          </Popover>
+          <EditorTypographyControls />
+          <ShareNotePopover note={note} shareLink={generateSharableLink()} />
         </div>
       </div>
       <ScrollTopButton />

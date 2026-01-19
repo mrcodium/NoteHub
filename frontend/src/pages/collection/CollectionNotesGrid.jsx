@@ -1,9 +1,5 @@
 // src > pages > collection > CollectionNotesGrid
-import { useState } from "react";
-import { CollaboratorsDialog } from "./CollaboratorsDialog";
 import NoteCard from "./NoteCard";
-import { useNoteStore } from "@/stores/useNoteStore";
-import { useCollaboratorManager } from "@/contex/CollaboratorManagerContext";
 
 // CollectionNotesGrid.jsx
 export const CollectionNotesGrid = ({

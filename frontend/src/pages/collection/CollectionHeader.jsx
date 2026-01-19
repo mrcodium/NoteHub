@@ -17,7 +17,7 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
   const showCollaboratorSection = isOwner || hasCollaborators;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       {/* User Profile Section */}
       <div className="flex items-center gap-4">
         <Dialog>

@@ -33,21 +33,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import { format } from "date-fns";
-import {
-  FONT_PRESETS,
-  FONT_SIZE,
-  useEditorStore,
-} from "@/stores/useEditorStore";
+import { FONT_SIZE, useEditorStore } from "@/stores/useEditorStore";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
 import EditorTypographyControls from "@/components/editor/EditorTypographyControls";
+import ShareNotePopover from "@/components/ShareNotePopover";
 
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
@@ -486,16 +480,9 @@ const NotePagePublic = () => {
               </PopoverContent>
             </Popover>
           )}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button className="size-11 rounded-full">
-                <Type />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="rounded-2xl p-4 select-none" align="end">
-              <EditorTypographyControls />
-            </PopoverContent>
-          </Popover>
+          <EditorTypographyControls />
+
+          <ShareNotePopover note={note} shareLink={`https://notehub-38kp.onrender.com/user/${username}/${collectionSlug}/${noteSlug}`}/>
         </div>
       </div>
       <ScrollTopButton />

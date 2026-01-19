@@ -132,14 +132,13 @@ const CollectionPage = () => {
             collection={collection}
             isOwner={isOwner}
           />
+        </div>
           <SortSelector
             sortBy={sortBy}
             sortDirection={sortDirection}
             setSortBy={setSortBy}
             toggleSortDirection={toggleSortDirection}
           />
-        </div>
-
         <CollectionNotesGrid
           notes={notes}
           sortedNotes={sortedNotes}

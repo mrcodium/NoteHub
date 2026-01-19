@@ -172,8 +172,6 @@ div:has(> .tiptap.ProseMirror) {
       }
     }
 
-    /* styles.css */
-
     ul[data-type="taskList"] {
       margin: 0;
     }
