@@ -440,7 +440,6 @@ export const updateCollaborators = async (req, res) => {
 
 export const exportPdf = async (req, res) => {
   const { html, typography } = req.body;
-  console.log(typography);
   if (!html) {
     return res.status(400).json({ message: "HTML is required" });
   }
@@ -552,7 +551,7 @@ document.addEventListener("DOMContentLoaded", () => {
     res.setHeader("Content-Disposition", "attachment; filename=note.pdf");
     res.end(pdf);
   } catch (err) {
-    console.error(err);
+    console.error("ERROR:\n", err);
     res.status(500).json({ message: "PDF export failed" });
   } finally {
     if (browser) await browser.close();
