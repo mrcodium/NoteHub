@@ -489,52 +489,5 @@ export const useNoteStore = create((set, get) => {
         toast.error(error.response.data.message);
       }
     },
-
-    exportPdf: async ({ html, name = "note" }) => {
-      try {
-        setStatus("note", { state: "exporting", error: null });
-
-        // 🔥 read typography from store
-        const { editorFontFamily, editorFontSizeIndex } =
-          useEditorStore.getState();
-
-        const font = FONT_SIZE[editorFontSizeIndex];
-        const typography = {
-          fontFamily: editorFontFamily,
-          fontSize: font.size, // "16px"
-          lineHeight: font.lineHeight ?? 1.65,
-        };
-
-        const res = await axiosInstance.post(
-          "/note/export-pdf",
-          { html, typography },
-          {
-            responseType: "arraybuffer", // ✅ important
-          }
-        );
-
-        const blob = new Blob([res.data], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-
-        // ✅ use note name
-        const fileName = name.endsWith(".pdf") ? name : `${name}.pdf`;
-        a.download = fileName;
-
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-
-        toast.success(`PDF "${fileName}" downloaded successfully`);
-      } catch (error) {
-        console.error("Error exporting PDF", error);
-        toast.error("Failed to export PDF");
-      } finally {
-        setStatus("note", { state: "idle", error: null });
-      }
-    },
   };
 });

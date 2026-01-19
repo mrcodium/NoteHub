@@ -11,7 +11,6 @@ import {
     getNoteBySlug,
     updateVisibility,
     updateCollaborators,
-    exportPdf,
 } from "../controller/note.controller.js";
 import { requester } from "../middleware/requester.middleware.js";
 
@@ -22,7 +21,6 @@ router.get('/:username/:collectionSlug/:noteSlug', requester, getNoteBySlug);
 router.get('/:_id', protectRoute, getNote);
 
 router.post('/', protectRoute, createNote);
-router.post('/export-pdf', exportPdf);
 router.delete('/:_id', protectRoute, deleteNote);
 router.put('/', protectRoute, updateContent);
 router.put('/rename', protectRoute, renameNote);
