@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useRef } from "react";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { ArticleCard } from "@/components/ArticleCard";
-import { noteToArticle} from "@/lib/utils";
+import { noteToArticle } from "@/lib/utils";
 import { ArticleCardSkeleton } from "@/components/ArticleCardSkeleton";
 
 const HomePage = () => {
@@ -15,14 +15,18 @@ const HomePage = () => {
   const handleObserver = useCallback(
     (entries) => {
       const [entry] = entries;
-      if (entry.isIntersecting && !status.note.state !== "loading" && pagination.hasMore) {
+      if (
+        entry.isIntersecting &&
+        !status.note.state !== "loading" &&
+        pagination.hasMore
+      ) {
         getPublicNotes({
           page: pagination.currentPage + 1,
           limit: 10,
         });
       }
     },
-    [pagination, getPublicNotes]
+    [pagination, getPublicNotes],
   );
 
   // Set up intersection observer
@@ -53,24 +57,18 @@ const HomePage = () => {
         {/* Render transformed notes */}
         {articles.map((note) => (
           <ArticleCard
-            note={note}
             key={note._id}
-            title={note.name}
-            noteSlug={note.slug}
+            note={note}
             description={note.article.description}
             images={note.article.images}
-            updatedAt={note.updatedAt}
             author={note.userId}
             collection={note.collectionId}
             headings={note.article.headings}
           />
         ))}
 
-        {(status.note.state === "loading" ) && 
-          (
-            [...Array(5)].map((_, i) => <ArticleCardSkeleton key={i} />)
-          )
-        }
+        {status.note.state === "loading" &&
+          [...Array(5)].map((_, i) => <ArticleCardSkeleton key={i} />)}
 
         {/* Infinite scroll trigger */}
         <div ref={loaderRef} className="h-1"></div>

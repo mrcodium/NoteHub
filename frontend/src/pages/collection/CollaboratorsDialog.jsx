@@ -225,7 +225,7 @@ const SearchBar = ({ onUserSelect, currentCollaborators }) => {
 
   return (
     <div className="relative">
-      <Label>Search by username, full name, or email</Label>
+      <Label className="mb-2">Search by username, full name, or email</Label>
       <div className="relative">
         <Search className="text-muted-foreground absolute size-4 left-2 top-1/2 -translate-y-1/2" />
         <Input

@@ -11,12 +11,14 @@ import {
     getNoteBySlug,
     updateVisibility,
     updateCollaborators,
+    searchNotes,
 } from "../controller/note.controller.js";
 import { requester } from "../middleware/requester.middleware.js";
 
 const router = express.Router();
 
 router.get('/', requester, getPublicNotes);
+router.get('/search', requester, searchNotes);
 router.get('/:username/:collectionSlug/:noteSlug', requester, getNoteBySlug);
 router.get('/:_id', protectRoute, getNote);
 

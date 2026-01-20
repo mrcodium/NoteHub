@@ -1,13 +1,12 @@
 import AvatarStack from "@/components/CollaboratorAvatars";
 import NotesOption from "@/components/NotesOption";
 import TooltipWrapper from "@/components/TooltipWrapper";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { format } from "date-fns";
-import { Calendar, EllipsisVertical, Eye, File, Lock } from "lucide-react";
+import { Calendar, EllipsisVertical, File, Lock } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 

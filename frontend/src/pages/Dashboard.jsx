@@ -33,7 +33,7 @@ const Dashboard = () => {
     <SidebarProvider>
       {authUser && <AppSidebar />}
 
-      <SidebarInset className="scrollbar-custom relative w-full h-svh">
+      <SidebarInset className="scrollbar-custom relative w-full h-svh overflow-hidden">
         <DashboardHeader />
 
         <div ref={scrollRef} className="overflow-x-hidden h-full">

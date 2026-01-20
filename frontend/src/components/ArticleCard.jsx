@@ -35,11 +35,8 @@ import { useAuthStore } from "@/stores/useAuthStore";
 export function ArticleCard({
   note,
   author,
-  title,
   description,
   images,
-  updatedAt,
-  noteSlug,
   collection,
   headings,
 }) {
@@ -138,7 +135,7 @@ export function ArticleCard({
                 )}
               </div>
               <span className="text-sm text-muted-foreground">
-                {`@${author?.userName}`} • {formatTimeAgo(updatedAt)}
+                {`@${author?.userName}`} • {formatTimeAgo(note.updatedAt)}
               </span>
             </div>
           </Link>
@@ -165,10 +162,10 @@ export function ArticleCard({
               </Link>
               {" / "}
               <Link
-                to={`/user/${author?.userName}/${collection.slug}/${noteSlug}`}
+                to={`/user/${author?.userName}/${collection.slug}/${note.slug}`}
                 className="hover:underline"
               >
-                {title}
+                {note.name}
               </Link>
             </CardTitle>
 
@@ -208,7 +205,7 @@ export function ArticleCard({
             </p>
             <div className="mt-2 flex items-center gap-2">
               <Link
-                to={`/user/${author?.userName}/${collection.slug}/${noteSlug}`}
+                to={`/user/${author?.userName}/${collection.slug}/${note.slug}`}
                 className="block w-fit"
               >
                 <Button className="w-full">
