@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Users } from "lucide-react";
+import { RefreshCcw, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { UserDetailDrawer } from "./UserDetailDrawer";
@@ -12,6 +12,7 @@ import { FilterControls } from "./FilterControls";
 import { SelectedUsersActions } from "./SelectedUsersActions";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { PaginationControls } from "./PaginationControls.jsx";
+import { Button } from "../ui/button";
 
 export function UserManagement() {
   const { getAllUsers } = useAuthStore();
@@ -34,6 +35,7 @@ export function UserManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [error, setError] = useState(null);
   const [usersData, setUsersData] = useState({
     users: [],
     pagination: {
@@ -56,6 +58,7 @@ export function UserManagement() {
   }, [currentPage, itemsPerPage, activeTab, searchQuery]);
 
   const fetchUsers = async () => {
+    setError(null);
     setIsLoading(true);
     try {
       const data = await getAllUsers({
@@ -66,6 +69,7 @@ export function UserManagement() {
       });
       setUsersData(data);
     } catch (error) {
+      setError(error.message || "Failed to fetch users");
       console.error("Failed to fetch users:", error);
     } finally {
       setIsLoading(false);
@@ -76,7 +80,7 @@ export function UserManagement() {
     setSelectedUsers((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
+        : [...prev, userId],
     );
   };
 
@@ -162,7 +166,16 @@ export function UserManagement() {
       </CardHeader>
 
       <CardContent className="flex-1 overflow-hidden p-4 sm:p-6">
-        {isLoading ? (
+        {error? (
+          <div className="space-y-4">
+            <div className="space-y-2 bg-destructive/5 py-2 px-4 text-center rounded-lg border border-destructive text-destructive">
+              <p>{error}</p>
+              <Button  onClick={fetchUsers}>
+                <RefreshCcw/>
+                Retry</Button>
+            </div>
+          </div>
+        ) : isLoading ? (
           <div className="flex justify-center items-center h-32">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>

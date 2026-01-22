@@ -1,24 +1,19 @@
 import User from "../model/user.model.js";
 import bcrypt from "bcryptjs";
-import { clearCookie, setCookie } from "../utils/jwt.js";
+import { clearCookie, generateToken, setCookie } from "../utils/jwt.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
 import { OAuth2Client } from "google-auth-library";
 import validator from "validator";
-import {
-  createLoginRecord,
-  getActiveSessions,
-  logoutAllSessions,
-  revokeToken,
-} from "../services/loginRecord.service.js";
-import LoginRecord from "../model/loginRecord.model.js";
 
 // common response functions
-const sendAuthResponse = async (req, res, user, authMethod) => {
-  const loginRecord = await createLoginRecord(req, res, user._id, authMethod);
+const sendAuthResponse = (res, user) => {
+  const token = generateToken({ userId: user._id });
+  setCookie(res, "jwt", token);
+
   const { password, ...userWithoutPassword } = user.toObject();
+
   return res.status(200).json({
     user: userWithoutPassword,
-    sessionId: loginRecord._id,
   });
 };
 
@@ -74,7 +69,7 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
 
-    return sendAuthResponse(req, res, newUser, "email");
+    return sendAuthResponse(res, newUser);
   } catch (error) {
     console.error("error in signup controller: \n", error);
     res.status(500).json({ message: "Internal server error." });
@@ -127,7 +122,7 @@ export const login = async (req, res) => {
     ) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    return sendAuthResponse(req, res, user, "email");
+    return sendAuthResponse(res, user);
   } catch (error) {
     console.error("error in login controller: ", error);
     res.status(500).json({ message: "Internal server error" });
@@ -137,7 +132,7 @@ export const login = async (req, res) => {
 // Initialize without redirect URI
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET
+  process.env.GOOGLE_CLIENT_SECRET,
 );
 
 export const googleLogin = async (req, res) => {
@@ -222,50 +217,12 @@ export const googleLogin = async (req, res) => {
     }
 
     // Generate token and send response (aligned with login/signup)
-    return sendAuthResponse(req, res, user, "google");
+    return sendAuthResponse(res, user);
   } catch (error) {
     console.error("Error in Google login controller: ", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };
-
-export const getSessions = async (req, res) => {
-  try {
-    const { userId } = req.query; 
-
-    if (!userId) {
-      return res.status(400).json({ message: "Missing userId in query parameters" });
-    }
-
-    const sessions = await getActiveSessions(userId);
-    res.status(200).json(sessions);
-  } catch (error) {
-    console.error("Get sessions error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-
-// Controller: getLoginHistory.js
-export const getLoginHistory = async (req, res) => {
-  const { userId, limit = 10 } = req.query; 
-
-  if (!userId) {
-    return res.status(400).json({ message: "userId query parameter is required" });
-  }
-
-  try {
-    const records = await LoginRecord.find({ userId })
-      .sort({ loginTime: -1 })
-      .limit(Number(limit));
-
-    res.status(200).json(records);
-  } catch (error) {
-    console.error("Error in getting Login History:\n", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
 
 export const logout = async (req, res) => {
   try {
@@ -276,34 +233,11 @@ export const logout = async (req, res) => {
       return res.status(200).json({ message: "Logged out successfully" });
     }
 
-    await revokeToken(token);
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);
     const statusCode = error.statusCode || 500;
     const message = statusCode >= 500 ? "Internal server error" : error.message;
     res.status(statusCode).json({ message });
-  }
-};
-
-export const logoutAll = async (req, res) => {
-  try {
-    const { userId } = req.body; // todo req.user
-    if(!userId) return res.status(400).json({message: "UserID not provided"});
-    
-    // Revoke all active sessions
-    const result = await logoutAllSessions(userId);
-
-    // Clear current session cookies
-    clearCookie(res, "jwt");
-    clearCookie(res, "sessionId");
-
-    res.status(200).json({
-      message: "All sessions logged out",
-      revokedCount: result.modifiedCount,
-    });
-  } catch (error) {
-    console.error("Logout all error:", error);
-    res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -2,7 +2,6 @@ import bcrypt from "bcryptjs";
 import validator from "validator";
 import User from "../model/user.model.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
-import { logoutAllSessions } from "../services/loginRecord.service.js";
 
 export const requestResetPasswordOtp = async (req, res) => {
   const { identifier } = req.body;
@@ -94,7 +93,6 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     user.password = hashedPassword;
     await user.save();
-    await logoutAllSessions(user._id);
     return res.status(200).json({
       success: true,
       message: "Password reset successfully",
@@ -153,7 +151,6 @@ export const updatePassword = async (req, res) => {
     await user.save();
 
     // Return user data without sensitive information
-    await logoutAllSessions(user._id);
     const { password, ...safeUser } = user.toObject();
     return res.status(200).json({
       success: true,

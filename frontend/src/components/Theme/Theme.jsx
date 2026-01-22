@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import Colors from "./Colors";
 import Radius from "./Radius";
-import CssVariables from "./CssVariables";
 import { ModeToggle } from "../mode-toggle";
 
 const Theme = () => {
@@ -21,7 +20,6 @@ const Theme = () => {
       <CardContent className="space-y-8">
         <Colors />
         <Radius />
-        <CssVariables />
       </CardContent>
     </Card>
   );

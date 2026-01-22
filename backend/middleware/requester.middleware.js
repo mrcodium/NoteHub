@@ -1,19 +1,19 @@
 import jwt from "jsonwebtoken";
 import User from "../model/user.model.js";
-import LoginRecord from "../model/loginRecord.model.js";
-import { Types } from "mongoose";
 
 /**
- * user extraction (no auth enforcement)
- * - Attaches user to `req.user` if valid token exists
- * - Silently fails if token is missing/invalid
+ * requester (soft auth)
+ * - Attaches user to req.user if JWT is valid
+ * - Never blocks the request
  */
 export const requester = async (req, res, next) => {
   try {
-    const token = req.cookies?.jwt || req.headers.authorization?.split(" ")[1];
-    if (!token) return next(); 
+    const token =
+      req.cookies?.jwt ||
+      req.headers.authorization?.split(" ")[1];
 
-    // Verify token (but don't reject on error)
+    if (!token) return next();
+
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET, {
@@ -22,33 +22,20 @@ export const requester = async (req, res, next) => {
         audience: process.env.JWT_AUDIENCE,
       });
     } catch {
-      return next(); 
+      return next(); // silent fail
     }
 
-    // Validate session ID format
-    const { sessionId } = decoded;
-    if (!sessionId || !Types.ObjectId.isValid(sessionId)) {
-      return next();
-    }
+    const { userId } = decoded;
+    if (!userId) return next();
 
-    // Check session (silently skip if invalid)
-    const session = await LoginRecord.findOne({
-      _id: new Types.ObjectId(sessionId),
-      isRevoked: false,
-      tokenExpiry: { $gt: new Date() },
-    });
-    if (!session) return next();
-
-    // Attach user if everything checks out
-    const user = await User.findById(session.userId);
+    const user = await User.findById(userId).select("-password");
     if (user) {
-      req.user = user;
-      req.session = session; // Optional: attach session data
+      req.user = user; 
     }
 
     next();
   } catch (error) {
-    console.error("User extraction error:", error);
-    next(); // Always continue even on errors
+    console.error("Requester middleware error:", error);
+    next(); // always continue
   }
 };

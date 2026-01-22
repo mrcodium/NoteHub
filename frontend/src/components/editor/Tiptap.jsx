@@ -72,6 +72,9 @@ const Tiptap = () => {
       extensions={extensions}
       content={content}
       onUpdate={({ editor }) => handleUpdate(editor.getHTML())}
+      onCreate={({ editor }) => {
+        migrateMathStrings(editor);
+      }}
       editorProps={{
         transformPastedHTML(html) {
           const doc = new DOMParser().parseFromString(html, "text/html");

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import "./stores/useNetworkStore";
-import { ThemeProvider, useTheme } from "./components/theme-provider";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { ThemeProvider } from "./components/theme-provider";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useAuthStore } from "./stores/useAuthStore";
 import { Toaster } from "sonner";
 
@@ -38,22 +38,19 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import CollectionPage from "./pages/collection/CollectionPage";
 import { CollaboratorManagerProvider } from "./contex/CollaboratorManagerContext";
 import { CollaboratorsDialog } from "./pages/collection/CollaboratorsDialog";
+import { ThemeShortcut } from "./components/theme-shortcut";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
-  const { theme } = useTheme();
 
   useEffect(() => {
     checkAuth();
     const radius = localStorage.getItem("radius") || 0.5;
-
-    document.documentElement.setAttribute("data-theme", theme);
     document.documentElement.style.setProperty("--radius", `${radius}rem`);
   }, [checkAuth]);
 
   const { setRoutes } = useRouteStore();
-  const { getNoteName, collections, status, setselectedNote } =
-    useNoteStore();
+  const { getNoteName, collections, status, setselectedNote } = useNoteStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -85,7 +82,7 @@ function App() {
 
   if (isCheckingAuth) {
     return (
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
         <div className="flex flex-col gap-2 items-center justify-center h-screen">
           <div className="logo text-xl text-foreground/70">Notehub</div>
           <Loader className="animate-spin" />
@@ -95,7 +92,8 @@ function App() {
   }
 
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <ThemeShortcut/>
       <CollaboratorManagerProvider>
         <TooltipProvider>
           <CollaboratorsDialog />

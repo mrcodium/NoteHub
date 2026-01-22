@@ -8,7 +8,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { Eye, EyeOff, Loader2, Lock, Mail, UserRound } from "lucide-react";
+import { Loader2,  } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -19,9 +19,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { Skeleton } from "@/components/ui/skeleton";
 import BaseHeader from "@/components/BaseHeader";
-import { Label } from "@/components/ui/label";
 import { LabledInput } from "@/components/ui/labeled-input";
 
 const ForgotPasswordPage = () => {
@@ -42,8 +40,6 @@ const ForgotPasswordPage = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [identifierError, setIdentifierError] = useState("");
   const [cooldown, setCooldown] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [user, setUser] = useState(null);
   const [isValidIdentifier, setIsValidIdentifier] = useState(false);
   const [isCheckingIdentifier, setIsCheckingIdentifier] = useState(false);

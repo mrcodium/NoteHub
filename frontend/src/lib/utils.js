@@ -83,6 +83,16 @@ export const formatCompactNumber = (num) => {
   }
 };
 
+export const stripLatex = (text) =>
+  text
+    .replace(/\$\$[\s\S]*?\$\$/g, " ") // $$ block
+    .replace(/\$[^$]*\$/g, " ")       // $ inline
+    .replace(/\\\([\s\S]*?\\\)/g, " ") // \( \)
+    .replace(/\\\[[\s\S]*?\\\]/g, " ") // \[ \]
+    .replace(/\s+/g, " ")
+    .trim();
+
+
 export const noteTransformer = (htmlContent, options = {}) => {
   if (!htmlContent || typeof htmlContent !== "string") {
     return {
@@ -161,7 +171,7 @@ export const noteTransformer = (htmlContent, options = {}) => {
         bestText = result.headings[0].text;
       }
 
-      result.description = bestText;
+      result.description = stripLatex(bestText);
     }
 
     return result;

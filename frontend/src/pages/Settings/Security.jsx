@@ -1,8 +1,7 @@
 // src/pages/Security.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Lock, Loader2, AlertCircle, Globe } from "lucide-react";
+import {  Loader2,  } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import {
   Card,
@@ -11,16 +10,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { axiosInstance } from "@/lib/axios";
-import { formatDeviceInfo, formatLocation } from "@/lib/utils";
-import { Link } from "react-router-dom";
 import { LabledInput } from "@/components/ui/labeled-input";
+import { Link } from "react-router-dom";
 
 const Security = () => {
-  const { authUser, updatePassword, isResettingPassword } = useAuthStore();
+  const { updatePassword, isResettingPassword } = useAuthStore();
 
   return (
     <div className="container mx-auto">
@@ -28,7 +22,7 @@ const Security = () => {
         <CardHeader>
           <CardTitle>Security Settings</CardTitle>
           <CardDescription>
-            Manage your account security settings and sessions
+            Manage your account security
           </CardDescription>
         </CardHeader>
 
@@ -37,9 +31,6 @@ const Security = () => {
             updatePassword={updatePassword}
             isResettingPassword={isResettingPassword}
           />
-          <AuthenticationSection user={authUser} />
-          <SessionSection user={authUser} />
-          <DangerSection />
         </CardContent>
       </Card>
     </div>
@@ -120,6 +111,7 @@ function PasswordUpdateSection({ updatePassword, isResettingPassword }) {
         <LabledInput
           id="currentPassword"
           label="Current Password"
+          placeholder="Enter password"
           type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
@@ -133,6 +125,7 @@ function PasswordUpdateSection({ updatePassword, isResettingPassword }) {
         <LabledInput
           id="newPassword"
           label="New Password"
+          placeholder="Enter password"
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
@@ -146,6 +139,7 @@ function PasswordUpdateSection({ updatePassword, isResettingPassword }) {
         <LabledInput
           id="confirmPassword"
           label="Confirm New Password"
+          placeholder="Enter password"
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
@@ -174,187 +168,6 @@ function PasswordUpdateSection({ updatePassword, isResettingPassword }) {
           </Button>
         </div>
       </form>
-    </div>
-  );
-}
-
-function AuthenticationSection({ user }) {
-  return (
-    <div className="space-y-4">
-      <h4 className="font-medium">Authentication</h4>
-      <div className="flex items-center justify-between p-4 border rounded-lg">
-        <div className="space-y-1">
-          <Label>Two-Factor Authentication</Label>
-          <p className="text-sm text-muted-foreground">
-            Add an extra layer of security to your account
-          </p>
-        </div>
-        <Switch checked={false} />
-      </div>
-      <div className="flex items-center justify-between p-4 border rounded-lg">
-        <div className="space-y-1">
-          <Label>Email Verification</Label>
-          <p className="text-sm text-muted-foreground">
-            Verify your email address
-          </p>
-        </div>
-        <Badge variant="default">Verified</Badge>
-      </div>
-      {user?.hasGoogleAuth && (
-        <div className="flex items-center justify-between p-4 border rounded-lg">
-          <div className="space-y-1">
-            <Label>Google Authentication</Label>
-            <p className="text-sm text-muted-foreground">
-              Connected to Google account
-            </p>
-          </div>
-          <Badge variant="default">Active</Badge>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SessionSection({ user }) {
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState({
-    sessions: false,
-    loginHistory: false,
-    logoutAll: false,
-  });
-  const [error, setError] = useState({
-    sessions: null,
-    loginHistory: null,
-  });
-
-  const handleLogoutAll = async () => {
-    try {
-      setLoading((prev) => ({ ...prev, logoutAll: true }));
-      const response = await axiosInstance.post("/auth/logout-all", {
-        userId: user?._id,
-      });
-      console.log(response);
-      await fetchSessions();
-    } catch (err) {
-      console.error("Failed to logout all sessions:", err);
-    } finally {
-      setLoading((prev) => ({ ...prev, logoutAll: false }));
-    }
-  };
-
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
-  const fetchSessions = async () => {
-    try {
-      setLoading((prev) => ({ ...prev, sessions: true }));
-      setError((prev) => ({ ...prev, sessions: null }));
-      const response = await axiosInstance.get(
-        `/auth/sessions?userId=${user?._id}`
-      );
-      setSessions(response.data);
-    } catch (err) {
-      setError((prev) => ({
-        ...prev,
-        sessions: err instanceof Error ? err.message : "Unknown error",
-      }));
-    } finally {
-      setLoading((prev) => ({ ...prev, sessions: false }));
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <h4 className="font-medium">Sessions</h4>
-      {loading.sessions ? (
-        <div className="flex justify-center py-4">
-          <p>Loading sessions...</p>
-        </div>
-      ) : error.sessions ? (
-        <div className="text-red-500 p-4 border rounded-lg">
-          Error loading sessions: {error.sessions}
-        </div>
-      ) : (
-        <>
-          <div className="space-y-2">
-            {sessions
-              .filter((s) => s.isActive)
-              .map((session) => (
-                <div key={session.id} className="bg-input/30 p-4 rounded-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Globe className="h-5 w-5" />
-                      <div>
-                        <p className="font-medium">
-                          {session.logoutTime
-                            ? "Past Session"
-                            : "Current Session"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDeviceInfo(session.device)}
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Logout
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 mt-4 text-sm">
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">IP Address</p>
-                      <p>{session.ipAddress}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Location</p>
-                      <p>{formatLocation(session.location)}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Last Active</p>
-                      <p>{new Date(session.loginTime).toLocaleTimeString()}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-          </div>
-          <Button
-            variant="outline"
-            onClick={handleLogoutAll}
-            disabled={loading.logout || sessions?.length === 0}
-          >
-            {loading.logout ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Logging out...
-              </>
-            ) : (
-              "Logout All Sessions"
-            )}
-          </Button>
-        </>
-      )}
-    </div>
-  );
-}
-
-function DangerSection() {
-  return (
-    <div className="space-y-4">
-      <h4 className="font-medium">Danger Zone</h4>
-      <div className="border rounded-lg p-4 bg-muted">
-        <div className="flex items-center justify-between">
-          <div>
-            <h5 className="font-medium flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Delete Account
-            </h5>
-            <p className="text-sm text-muted-foreground">
-              Permanently delete this user account
-            </p>
-          </div>
-          <Button variant="destructive">Delete Account</Button>
-        </div>
-      </div>
     </div>
   );
 }

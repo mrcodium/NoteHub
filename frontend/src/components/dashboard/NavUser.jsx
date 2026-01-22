@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Link } from "react-router-dom";
-import { ModeToggle } from "../mode-toggle";
 
 const NavUser = () => {
   const { isMobile } = useSidebar();

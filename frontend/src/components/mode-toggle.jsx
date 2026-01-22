@@ -9,36 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
 export function ModeToggle() {
   const { theme, setTheme } = useTheme();
-  const options = {
-    light: <Sun className="h-4 w-4" />,
-    dark: <Moon className="h-4 w-4" />,
-    system: <Monitor className="h-4 w-4" />,
-  };
-
-  // Keyboard shortcut
-  React.useEffect(() => {
-    const down = (e) => {
-      if (e.key === "d" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        toggleMode();
-      }
-    };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
 
   return (
     <Select value={theme} onValueChange={setTheme}>

@@ -17,7 +17,6 @@ export const useAuthStore = create((set, get) => ({
   isRemovingCover: false,
   isSendingOtp: false,
   isResettingPassword: false,
-  sessionId: null,
   socket: null,
   onlineUsers: [],
 
@@ -198,8 +197,8 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
-      const { user, sessionId } = res.data;
-      set({ authUser: user, sessionId });
+      const { user } = res.data;
+      set({ authUser: user });
       get().connectSocket();
       toast.success("Log in successful");
       return true;

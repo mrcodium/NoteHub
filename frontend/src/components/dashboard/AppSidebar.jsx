@@ -13,6 +13,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { Button } from "../ui/button";
@@ -28,6 +29,8 @@ const AppSidebar = (props) => {
   const { authUser } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const { collapseAll } = useLocalStorage();
+  const { closeSidebar, isMobile } = useSidebar();
+  
 
   useEffect(() => {
     getAllCollections({
@@ -66,7 +69,9 @@ const AppSidebar = (props) => {
           <div className="flex items-center justify-between">
             <div className="flex gap-2 items-center">
               <SidebarCloseTrigger tooltip={"Close Sidebar Ctrl M"} />
-              <Link to="/" className="logo truncate font">
+              <Link
+              onClick={() => isMobile && closeSidebar()}
+               to="/" className="logo truncate font">
                 NoteHub
               </Link>
             </div>

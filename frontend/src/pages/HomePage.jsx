@@ -3,6 +3,7 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import { ArticleCard } from "@/components/ArticleCard";
 import { noteToArticle } from "@/lib/utils";
 import { ArticleCardSkeleton } from "@/components/ArticleCardSkeleton";
+import { CheckCircle2 } from "lucide-react";
 
 const HomePage = () => {
   const loaderRef = useRef(null);
@@ -75,8 +76,17 @@ const HomePage = () => {
 
         {/* End of notes message */}
         {!pagination.hasMore && notes.length > 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            You've reached the end of your notes
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="relative bg-muted rounded-full p-4 shadow-lg">
+              <CheckCircle2 className="h-12 w-12 text-green-500" />
+            </div>
+
+            <h3 className="mt-6 text-xl font-semibold">
+              You've reached the end
+            </h3>
+            <p className="mt-2 text-center text-muted-foreground max-w-md">
+              That's all for now. Check back later for more content.
+            </p>
           </div>
         )}
       </div>

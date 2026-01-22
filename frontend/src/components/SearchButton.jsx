@@ -15,6 +15,7 @@ import {
   Users,
   Globe,
   ChevronRight,
+  Folder,
 } from "lucide-react";
 import { debounce } from "lodash";
 import { Link, useNavigate } from "react-router-dom";
@@ -32,9 +33,52 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "./ui/separator";
 import { axiosInstance } from "@/lib/axios";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { formatDistanceToNow, formatDistanceToNowStrict } from "date-fns";
 import { EmptyState } from "@/pages/collection/EmptyState";
 import { Badge } from "./ui/badge";
+import { stripLatex } from "@/lib/utils";
+
+export function getFirstMatchSnippet(html, query, radius = 60) {
+  if (!html || !query) return null;
+
+  // 1️⃣ Normalize block tags
+  const normalizedHtml = html
+    .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|tr|td|th|blockquote)>/gi, " ")
+    .replace(/<br\s*\/?>/gi, " ");
+
+  // 2️⃣ Convert HTML → text ONCE
+  const div = document.createElement("div");
+  div.innerHTML = normalizedHtml;
+  let text = div.textContent || "";
+  text = stripLatex(text);
+
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+
+  // 3️⃣ Find match
+  const index = lowerText.indexOf(lowerQuery);
+  if (index === -1) return null;
+
+  const start = Math.max(0, index - radius);
+  const end = Math.min(text.length, index + query.length + radius);
+
+  // 4️⃣ Slice first
+  let pre = text.slice(start, index);
+  const match = text.slice(index, index + query.length);
+  let post = text.slice(index + query.length, end);
+
+  return (
+    <>
+      {start > 0 && "..."}
+      {pre}
+      <mark className="bg-yellow-300 text-black rounded px-1">
+        {match}
+      </mark>
+      {post}
+      {end < text.length && "..."}
+    </>
+  );
+}
+
 
 export function SearchButton() {
   const navigate = useNavigate();
@@ -76,7 +120,6 @@ export function SearchButton() {
             search: query,
           }),
         ]);
-        console.log(notesResponse);
 
         setSearchResults({
           notes: notesResponse.data || [],
@@ -109,19 +152,6 @@ export function SearchButton() {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
-
-  const getVisibilityIcon = (visibility) => {
-    switch (visibility) {
-      case "public":
-        return <Globe className="h-3 w-3" />;
-      case "private":
-        return <Lock className="h-3 w-3" />;
-      case "shared":
-        return <Users className="h-3 w-3" />;
-      default:
-        return null;
-    }
-  };
 
   return (
     <>
@@ -226,48 +256,60 @@ export function SearchButton() {
                         <EmptyState />
                       )
                     ) : (
-                      <div className="p-1 border-t">
+                      <div className="border-t">
                         <h3 className="text-xs font-medium text-muted-foreground px-2 py-1.5">
                           Results
                         </h3>
-                        <div className="space-y-1">
+                        <div>
                           {searchResults.notes.map((note) => (
                             <div
                               key={note._id}
-                              className="flex border-b items-start gap-3 p-2 rounded-md group cursor-pointer"
+                              className="flex border-b border-primary/20 hover:bg-primary/10 items-start gap-3 p-2  group cursor-pointer"
                               onClick={() => {
                                 navigate(
                                   `/user/${note.userId?.userName}/${note.collectionId?.slug}/${note.slug}`,
                                 );
-                                setOpen(false); // close the dialog
+                                setOpen(false);
                               }}
                             >
-                              {/* <FileText className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" /> */}
-                              <div className="flex-1 min-w-0">
-                                <p className="dark:text-[#7ab7ff] dark:group-hover:text-[#5e83b3] text-[#2964aa] group-hover:text-[#749ac8] flex items-center gap-1 truncate">
-                                  {note.collectionId?.name}
-                                  <ChevronRight size={16}/>
-                                  {note.name}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
-                                  <div className="flex items-center gap-1">
-                                    <Avatar className="size-4">
-                                      <AvatarImage src={note.userId?.avatar} />
-                                      <AvatarFallback>
-                                        {note.userId?.fullName?.charAt(0)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <span>{note.userId?.fullName}</span>
-                                  </div>
-                                  <span>•</span>
-                                  <span>
-                                    {formatDistanceToNowStrict(
-                                      new Date(note.updatedAt),
-                                      {
-                                        addSuffix: true,
-                                      },
+                              <div className="flex-1 space-y-3">
+                                {/* note name and description */}
+                                <div className="w-full min-w-0">
+                                  <p className="line-clamp-1 font-medium">
+                                    {note.name}
+                                  </p>
+                                  <p className="text-primary/70 text-sm line-clamp-2">
+                                    {getFirstMatchSnippet(
+                                      note.content,
+                                      searchQuery,
                                     )}
-                                  </span>
+                                  </p>
+                                </div>
+
+                                {/* meta data collection and author  */}
+                                <div className="space-y-1">
+                                  <div className="flex gap-1 items-center">
+                                    <Folder
+                                      className="text-muted-foreground fill-muted-foreground"
+                                      size={14}
+                                    />
+                                    <p className="line-clamp-1 text-xs text-muted-foreground">
+                                      {note.collectionId?.name}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                      <Avatar className="size-4">
+                                        <AvatarImage
+                                          src={note.userId?.avatar}
+                                        />
+                                        <AvatarFallback>
+                                          {note.userId?.fullName?.charAt(0)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span>{note.userId?.fullName}</span>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -357,7 +399,7 @@ export function SearchButton() {
                               navigate(`/user/${user.userName}`);
                               setOpen(false);
                             }}
-                            className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer group"
+                            className="flex items-center gap-3 p-2 rounded-md  cursor-pointer group"
                           >
                             <div className="relative">
                               <Avatar className="h-8 w-8">
