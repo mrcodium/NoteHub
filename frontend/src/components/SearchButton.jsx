@@ -254,7 +254,7 @@ export function SearchButton() {
             </TabsList>
 
             <TabsContent className="mt-0" value="notes">
-              <div className="max-h-[80vh] overflow-y-auto">
+              <div className="max-h-[70vh] overflow-y-auto">
                 {!isSearching && (
                   <>
                     {searchResults.notes.length === 0 ? (
