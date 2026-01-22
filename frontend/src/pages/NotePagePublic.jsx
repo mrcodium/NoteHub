@@ -90,7 +90,7 @@ const NotePagePublic = () => {
       try {
         setIsLoading(true);
         const response = await axiosInstance.get(
-          `/note/${username}/${collectionSlug}/${noteSlug}`
+          `/note/${username}/${collectionSlug}/${noteSlug}`,
         );
         const { note, author } = response.data;
         setNote(note);
@@ -116,7 +116,7 @@ const NotePagePublic = () => {
     if (note?.content) {
       // Generate Table of Contents
       const headings = Array.from(
-        document.querySelectorAll(".tiptap h1, .tiptap h2, .tiptap h3")
+        document.querySelectorAll(".tiptap h1, .tiptap h2, .tiptap h3"),
       );
 
       const tocData = headings.map((h, index) => {
@@ -158,7 +158,7 @@ const NotePagePublic = () => {
         if (!pre.querySelector(".pre-header")) {
           const codeElement = pre.querySelector("code");
           const languageClass = Array.from(codeElement?.classList || []).find(
-            (cls) => cls.startsWith("language-")
+            (cls) => cls.startsWith("language-"),
           );
           const language = languageClass
             ? languageClass.replace("language-", "")
@@ -211,7 +211,7 @@ const NotePagePublic = () => {
       images.forEach((img) => {
         img.style.cursor = "pointer";
         img.addEventListener("click", () =>
-          setSelectedImage(img.getAttribute("src") || "")
+          setSelectedImage(img.getAttribute("src") || ""),
         );
       });
 
@@ -301,7 +301,7 @@ const NotePagePublic = () => {
     <div
       className={cn(
         "h-full flex flex-col justify-between",
-        !note?.content.trim() && "empty"
+        !note?.content.trim() && "empty",
       )}
     >
       <div className="max-w-screen-md w-full mx-auto relative">
@@ -467,7 +467,8 @@ const NotePagePublic = () => {
                           }}
                           className={cn(
                             "cursor-pointer !pl-0 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
-                            activeId === item.id && "text-primary font-semibold"
+                            activeId === item.id &&
+                              "text-primary font-semibold",
                           )}
                           style={{ paddingLeft: (item.level - 1) * 12 }}
                         >
@@ -482,15 +483,20 @@ const NotePagePublic = () => {
           )}
           <EditorTypographyControls />
 
-          <ShareNotePopover note={note} shareLink={`https://notehub-38kp.onrender.com/user/${username}/${collectionSlug}/${noteSlug}`}/>
-          <Button
-            onClick={() => navigate(`/note/${note._id}/editor`)}
-            size="icon"
-            tooltip="Edit Content"
-            className="size-11 rounded-full"
-          >
-            <Pencil /> 
-          </Button>
+          <ShareNotePopover
+            note={note}
+            shareLink={`https://notehub-38kp.onrender.com/user/${username}/${collectionSlug}/${noteSlug}`}
+          />
+          {isOwner && (
+            <Button
+              onClick={() => navigate(`/note/${note._id}/editor`)}
+              size="icon"
+              tooltip="Edit Content"
+              className="size-11 rounded-full"
+            >
+              <Pencil />
+            </Button>
+          )}
         </div>
       </div>
       <ScrollTopButton />
