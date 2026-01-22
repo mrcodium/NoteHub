@@ -10,11 +10,6 @@ import {
   Trash2,
   Ghost,
   ArrowLeft,
-  FileText,
-  Lock,
-  Users,
-  Globe,
-  ChevronRight,
   Folder,
 } from "lucide-react";
 import { debounce } from "lodash";
@@ -36,49 +31,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { EmptyState } from "@/pages/collection/EmptyState";
 import { Badge } from "./ui/badge";
 import { stripLatex } from "@/lib/utils";
+import { removeStopwords } from "stopword";
 
-export function getFirstMatchSnippet(html, query, radius = 60) {
-  if (!html || !query) return null;
+export function getFirstMatchSnippets(html, query, radius = 60, limit = 3) {
+  if (!html || !query) return [];
 
-  // 1️⃣ Normalize block tags
+  // Normalize block tags
   const normalizedHtml = html
     .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|tr|td|th|blockquote)>/gi, " ")
     .replace(/<br\s*\/?>/gi, " ");
 
-  // 2️⃣ Convert HTML → text ONCE
+  // HTML → text once
   const div = document.createElement("div");
   div.innerHTML = normalizedHtml;
-  let text = div.textContent || "";
-  text = stripLatex(text);
+  let text = stripLatex(div.textContent || "");
 
   const lowerText = text.toLowerCase();
-  const lowerQuery = query.toLowerCase();
+  const keywords = removeStopwords(query.toLowerCase().split(/\s+/));
 
-  // 3️⃣ Find match
-  const index = lowerText.indexOf(lowerQuery);
-  if (index === -1) return null;
+  const snippets = [];
 
-  const start = Math.max(0, index - radius);
-  const end = Math.min(text.length, index + query.length + radius);
+  for (const word of keywords) {
+    if (snippets.length >= limit) break;
 
-  // 4️⃣ Slice first
-  let pre = text.slice(start, index);
-  const match = text.slice(index, index + query.length);
-  let post = text.slice(index + query.length, end);
+    const index = lowerText.indexOf(word);
+    if (index === -1) continue;
 
-  return (
-    <>
-      {start > 0 && "..."}
-      {pre}
-      <mark className="bg-yellow-300 text-black rounded px-1">
-        {match}
-      </mark>
-      {post}
-      {end < text.length && "..."}
-    </>
-  );
+    const start = Math.max(0, index - radius);
+    const end = Math.min(text.length, index + word.length + radius);
+
+    snippets.push(
+      <span key={word}>
+        {start > 0 && "..."}
+        {text.slice(start, index)}
+        <mark className="bg-yellow-200 text-black">
+          {text.slice(index, index + word.length)}
+        </mark>
+        {text.slice(index + word.length, end)}
+        {end < text.length && "..."}
+      </span>,
+    );
+  }
+
+  return snippets;
 }
-
 
 export function SearchButton() {
   const navigate = useNavigate();
@@ -153,6 +149,18 @@ export function SearchButton() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
+  const generateSnippet = React.useCallback(
+    (html) => getFirstMatchSnippets(html, searchQuery),
+    [searchQuery],
+  );
+
+  const memoizedNotes = React.useMemo(() => {
+    return searchResults.notes.map((note) => ({
+      ...note,
+      snippets: generateSnippet(note.content),
+    }));
+  }, [searchResults.notes, generateSnippet]);
+
   return (
     <>
       {/* Square search button */}
@@ -177,7 +185,7 @@ export function SearchButton() {
             <div className="relative flex items-center border-b">
               <DialogClose asChild>
                 <Button variant="ghost" className="h-full rounded-none">
-                  <ArrowLeft />
+                  <ArrowLeft className="!size-6" />
                 </Button>
               </DialogClose>
               <Input
@@ -257,14 +265,14 @@ export function SearchButton() {
                       )
                     ) : (
                       <div className="border-t">
-                        <h3 className="text-xs font-medium text-muted-foreground px-2 py-1.5">
+                        <h3 className="text-xs font-medium text-muted-foreground px-4 py-1.5">
                           Results
                         </h3>
                         <div>
-                          {searchResults.notes.map((note) => (
+                          {memoizedNotes.map((note) => (
                             <div
                               key={note._id}
-                              className="flex border-b border-primary/20 hover:bg-primary/10 items-start gap-3 p-2  group cursor-pointer"
+                              className="flex border-b border-primary/20 hover:bg-primary/10 items-start gap-3 p-2 px-4  group cursor-pointer"
                               onClick={() => {
                                 navigate(
                                   `/user/${note.userId?.userName}/${note.collectionId?.slug}/${note.slug}`,
@@ -275,14 +283,11 @@ export function SearchButton() {
                               <div className="flex-1 space-y-3">
                                 {/* note name and description */}
                                 <div className="w-full min-w-0">
-                                  <p className="line-clamp-1 font-medium">
+                                  <p className="line-clamp-1 font-medium text-lg">
                                     {note.name}
                                   </p>
-                                  <p className="text-primary/70 text-sm line-clamp-2">
-                                    {getFirstMatchSnippet(
-                                      note.content,
-                                      searchQuery,
-                                    )}
+                                  <p className="text-primary/70 text-sm line-clamp-3">
+                                    {note.snippets}
                                   </p>
                                 </div>
 
@@ -334,7 +339,7 @@ export function SearchButton() {
                       ) : null
                     ) : (
                       <div className="p-1 border-t">
-                        <h3 className="text-xs font-medium text-muted-foreground px-2 py-1.5">
+                        <h3 className="text-xs font-medium text-muted-foreground px-4 py-1.5">
                           Results
                         </h3>
                         <div className="space-y-1">
@@ -374,7 +379,7 @@ export function SearchButton() {
                   <>
                     <Separator />
                     <div className="p-1">
-                      <div className="flex items-center justify-between w-full px-2 py-1.5">
+                      <div className="flex items-center justify-between w-full px-4 py-1.5">
                         <h3 className="text-xs font-medium text-muted-foreground">
                           Recent Searches
                         </h3>

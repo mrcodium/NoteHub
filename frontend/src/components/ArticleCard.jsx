@@ -31,6 +31,7 @@ import { formatTimeAgo } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { useAuthStore } from "@/stores/useAuthStore";
+import TableOfContent from "./table-of-content";
 
 export function ArticleCard({
   note,
@@ -40,7 +41,7 @@ export function ArticleCard({
   collection,
   headings,
 }) {
-  const {authUser} = useAuthStore();
+  const { authUser } = useAuthStore();
   const [api, setApi] = useState();
   const [current, setCurrent] = useState(0);
   const [openImageIndex, setOpenImageIndex] = useState(null);
@@ -122,7 +123,8 @@ export function ArticleCard({
                     variant="ghost"
                     className={"p-1 border-none text-muted-foreground"}
                   >
-                    {note.visibility === "public" && collection.visibility === "public" ? (
+                    {note.visibility === "public" &&
+                    collection.visibility === "public" ? (
                       <Globe size={16} strokeWidth={3} />
                     ) : (
                       <Lock
@@ -170,28 +172,16 @@ export function ArticleCard({
             </CardTitle>
 
             {headings?.length > 0 && (
-              <Accordion type="single" collapsible className="mb-3">
-                <AccordionItem value="headings" className="border-b-0 w-max">
-                  <AccordionTrigger className="gap-4 py-1 text-sm hover:no-underline">
-                    <div className="flex items-center gap-2 text-muted-foreground">
+              <Accordion type="single" collapsible className="mb-3 w-full">
+                <AccordionItem value="headings" className="border-b-0 w-full">
+                  <AccordionTrigger className="group  hover:bg-primary/5 gap-4 py-2 text-sm hover:no-underline">
+                    <div className="flex group-hover:text-primary items-center gap-2 text-muted-foreground">
                       <span>Table of Contents</span>
                     </div>
                   </AccordionTrigger>
+
                   <AccordionContent className="pb-0">
-                    <ul className="space-y-1 mt-1 pl-2">
-                      {headings.map((heading, index) => (
-                        <li key={index} className={`pl-${heading.level * 2}`}>
-                          <a
-                            href={`#${heading.text
-                              .toLowerCase()
-                              .replace(/\s+/g, "-")}`}
-                            className="text-sm hover:text-primary"
-                          >
-                            {heading.text}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
+                    <TableOfContent data={headings}/>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
