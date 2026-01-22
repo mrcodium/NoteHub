@@ -98,7 +98,7 @@ const NotePage = () => {
     if (content) {
       // Generate Table of Contents
       const headings = Array.from(
-        document.querySelectorAll(".tiptap h1, .tiptap h2, .tiptap h3")
+        document.querySelectorAll(".tiptap h1, .tiptap h2, .tiptap h3"),
       );
 
       const tocData = headings.map((h, index) => {
@@ -139,7 +139,7 @@ const NotePage = () => {
         if (!pre.querySelector(".pre-header")) {
           const codeElement = pre.querySelector("code");
           const languageClass = Array.from(codeElement.classList).find((cls) =>
-            cls.startsWith("language-")
+            cls.startsWith("language-"),
           );
           const language = languageClass
             ? languageClass.replace("language-", "")
@@ -272,7 +272,7 @@ const NotePage = () => {
     <div
       className={cn(
         "h-full flex flex-col justify-between",
-        !content.trim() && "empty"
+        !content.trim() && "empty",
       )}
     >
       <div className="max-w-screen-md w-full mx-auto relative">
@@ -404,7 +404,7 @@ const NotePage = () => {
                 >
                   <div className="flex items-center gap-2">
                     <TextQuote />
-                    Index <ChevronsUpDown className="text-primary/30" />
+                    Index <ChevronsUpDown className="text-primary-foreground" />
                   </div>
                   <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
                     {Number(progress || 0)}%
@@ -431,7 +431,8 @@ const NotePage = () => {
                           }}
                           className={cn(
                             "cursor-pointer !pl-0 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
-                            activeId === item.id && "text-primary font-semibold"
+                            activeId === item.id &&
+                              "text-primary font-semibold",
                           )}
                           style={{ paddingLeft: (item.level - 1) * 12 }}
                         >
@@ -446,6 +447,14 @@ const NotePage = () => {
           )}
           <EditorTypographyControls />
           <ShareNotePopover note={note} shareLink={generateSharableLink()} />
+          <Button
+            onClick={() => navigate(`/note/${note._id}/editor`)}
+            size="icon"
+            tooltip="Edit Content"
+            className="size-11 rounded-full"
+          >
+            <Pencil />
+          </Button>
         </div>
       </div>
       <ScrollTopButton />

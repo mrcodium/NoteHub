@@ -440,7 +440,7 @@ const NotePagePublic = () => {
                 >
                   <div className="flex items-center gap-2">
                     <TextQuote />
-                    Index <ChevronsUpDown className="text-primary/30" />
+                    Index <ChevronsUpDown className="text-primary-foreground" />
                   </div>
                   <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
                     {Number(progress || 0)}%
@@ -483,6 +483,14 @@ const NotePagePublic = () => {
           <EditorTypographyControls />
 
           <ShareNotePopover note={note} shareLink={`https://notehub-38kp.onrender.com/user/${username}/${collectionSlug}/${noteSlug}`}/>
+          <Button
+            onClick={() => navigate(`/note/${note._id}/editor`)}
+            size="icon"
+            tooltip="Edit Content"
+            className="size-11 rounded-full"
+          >
+            <Pencil /> 
+          </Button>
         </div>
       </div>
       <ScrollTopButton />
