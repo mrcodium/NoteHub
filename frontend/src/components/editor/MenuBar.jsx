@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useNavigate } from "react-router-dom";
 import { useNoteStore } from "@/stores/useNoteStore";
@@ -55,6 +55,20 @@ export const MenuBar = ({ noteId }) => {
     return true;
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault(); // stop browser save
+        if (noteId && status.noteContent.state !== "saving") {
+          handleContentSave();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [noteId, status.noteContent.state, editor]);
+
   const handleContentSave = async () => {
     let content = editor
       .getHTML()
@@ -63,8 +77,6 @@ export const MenuBar = ({ noteId }) => {
       .replace(/<\/table>/g, "</table></div>")
       .replace(/<pre/g, "<div class='relative pre-wrapper'><pre")
       .replace(/<\/pre>/g, "</pre></div>");
-
-    console.log(content);
 
     if (isEmptyContent(content)) content = "";
     await updateContent({
@@ -193,7 +205,7 @@ export const MenuBar = ({ noteId }) => {
           tooltipMessage="Highlighter"
           colors={COLORS}
           activeColor={COLORS.find((color) =>
-            editor.isActive("highlight", { color })
+            editor.isActive("highlight", { color }),
           )}
           onColorSelect={(color) =>
             editor.chain().focus().setHighlight({ color }).run()
@@ -207,7 +219,7 @@ export const MenuBar = ({ noteId }) => {
           tooltipMessage="Set Color"
           colors={COLORS}
           activeColor={COLORS.find((color) =>
-            editor.isActive("textStyle", { color })
+            editor.isActive("textStyle", { color }),
           )}
           onColorSelect={(color) =>
             editor.chain().focus().setColor(color).run()
@@ -239,7 +251,7 @@ export const MenuBar = ({ noteId }) => {
         <LinkDialog editor={editor} />
 
         <Button
-          tooltip={"Save Content"}
+          tooltip={"Ctrl + S"}
           disabled={!noteId || status.noteContent.state === "saving"}
           onClick={handleContentSave}
         >

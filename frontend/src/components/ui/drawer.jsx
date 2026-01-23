@@ -1,28 +1,16 @@
+"use client"
+
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
-import { useModalBackButtonSupport } from "@/hooks/useModalBackButtonSupport"
-
 
 const Drawer = ({
   shouldScaleBackground = true,
-  open,
-  onOpenChange,
   ...props
-}) => {
-  const modalProps = useModalBackButtonSupport(open, onOpenChange, "Drawer")
-
-  return (
-    <DrawerPrimitive.Root
-      data-slot="drawer"
-      shouldScaleBackground={shouldScaleBackground}
-      {...modalProps}
-      {...props}
-    />
-  )
-}
-
+}) => (
+  <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
+)
 Drawer.displayName = "Drawer"
 
 const DrawerTrigger = DrawerPrimitive.Trigger
