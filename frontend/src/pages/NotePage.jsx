@@ -430,11 +430,10 @@ const NotePage = () => {
                             setTocOpen(false);
                           }}
                           className={cn(
-                            "cursor-pointer !pl-0 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
+                            "cursor-pointer line-clamp-1 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
                             activeId === item.id &&
                               "text-primary font-semibold",
                           )}
-                          style={{ paddingLeft: (item.level - 1) * 12 }}
                         >
                           {item.text}
                         </p>
