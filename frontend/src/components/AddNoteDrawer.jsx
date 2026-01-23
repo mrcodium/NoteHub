@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import TooltipWrapper from "./TooltipWrapper";
 import ChooseCollection from "./addNote/ChooseCollection";
 import CreateCollection from "./addNote/CreateCollection";
@@ -23,7 +29,7 @@ const AddNoteDrawer = ({ trigger }) => {
     const tabs = ["choose-collection", "create-collection", "add-note"];
     const currentIndex = tabs.indexOf(activeTab);
     const newIndex = tabs.indexOf(newTab);
-    
+
     setDirection(newIndex > currentIndex ? 1 : -1);
     setActiveTab(newTab);
   };
@@ -31,22 +37,26 @@ const AddNoteDrawer = ({ trigger }) => {
   const variants = {
     enter: (direction) => ({
       x: direction > 0 ? 30 : -30,
-      opacity: 0
+      opacity: 0,
     }),
     center: {
       x: 0,
-      opacity: 1
+      opacity: 1,
     },
     exit: (direction) => ({
       x: direction > 0 ? -30 : 30,
-      opacity: 0
-    })
+      opacity: 0,
+    }),
   };
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+      <DrawerTrigger asChild>{trigger}</DrawerTrigger>
       <DrawerContent className="h-[80vh]">
+        <DrawerTitle className="sr-only">Add note to collection</DrawerTitle>
+        <DrawerDescription className="sr-only">
+          Choose or create a collection, then add a new note.
+        </DrawerDescription>
         <div className="mx-auto w-full max-w-2xl overflow-y-auto">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
@@ -58,7 +68,7 @@ const AddNoteDrawer = ({ trigger }) => {
               exit="exit"
               transition={{
                 x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
+                opacity: { duration: 0.2 },
               }}
             >
               {activeTab === "choose-collection" ? (

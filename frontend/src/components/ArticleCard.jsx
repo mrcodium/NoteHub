@@ -154,7 +154,7 @@ export function ArticleCard({
 
       <CardContent className="p-0">
         <div className="flex flex-col items-start md:flex-row gap-4">
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <CardTitle className="text-base sm:text-xl font-semibold mb-2">
               <Link
                 to={`/user/${author?.userName}/${collection.slug}`}
@@ -180,7 +180,7 @@ export function ArticleCard({
                     </div>
                   </AccordionTrigger>
 
-                  <AccordionContent className="pb-0">
+                  <AccordionContent className="pb-0 w-full">
                     <TableOfContent data={headings}/>
                   </AccordionContent>
                 </AccordionItem>

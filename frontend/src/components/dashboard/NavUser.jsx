@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Settings,
-  Sparkles,
-} from "lucide-react";
-
+import React, { useState } from "react";
+import { Bell, ChevronsUpDown, Loader2, LogOut, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -29,13 +21,24 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { Link } from "react-router-dom";
 
 const NavUser = () => {
-  const { isMobile } = useSidebar();
-  const { authUser } = useAuthStore();
-  const { logout } = useAuthStore();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { isMobile, closeSidebar } = useSidebar();
+  const { authUser, logout, isLoggingOut } = useAuthStore();
+
+  const handleLogout = async () => {
+    await logout(); // perform actual logout
+    setDropdownOpen(false); // close dropdown overlay
+    closeSidebar(); // close sidebar if open
+    const layers = document.querySelectorAll("[data-scroll-locked]");
+    if (layers.length === 0) {
+      document.body.style.pointerEvents = "";
+    }
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -48,9 +51,9 @@ const NavUser = () => {
                     ? authUser.fullName
                         .trim()
                         .split(/\s+/)
-                        .map((w) => w[0]?.toUpperCase() || "")
+                        .map((w) => w[0]?.toUpperCase())
                         .join("")
-                        .slice(0, 2) || "NH"
+                        .slice(0, 2)
                     : "NH"}
                 </AvatarFallback>
               </Avatar>
@@ -64,6 +67,7 @@ const NavUser = () => {
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
             side={isMobile ? "bottom" : "right"}
@@ -82,9 +86,9 @@ const NavUser = () => {
                       ? authUser.fullName
                           .trim()
                           .split(/\s+/)
-                          .map((w) => w[0]?.toUpperCase() || "")
+                          .map((w) => w[0]?.toUpperCase())
                           .join("")
-                          .slice(0, 2) || "NH"
+                          .slice(0, 2)
                       : "NH"}
                   </AvatarFallback>
                 </Avatar>
@@ -96,22 +100,9 @@ const NavUser = () => {
                 </div>
               </DropdownMenuItem>
             </Link>
+
             <DropdownMenuSeparator />
-            {authUser?.hasGoogleAuth && (
-              <>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <img
-                      className="size-5"
-                      src="/google-logo.svg"
-                      alt="google-logo"
-                    />
-                    Google
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-              </>
-            )}
+
             <DropdownMenuGroup>
               <Link to="/settings/personalization">
                 <DropdownMenuItem>
@@ -126,9 +117,11 @@ const NavUser = () => {
                 </DropdownMenuItem>
               </Link>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
-              <LogOut />
+
+            <DropdownMenuItem disabled={isLoggingOut} onClick={handleLogout}>
+              {isLoggingOut ? <Loader2 className="animate-spin" /> : <LogOut />}
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

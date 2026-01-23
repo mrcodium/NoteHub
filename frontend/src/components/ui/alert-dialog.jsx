@@ -3,12 +3,28 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { useModalBackButtonSupport } from "@/hooks/useModalBackButtonSupport"
 
-const AlertDialog = AlertDialogPrimitive.Root
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger
-
 const AlertDialogPortal = AlertDialogPrimitive.Portal
+
+function AlertDialog({
+  open,
+  onOpenChange,
+  ...props
+}) {
+  const modalProps = useModalBackButtonSupport(open, onOpenChange, "AlertDialog");
+
+  return (
+    <AlertDialogPrimitive.Root
+      data-slot="alert-dialog"
+      {...modalProps}
+      {...props}
+    />
+  )
+}
+
 
 const AlertDialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay

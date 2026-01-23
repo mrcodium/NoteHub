@@ -9,6 +9,7 @@ export const useAuthStore = create((set, get) => ({
   isCheckingAuth: true,
   isSigningUp: false,
   isLoggingIn: false,
+  isLoggingOut: false,
   isVerifyingEmail: false,
   emailStatus: "",
   isUploadingAvatar: false,
@@ -27,7 +28,7 @@ export const useAuthStore = create((set, get) => ({
         "/password/request-reset-password-otp",
         {
           identifier,
-        }
+        },
       );
       toast.success(response.data.message || "OTP sent successfully!");
       return response.data;
@@ -69,11 +70,12 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  updatePassword: async ({currentPassword, newPassword})=>{
+  updatePassword: async ({ currentPassword, newPassword }) => {
     try {
-      set({isResettingPassword: true});
+      set({ isResettingPassword: true });
       const response = await axiosInstance.put("/password/update", {
-        currentPassword, newPassword
+        currentPassword,
+        newPassword,
       });
       toast.success(response.data.message || "Password updated successfully!");
       return response.data;
@@ -81,8 +83,8 @@ export const useAuthStore = create((set, get) => ({
       toast.error(error.response?.data?.message || "Failed to update password");
       console.error("Update password error:", error);
       return null;
-    } finally{
-      set({isResettingPassword: false});
+    } finally {
+      set({ isResettingPassword: false });
     }
   },
 
@@ -94,7 +96,12 @@ export const useAuthStore = create((set, get) => ({
       return null;
     }
   },
-  getAllUsers: async ({page = 1, limit = 10, search = "", filter = "all"}) => {    
+  getAllUsers: async ({
+    page = 1,
+    limit = 10,
+    search = "",
+    filter = "all",
+  }) => {
     try {
       const response = await axiosInstance.get("/user", {
         params: { page, limit, search, filter },
@@ -235,6 +242,7 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: async () => {
+    set({ isLoggingOut: true });
     try {
       const res = await axiosInstance.post("/auth/logout");
       set({ authUser: null });
@@ -243,6 +251,8 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       set({ authUser: null });
       toast.error(error.response.data.message);
+    } finally {
+      set({ isLoggingOut: false });
     }
   },
 

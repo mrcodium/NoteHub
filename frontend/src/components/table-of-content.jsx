@@ -3,34 +3,22 @@ import React from "react";
 const TableOfContent = ({ data = [] }) => {
   if (!data.length) return null;
 
-  // 🔑 Normalize hierarchy (important fix)
-  const baseLevel = Math.min(...data.map((d) => d.level));
   const STEP = 20;
-
-  const getIndentLines = (level) => {
-    const lines = [];
-
-    for (let l = baseLevel + 1; l <= level; l++) {
-      const visualLevel = l - baseLevel - 1;
-
-      lines.push(
-        <div
-          key={l}
-          className="absolute top-0 bottom-0"
-          style={{ left: `${visualLevel * STEP + 12}px` }}
-        >
-          <div className="w-px h-full bg-primary/10" />
-        </div>,
-      );
-    }
-
-    return lines;
-  };
+  const stack = []; // Track parent levels
 
   return (
     <div>
       {data.map((item, index) => {
-        const indentLevel = item.level - baseLevel;
+        // Remove stack items that are >= current level
+        while (stack.length && stack[stack.length - 1] >= item.level) {
+          stack.pop();
+        }
+
+        // Current depth = stack length
+        const indentLevel = stack.length;
+
+        // Push current level to stack
+        stack.push(item.level);
 
         return (
           <div
@@ -38,32 +26,25 @@ const TableOfContent = ({ data = [] }) => {
             className="relative"
             style={{ paddingLeft: `${indentLevel * STEP + 8}px` }}
           >
-            {/* Vertical hierarchy lines */}
-            {indentLevel > 0 && getIndentLines(item.level, index)}
-
-            {/* Horizontal connector */}
-            {/* {indentLevel > 0 && (
+            {/* Vertical lines for all ancestors */}
+            {stack.slice(0, -1).map((lvl, i) => (
               <div
-                className="absolute top-1/2 h-px w-3 bg-primary/0"
-                style={{ left: `${(indentLevel - 1) * STEP + 12}px` }}
-              />
-            )} */}
+                key={i}
+                className="absolute top-0 bottom-0"
+                style={{ left: `${i * STEP + 12}px` }}
+              >
+                <div className="w-px h-full bg-primary/10" />
+              </div>
+            ))}
 
             {/* Content */}
-            <div className="relative z-10 cursor-pointer">
+            <div className="relative z-10">
               <div
-                className={`
-                  transition-colors
-                  ${
-                    indentLevel === 0
-                      ? "text-base font-semibold"
-                      : indentLevel === 1
-                        ? "text-sm font-medium text-primary/70"
-                        : indentLevel === 2
-                          ? "text-sm text-primary/50"
-                          : "text-sm text-primary/40"
-                  }
-                `}
+                className={`transition-colors ${
+                  indentLevel === 0
+                    ? "text-base font-semibold"
+                    : "text-sm font-medium text-primary/70"
+                }`}
               >
                 {item.text}
               </div>

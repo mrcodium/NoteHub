@@ -25,7 +25,7 @@ const socialMedia = [
     icon: "/social-icons/facebook.svg",
     url: (link) =>
       `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-        link
+        link,
       )}`,
   },
   {
@@ -44,7 +44,7 @@ const socialMedia = [
     icon: "/social-icons/linkedin.svg",
     url: (link) =>
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-        link
+        link,
       )}`,
   },
 ];
@@ -102,7 +102,10 @@ export function ShareNotePopover({ shareLink }) {
               <div className="grid grid-cols-5 items-center gap-2">
                 {socialMedia.map((item) => {
                   return (
-                    <div className="flex flex-col items-center gap-2">
+                    <div
+                      key={item.name}
+                      className="flex flex-col items-center gap-2"
+                    >
                       <Button
                         key={item.name}
                         variant="ghost"

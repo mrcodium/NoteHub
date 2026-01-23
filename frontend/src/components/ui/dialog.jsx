@@ -5,14 +5,32 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useModalBackButtonSupport } from "@/hooks/useModalBackButtonSupport"
 
-const Dialog = DialogPrimitive.Root
+// const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
 
 const DialogPortal = DialogPrimitive.Portal
 
 const DialogClose = DialogPrimitive.Close
+
+function Dialog({
+  open,
+  onOpenChange,
+  ...props
+}) {
+  const modalProps = useModalBackButtonSupport(open, onOpenChange, "Dialog")
+
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      {...modalProps}
+      {...props}
+    />
+  )
+}
+
 
 const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
