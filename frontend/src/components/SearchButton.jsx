@@ -93,6 +93,7 @@ export function SearchButton() {
     removeSearchHistory,
     clearSearchHistory,
   } = useLocalStorage();
+  const inputRef = React.useRef(null);
 
   // Debounced search for both notes and users
   const fetchSearchResults = React.useCallback(
@@ -189,6 +190,7 @@ export function SearchButton() {
                 </Button>
               </DialogClose>
               <Input
+                ref={inputRef}
                 placeholder="Search notes and users..."
                 value={searchQuery}
                 onChange={(e) => {
@@ -196,13 +198,16 @@ export function SearchButton() {
                   setIsTyping(true);
                 }}
                 autoFocus
-                className="py-3 border-0 h-auto shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="py-3 pr-14 border-0 h-auto shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
               />
               <Button
                 disabled={searchQuery.trim() === ""}
                 variant="ghost"
-                className="h-full rounded-none"
-                onClick={() => setSearchQuery("")}
+                className="h-full rounded-none absolute right-0 top-1/2 -translate-y-1/2"
+                onClick={() => {
+                  setSearchQuery("");
+                  inputRef.current?.focus();
+                }}
               >
                 <X />
               </Button>
@@ -467,7 +472,7 @@ export function NotFound({ searchQuery = "", type = "users" }) {
         </p>
       </div>
 
-      <div className="text-xs text-muted-foreground/60">
+      <div className="text-sm text-muted-foreground/60">
         <p>Try different keywords or check spelling</p>
       </div>
     </div>
