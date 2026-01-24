@@ -350,18 +350,14 @@ export const renameNote = async (req, res) => {
     }
 
     // 2️⃣ Extract old keywords (title + content)
-    const oldKeywords = extractKeywords(
-      `${note.name} ${note.content || ""}`
-    );
+    const oldKeywords = extractKeywords(`${note.name} ${note.content || ""}`);
 
     // 3️⃣ Rename
     note.name = newName;
     await note.save();
 
     // 4️⃣ Extract new keywords (updated title + content)
-    const newKeywords = extractKeywords(
-      `${newName} ${note.content || ""}`
-    );
+    const newKeywords = extractKeywords(`${newName} ${note.content || ""}`);
 
     // 5️⃣ Update search index
     await updateIndex(note._id, oldKeywords, newKeywords);
@@ -496,18 +492,34 @@ export const updateCollaborators = async (req, res) => {
 
 export const searchNotes = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, page = 1, limit = 10 } = req.query;
+
     if (!q) {
       return res.status(400).json({ message: "Query required" });
     }
 
+    const currentPage = Number(page);
+    const notesPerPage = Number(limit);
+    const skip = (currentPage - 1) * notesPerPage;
+
     const requester = req.user || null;
-    const requesterId = requester?._id;
-
     const tokens = normalizeText(q);
-    if (!tokens.length) return res.json([]);
 
-    const scoreMap = new Map(); // noteId -> score
+    if (!tokens.length) {
+      return res.json({
+        notes: [],
+        pagination: {
+          currentPage,
+          totalPages: 0,
+          totalItems: 0,
+          notesPerPage,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      });
+    }
+
+    const scoreMap = new Map();
 
     /* 1️⃣ Index-based search */
     const indexDocs = await SearchIndex.find({
@@ -521,9 +533,8 @@ export const searchNotes = async (req, res) => {
       }
     }
 
-    /* 2️⃣ Title substring search (>=2 chars, higher weight) */
+    /* 2️⃣ Title-based search */
     const titleTokens = tokens.filter((t) => t.length >= 2);
-
     if (titleTokens.length) {
       const titleRegex = titleTokens.map((t) => `(?=.*${t})`).join("");
       const titleNotes = await Note.find({
@@ -532,7 +543,7 @@ export const searchNotes = async (req, res) => {
 
       for (const note of titleNotes) {
         const key = note._id.toString();
-        scoreMap.set(key, (scoreMap.get(key) || 0) + 3); // ⭐ higher weight
+        scoreMap.set(key, (scoreMap.get(key) || 0) + 3);
       }
     }
 
@@ -541,37 +552,46 @@ export const searchNotes = async (req, res) => {
       .sort((a, b) => b[1] - a[1])
       .map(([id]) => id);
 
-    /* 4️⃣ Fetch notes + populate */
-    const notes = await Note.find({
-      _id: { $in: sortedNoteIds },
-    })
+    /* 4️⃣ Fetch notes */
+    const notes = await Note.find({ _id: { $in: sortedNoteIds } })
       .populate("userId", "_id userName fullName avatar")
-      .populate(
-        "collectionId",
-        "_id name slug visibility collaborators userId"
-      )
+      .populate("collectionId", "_id name slug visibility collaborators userId")
       .lean();
 
-    // Filter notes using the same access rules
     const accessibleNotes = notes.filter((note) =>
       canAccessNote({
         requester,
         ownerId: note.userId._id,
         note,
-        collection: note.collectionId, // populated collection
-      })
+        collection: note.collectionId,
+      }),
     );
 
     // Preserve ranking
-    const noteMap = new Map(accessibleNotes.map(n => [n._id.toString(), n]));
+    const noteMap = new Map(accessibleNotes.map((n) => [n._id.toString(), n]));
+
     const rankedNotes = sortedNoteIds
-      .map(id => noteMap.get(id))
+      .map((id) => noteMap.get(id))
       .filter(Boolean);
 
-    res.json(rankedNotes);
+    /* 5️⃣ Pagination */
+    const totalNotes = rankedNotes.length;
+    const totalPages = Math.ceil(totalNotes / notesPerPage);
+    const paginatedNotes = rankedNotes.slice(skip, skip + notesPerPage);
+
+    res.json({
+      notes: paginatedNotes,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalItems: totalNotes,
+        itemsPerPage: notesPerPage,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Search failed" });
   }
 };
-

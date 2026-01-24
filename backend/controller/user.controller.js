@@ -118,26 +118,17 @@ export const getAllUsers = async (req, res) => {
       .skip(skip)
       .limit(limit);
     
-    // Get counts for each filter type
-    const allUsersCount = await User.countDocuments();
-    const onlineUsersCount = await User.countDocuments({ isOnline: true });
-    const oauthUsersCount = await User.countDocuments({ hasGoogleAuth: true });
     
     res.status(200).json({
       users,
       pagination: {
         currentPage: page,
         totalPages,
-        totalUsers,
-        usersPerPage: limit,
+        totalItems: totalUsers,
+        itemsPerPage: limit,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1
       },
-      counts: {
-        all: allUsersCount,
-        online: onlineUsersCount,
-        oauth: oauthUsersCount
-      }
     });
   } catch (error) {
     console.error("Error in getAllUsers controller: ", error);

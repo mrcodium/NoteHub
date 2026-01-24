@@ -11,6 +11,8 @@ import {
   Ghost,
   ArrowLeft,
   Folder,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { debounce } from "lodash";
 import { Link, useNavigate } from "react-router-dom";
@@ -32,6 +34,15 @@ import { EmptyState } from "@/pages/collection/EmptyState";
 import { Badge } from "./ui/badge";
 import { stripLatex } from "@/lib/utils";
 import { removeStopwords } from "stopword";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export function getFirstMatchSnippets(html, query, radius = 60, limit = 3) {
   if (!html || !query) return [];
@@ -84,6 +95,24 @@ export function SearchButton() {
     notes: [],
     users: [],
   });
+  const [pagination, setPagination] = React.useState({
+    notes: {
+      currentPage: 1,
+      totalPages: 0,
+      totalItems: 0,
+      itemsPerPage: 10,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+    users: {
+      currentPage: 1,
+      totalPages: 0,
+      totalItems: 0,
+      itemsPerPage: 10,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    },
+  });
   const [isSearching, setIsSearching] = React.useState(false);
   const { authUser, getAllUsers } = useAuthStore();
   const [isTyping, setIsTyping] = React.useState(false);
@@ -97,10 +126,26 @@ export function SearchButton() {
 
   // Debounced search for both notes and users
   const fetchSearchResults = React.useCallback(
-    debounce(async (query) => {
+    debounce(async (query, notesPage = 1, usersPage = 1) => {
       setIsTyping(false);
       if (!query.trim()) {
         setSearchResults({ notes: [], users: [] });
+        setPagination({
+          notes: {
+            currentPage: 1,
+            totalPages: 0,
+            totalItems: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+          users: {
+            currentPage: 1,
+            totalPages: 0,
+            totalItems: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        });
         return;
       }
 
@@ -109,9 +154,11 @@ export function SearchButton() {
 
         // Fetch both notes and users in parallel
         const [notesResponse, usersResponse] = await Promise.all([
-          axiosInstance.get(`/note/search?q=${encodeURIComponent(query)}`),
+          axiosInstance.get(
+            `/note/search?q=${encodeURIComponent(query)}&page=${notesPage}&limit=10`,
+          ),
           getAllUsers({
-            page: 1,
+            page: usersPage,
             limit: 10,
             filter: "all",
             search: query,
@@ -119,8 +166,25 @@ export function SearchButton() {
         ]);
 
         setSearchResults({
-          notes: notesResponse.data || [],
+          notes: notesResponse.data.notes || [],
           users: usersResponse.users || [],
+        });
+
+        setPagination({
+          notes: notesResponse.data.pagination || {
+            currentPage: 1,
+            totalPages: 0,
+            totalItems: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+          users: usersResponse.pagination || {
+            currentPage: 1,
+            totalPages: 0,
+            totalItems: 0,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
         });
       } catch (error) {
         console.error("Failed to search:", error);
@@ -132,11 +196,20 @@ export function SearchButton() {
     [getAllUsers, authUser],
   );
 
-  // Handle search input changes
+  // Handle search input changes (reset to page 1)
   React.useEffect(() => {
-    fetchSearchResults(searchQuery);
+    fetchSearchResults(searchQuery, 1, 1);
     return () => fetchSearchResults.cancel();
-  }, [searchQuery, fetchSearchResults]);
+  }, [searchQuery]);
+
+  // Handle pagination changes
+  const handleNotesPageChange = (page) => {
+    fetchSearchResults(searchQuery, page, pagination.users.currentPage);
+  };
+
+  const handleUsersPageChange = (page) => {
+    fetchSearchResults(searchQuery, pagination.notes.currentPage, page);
+  };
 
   // Keyboard shortcut
   React.useEffect(() => {
@@ -239,9 +312,9 @@ export function SearchButton() {
                 className="w-full h-12 gap-3 rounded-none text-base border-b-[3px] border-transparent !shadow-none data-[state=active]:bg-primary/5 data-[state=active]:border-primary/50"
               >
                 Notes
-                {searchResults.notes.length > 0 && (
+                {pagination.notes.totalItems > 0 && (
                   <Badge className={"px-1.5"}>
-                    {searchResults.notes.length}
+                    {pagination.notes.totalItems}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -250,9 +323,9 @@ export function SearchButton() {
                 className="w-full h-12 gap-3 rounded-none text-base border-b-[3px] border-transparent !shadow-none data-[state=active]:bg-primary/5 data-[state=active]:border-primary/50"
               >
                 Users
-                {searchResults.users.length > 0 && (
+                {pagination.users.totalItems > 0 && (
                   <Badge className={"px-1.5"}>
-                    {searchResults.users.length}
+                    {pagination.users.totalItems}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -260,71 +333,78 @@ export function SearchButton() {
 
             <TabsContent className="mt-0" value="notes">
               <div className="max-h-[70vh] overflow-y-auto">
-                {!isSearching && (
+                {searchResults.notes.length === 0 ? (
+                  searchQuery && !isTyping ? (
+                    <NotFound searchQuery={searchQuery} type="notes" />
+                  ) : (
+                    <EmptyState />
+                  )
+                ) : (
                   <>
-                    {searchResults.notes.length === 0 ? (
-                      searchQuery && !isTyping ? (
-                        <NotFound searchQuery={searchQuery} type="notes" />
-                      ) : (
-                        <EmptyState />
-                      )
-                    ) : (
-                      <div className="border-t">
-                        <h3 className="text-xs font-medium text-muted-foreground px-4 py-1.5">
-                          Results
-                        </h3>
-                        <div>
-                          {memoizedNotes.map((note) => (
-                            <div
-                              key={note._id}
-                              className="flex border-b border-primary/20 hover:bg-primary/10 items-start gap-3 p-2 px-4  group cursor-pointer"
-                              onClick={() => {
-                                navigate(
-                                  `/user/${note.userId?.userName}/${note.collectionId?.slug}/${note.slug}`,
-                                );
-                                setOpen(false);
-                              }}
-                            >
-                              <div className="flex-1 space-y-3">
-                                {/* note name and description */}
-                                <div className="w-full min-w-0">
-                                  <p className="line-clamp-1 font-medium text-lg">
-                                    {note.name}
-                                  </p>
-                                  <p className="text-primary/70 text-sm line-clamp-3">
-                                    {note.snippets}
+                    <div className="border-t">
+                      <h3 className="text-xs font-medium text-muted-foreground px-4 py-1.5">
+                        Results
+                      </h3>
+                      <div>
+                        {memoizedNotes.map((note) => (
+                          <div
+                            key={note._id}
+                            className="flex border-b border-primary/20 hover:bg-primary/10 items-start gap-3 p-2 px-4  group cursor-pointer"
+                            onClick={() => {
+                              navigate(
+                                `/user/${note.userId?.userName}/${note.collectionId?.slug}/${note.slug}`,
+                              );
+                              setOpen(false);
+                            }}
+                          >
+                            <div className="flex-1 space-y-3">
+                              {/* note name and description */}
+                              <div className="w-full min-w-0">
+                                <p className="line-clamp-1 font-medium text-lg">
+                                  {note.name}
+                                </p>
+                                <p className="text-primary/70 text-sm line-clamp-3">
+                                  {note.snippets}
+                                </p>
+                              </div>
+
+                              {/* meta data collection and author  */}
+                              <div className="space-y-1">
+                                <div className="flex gap-1 items-center">
+                                  <Folder
+                                    className="text-muted-foreground fill-muted-foreground"
+                                    size={14}
+                                  />
+                                  <p className="line-clamp-1 text-xs text-muted-foreground">
+                                    {note.collectionId?.name}
                                   </p>
                                 </div>
-
-                                {/* meta data collection and author  */}
-                                <div className="space-y-1">
-                                  <div className="flex gap-1 items-center">
-                                    <Folder
-                                      className="text-muted-foreground fill-muted-foreground"
-                                      size={14}
-                                    />
-                                    <p className="line-clamp-1 text-xs text-muted-foreground">
-                                      {note.collectionId?.name}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <Avatar className="size-4">
-                                        <AvatarImage
-                                          src={note.userId?.avatar}
-                                        />
-                                        <AvatarFallback>
-                                          {note.userId?.fullName?.charAt(0)}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <span>{note.userId?.fullName}</span>
-                                    </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Avatar className="size-4">
+                                      <AvatarImage src={note.userId?.avatar} />
+                                      <AvatarFallback>
+                                        {note.userId?.fullName?.charAt(0)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span>{note.userId?.fullName}</span>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Notes Pagination */}
+                    {pagination.notes.totalPages > 1 && (
+                      <div className="border-t p-4 sticky bottom-0 bg-muted">
+                        <CustomPagination
+                          currentPage={pagination.notes.currentPage}
+                          totalPages={pagination.notes.totalPages}
+                          onPageChange={handleNotesPageChange}
+                        />
                       </div>
                     )}
                   </>
@@ -334,51 +414,61 @@ export function SearchButton() {
 
             <TabsContent className="mt-0" value="users">
               <div className="max-h-[80vh] overflow-y-auto">
-                {!isSearching && (
+                {searchResults.users.length === 0 ? (
+                  searchQuery && !isTyping ? (
+                    <NotFound searchQuery={searchQuery} type="users" />
+                  ) : searchHistory.length === 0 ? (
+                    <EmptyState type="users" />
+                  ) : null
+                ) : (
                   <>
-                    {searchResults.users.length === 0 ? (
-                      searchQuery && !isTyping ? (
-                        <NotFound searchQuery={searchQuery} type="users" />
-                      ) : searchHistory.length === 0 ? (
-                        <EmptyState type="users" />
-                      ) : null
-                    ) : (
-                      <div className="p-1 border-t">
-                        <h3 className="text-xs font-medium text-muted-foreground px-4 py-1.5">
-                          Results
-                        </h3>
-                        <div className="space-y-1">
-                          {searchResults.users.map((user) => (
-                            <div
-                              key={user._id}
-                              onClick={() => {
-                                addSearchHistory(user);
-                                navigate(`/user/${user.userName}`);
-                                setOpen(false);
-                              }}
-                              className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer"
-                            >
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={user.avatar} />
-                                <AvatarFallback>
-                                  {user.fullName?.charAt(0) || (
-                                    <User className="h-4 w-4" />
-                                  )}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium">{user.fullName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  @{user.userName}
-                                </p>
-                              </div>
+                    <div className="p-1 border-t">
+                      <h3 className="text-xs font-medium text-muted-foreground px-4 py-1.5">
+                        Results
+                      </h3>
+                      <div className="space-y-1">
+                        {searchResults.users.map((user) => (
+                          <div
+                            key={user._id}
+                            onClick={() => {
+                              addSearchHistory(user);
+                              navigate(`/user/${user.userName}`);
+                              setOpen(false);
+                            }}
+                            className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer"
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={user.avatar} />
+                              <AvatarFallback>
+                                {user.fullName?.charAt(0) || (
+                                  <User className="h-4 w-4" />
+                                )}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{user.fullName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                @{user.userName}
+                              </p>
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Users Pagination */}
+                    {pagination.users.totalPages > 1 && (
+                      <div className="border-t p-4 sticky bottom-0 bg-muted">
+                        <CustomPagination
+                          currentPage={pagination.users.currentPage}
+                          totalPages={pagination.users.totalPages}
+                          onPageChange={handleUsersPageChange}
+                        />
                       </div>
                     )}
                   </>
                 )}
+                
                 {/* Search History */}
                 {searchHistory.length > 0 && (
                   <>
@@ -449,6 +539,96 @@ export function SearchButton() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// Custom Pagination Component
+function CustomPagination({ currentPage, totalPages, onPageChange }) {
+  const getPageNumbers = () => {
+    const pages = [];
+    const showEllipsis = totalPages > 7;
+
+    if (!showEllipsis) {
+      // Show all pages if 7 or fewer
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+
+      if (currentPage <= 3) {
+        // Near the start
+        pages.push(2, 3, 4, "ellipsis", totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Near the end
+        pages.push(
+          "ellipsis",
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages,
+        );
+      } else {
+        // In the middle
+        pages.push(
+          "ellipsis",
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          "ellipsis",
+          totalPages,
+        );
+      }
+    }
+
+    return pages;
+  };
+
+  return (
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
+            className={
+              currentPage === 1
+                ? "pointer-events-none opacity-50"
+                : "cursor-pointer"
+            }
+          />
+        </PaginationItem>
+
+        {getPageNumbers().map((page, index) => (
+          <PaginationItem key={index}>
+            {page === "ellipsis" ? (
+              <PaginationEllipsis />
+            ) : (
+              <PaginationLink
+                onClick={() => onPageChange(page)}
+                isActive={currentPage === page}
+                className="cursor-pointer"
+              >
+                {page}
+              </PaginationLink>
+            )}
+          </PaginationItem>
+        ))}
+
+        <PaginationItem>
+          <PaginationNext
+            onClick={() =>
+              currentPage < totalPages && onPageChange(currentPage + 1)
+            }
+            className={
+              currentPage === totalPages
+                ? "pointer-events-none opacity-50"
+                : "cursor-pointer"
+            }
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   );
 }
 
