@@ -6,11 +6,12 @@ import {
     removeCover,
     updateFullName,
     updateUserName,
-    updateEmail,
     checkAuth,
     getUser,
     getAllUsers,
     isEmailAvailable,
+    requestEmailUpdateOtp,
+    confirmEmailUpdate,
 } from "../controller/user.controller.js";
 import { protectRoute } from "../middleware/protectRoute.middleware.js";
 import { handlefileUpload } from "../middleware/multer.middleware.js";
@@ -24,7 +25,8 @@ router.delete("/remove-cover", protectRoute, removeCover);
 
 router.put("/update-fullname", protectRoute, updateFullName);
 router.put("/update-username", protectRoute, updateUserName);
-router.put("/update-email", protectRoute, updateEmail);
+router.post('/request-update-email-otp', protectRoute, requestEmailUpdateOtp);
+router.post('/update-email', protectRoute, confirmEmailUpdate);
 
 router.get("/me", protectRoute, checkAuth);
 router.get("/:identifier", getUser);

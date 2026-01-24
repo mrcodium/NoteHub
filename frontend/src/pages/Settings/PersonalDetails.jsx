@@ -1,33 +1,39 @@
-import React, { useRef, useState } from "react";
+import React, { useState, useRef } from "react";
+
+// UI components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuthStore } from "@/stores/useAuthStore";
 import { LabledInput } from "@/components/ui/labeled-input";
 import { Button } from "@/components/ui/button";
 import { Check, Loader2 } from "lucide-react";
 
+// Store
+import { useAuthStore } from "@/stores/useAuthStore";
+import UpdateEmailCard from "@/components/UpdateEmailCard";
+
 const PersonalDetails = () => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Personal Details</CardTitle>
-      </CardHeader>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Personal Details</CardTitle>
+        </CardHeader>
 
-      <CardContent className="space-y-4">
-        <Field
-          label="Full Name"
-          field="fullName"
-          apiEndPoint="user/update-fullname"
-        />
+        <CardContent className="space-y-4">
+          <Field
+            label="Full Name"
+            field="fullName"
+            apiEndPoint="user/update-fullname"
+          />
 
-        <Field
-          label="Username"
-          field="userName"
-          apiEndPoint="user/update-username"
-        />
-
-        <Field label="Email" field="email" apiEndPoint="email/update" />
-      </CardContent>
-    </Card>
+          <Field
+            label="Username"
+            field="userName"
+            apiEndPoint="user/update-username"
+          />
+        </CardContent>
+      </Card>
+      <UpdateEmailCard />
+    </div>
   );
 };
 

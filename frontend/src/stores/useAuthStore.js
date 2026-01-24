@@ -18,8 +18,51 @@ export const useAuthStore = create((set, get) => ({
   isRemovingCover: false,
   isSendingOtp: false,
   isResettingPassword: false,
+  isUpdatingEmail: false,
   socket: null,
   onlineUsers: [],
+
+  requestEmailUpdateOtp: async (email) => {
+    set({ isSendingOtp: true });
+    try {
+      const response = await axiosInstance.post(
+        "/user/request-update-email-otp",
+        {
+          email,
+        },
+      );
+      toast.success(response.data.message || "OTP sent successfully!");
+      return response.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send OTP");
+      console.error("Request update email OTP error:", error);
+      return null;
+    } finally {
+      set({ isSendingOtp: false });
+    }
+  },
+
+  confirmEmailUpdate: async ({ email, otp }) => {
+    set({ isUpdatingEmail: true });
+    try {
+      const response = await axiosInstance.post("/user/update-email", {
+        email,
+        otp,
+      });
+      toast.success(response.data.message || "email update successfully!");
+      if(response.data.user) {
+        set({authUser: response.data.user})
+      }
+      
+      return response.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update email");
+      console.error("Update email error:", error);
+      return null;
+    } finally {
+      set({ isUpdatingEmail: false });
+    }
+  },
 
   requestResetPasswordOtp: async (identifier) => {
     set({ isSendingOtp: true });
@@ -294,8 +337,8 @@ export const useAuthStore = create((set, get) => ({
       toast.success(res.data.message);
       return true;
     } catch (error) {
-      toast.error(error.response.data.message);
-      console.log(error.response?.data?.message);
+      toast.error(error.response.data.message || error.message);
+      console.log(error.response?.data?.message || error.message);
       console.log(error);
       return false;
     }

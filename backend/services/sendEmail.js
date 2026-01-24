@@ -1,25 +1,34 @@
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export const sendEmail = async (email, subject, text, html) => {
-    try {
-        const { data, error } = await resend.emails.send({
-            from: 'NoteHub <onboarding@resend.dev>',
-            to: email,
-            subject: subject,
-            html: html,
-            text: text, // plain text fallback
-        });
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "NoteHub",
+          email: process.env.EMAIL_SENDER, 
+        },
+        to: [{ email }],
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+    });
 
-        if (error) {
-            console.error('❌ Resend error:', error);
-            throw error;
-        }
+    const data = await res.json();
 
-        return data;
-    } catch (error) {
-        console.error('❌ Email sending failed:', error);
-        throw error;
+    if (!res.ok) {
+      console.error("❌ Brevo API error:", data);
+      throw new Error("Email failed");
     }
+    console.log(data);
+    return data;
+  } catch (err) {
+    console.error("❌ Email sending failed:", err);
+    throw err;
+  }
 };

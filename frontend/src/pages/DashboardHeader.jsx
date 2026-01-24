@@ -6,10 +6,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  SidebarOpenTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { SidebarOpenTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -71,7 +68,7 @@ const DashboardHeader = () => {
     const fetchStars = async () => {
       try {
         const response = await axios.get(
-          "https://api.github.com/repos/abhijeetSinghRajput/notehub"
+          "https://api.github.com/repos/abhijeetSinghRajput/notehub",
         );
         const starCount = response.data?.stargazers_count;
         setGithubStarCount(formatCompactNumber(starCount));
@@ -129,10 +126,7 @@ const DashboardHeader = () => {
               {hidden.length > 0 && visibleBreadcrumbs === 1 && (
                 <>
                   <BreadcrumbItem>
-                    <DropdownMenu
-                      modal={true}
-                      className="z-50 transition-all"
-                    >
+                    <DropdownMenu modal={true} className="z-50 transition-all">
                       <DropdownMenuTrigger className="flex items-center gap-1">
                         <BreadcrumbEllipsis className="size-4" />
                         <span className="sr-only">Toggle menu</span>
@@ -199,12 +193,15 @@ const DashboardHeader = () => {
                   <BreadcrumbItem className="min-w-0">
                     <Link
                       to={route.path}
-                      className={`truncate block min-w-0 ${
-                        index === visible.length - 1
-                          ? "text-foreground"
-                          : ""
+                      className={`truncate flex items-center gap-2 min-w-0 ${
+                        index === visible.length - 1 ? "text-foreground" : ""
                       }`}
                     >
+                      {route.path === "/" && (
+                        <div className="size-6">
+                          <img className="w-full h-full object-contain" src="/notehub.png" alt="" />
+                        </div>
+                      )}
                       {route.name}
                     </Link>
                   </BreadcrumbItem>
@@ -236,7 +233,7 @@ const DashboardHeader = () => {
                 <TooltipWrapper message="Source Code">
                   <a href="https://github.com/abhijeetSinghRajput/notehub">
                     <Button size="sm" className="p-2" variant="secondary">
-                      <GithubIcon/>
+                      <GithubIcon />
                       {githubStarCount || ""}
                     </Button>
                   </a>
@@ -249,9 +246,7 @@ const DashboardHeader = () => {
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={authUser?.avatar} />
                       <AvatarFallback>
-                        {(authUser?.fullName || "U")
-                          .charAt(0)
-                          .toUpperCase()}
+                        {(authUser?.fullName || "U").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </TooltipTrigger>

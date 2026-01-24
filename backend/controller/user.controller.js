@@ -1,6 +1,7 @@
 import User from "../model/user.model.js";
 import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
 import validator from "validator";
+import { sendOtp, validateOtp } from "../services/otp.service.js";
 
 export const isEmailAvailable = async (req, res) => {
   try {
@@ -306,36 +307,79 @@ export const updateUserName = async (req, res) => {
   }
 };
 
-export const updateEmail = async (req, res) => {
+export const requestEmailUpdateOtp = async (req, res) => {
   try {
     const { email } = req.body;
     const { user } = req;
 
     if (!email?.trim()) {
-      return res.status(400).json({ message: "Email is required." });
+      return res.status(400).json({ success: false, message: "Email is required." });
     }
 
     if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
+      return res.status(400).json({ success: false, message: "Invalid email format." });
     }
 
     const normalizedEmail = validator.normalizeEmail(email);
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser && existingUser._id.toString() !== user._id.toString()) {
-      return res.status(400).json({ message: "Email already in use." });
+      return res.status(400).json({ success: false, message: "Email already in use." });
     }
 
+    // Send OTP to new email
+    await sendOtp({
+      email: normalizedEmail,
+      purpose: "email_update",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `OTP sent to ${normalizedEmail}`,
+      email: normalizedEmail.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + b.replace(/./g, "*") + c),
+    });
+  } catch (error) {
+    console.error("Email update OTP error:", error);
+    return res.status(500).json({ success: false, message: "Failed to send OTP." });
+  }
+};
+
+
+export const confirmEmailUpdate = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const { user } = req;
+
+    if (!email?.trim() || !otp?.trim()) {
+      return res.status(400).json({ success: false, message: "Email and OTP are required." });
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ success: false, message: "Invalid email format." });
+    }
+
+    const normalizedEmail = validator.normalizeEmail(email);
+
+    // Validate OTP
+    await validateOtp({
+      email: normalizedEmail,
+      purpose: "email_update",
+      otp,
+    });
+
+    // Update user email
     user.email = normalizedEmail;
     await user.save();
 
     const { password, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({
+    return res.status(200).json({
+      success: true,
       user: userWithoutPassword,
       message: "Email updated successfully.",
     });
   } catch (error) {
-    console.log("Error in updateEmail controller\n", error);
-    res.status(500).json({ message: "Internal server error." });
+    console.error("Email update error:", error);
+    const status = error.name === "ValidationError" ? 400 : 500;
+    return res.status(status).json({ success: false, message: error.message || "Failed to update email." });
   }
 };
