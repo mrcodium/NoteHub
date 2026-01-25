@@ -2,46 +2,54 @@ import mongoose from "mongoose";
 import fs from "fs";
 import Note from "../../model/note.model.js";
 import SearchIndex from "../../model/searchIndex.model.js";
-import { extractKeywords } from "./textProcessor.js";
+import { extractKeywordFrequency } from "./textProcessor.js";
 
 async function reindex() {
   try {
-    console.log("connecting...");
-    await mongoose.connect("mongodb+srv://abhijeet62008:alpha%20knight@cluster0.xwec2.mongodb.net/notehub?retryWrites=true&w=majority&appName=Cluster0");
+    console.log("🔌 connecting...");
+    await mongoose.connect(process.env.MONGO_URI);
 
     console.log("⚠️ Clearing existing search index...");
     await SearchIndex.deleteMany({});
 
     const cursor = Note.find({}).cursor();
-    const bulkMap = new Map(); // word -> Set(noteId)
+    const bulkMap = new Map(); // lemma -> Map(noteId -> tf)
 
     for await (const note of cursor) {
-      const keywords = extractKeywords(`${note.name} ${note.content}` || "");
-      for (const word of keywords) {
-        if (!bulkMap.has(word)) {
-          bulkMap.set(word, new Set());
+      const freqMap = extractKeywordFrequency(
+        `${note.name} ${note.content}` || ""
+      );
+
+      for (const [lemma, tf] of Object.entries(freqMap)) {
+        if (!bulkMap.has(lemma)) {
+          bulkMap.set(lemma, new Map());
         }
-        bulkMap.get(word).add(note._id.toString());
+        bulkMap.get(lemma).set(note._id.toString(), tf);
       }
     }
 
-    console.log(`📦 Preparing bulk operations (${bulkMap.size} words)...`);
+    console.log(`📦 Preparing bulk ops (${bulkMap.size} lemmas)...`);
 
     const ops = [];
-    for (const [word, ids] of bulkMap.entries()) {
+    for (const [lemma, noteMap] of bulkMap.entries()) {
       ops.push({
         insertOne: {
           document: {
-            lemma: word,
-            noteIds: [...ids].map((id) => new mongoose.Types.ObjectId(id)),
+            lemma,
+            notes: [...noteMap.entries()].map(([noteId, tf]) => ({
+              noteId: new mongoose.Types.ObjectId(noteId),
+              tf,
+            })),
           },
         },
       });
     }
 
-    // 👉 Save ops in a JSON file
-    fs.writeFileSync("reindex_ops.json", JSON.stringify(ops, null, 2), "utf-8");
-    console.log("📝 Bulk operations saved to reindex_ops.json");
+    fs.writeFileSync(
+      "reindex_ops.json",
+      JSON.stringify(ops, null, 2),
+      "utf-8"
+    );
 
     if (ops.length) {
       await SearchIndex.bulkWrite(ops);

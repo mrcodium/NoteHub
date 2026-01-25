@@ -9,14 +9,25 @@ const SearchIndexSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    noteIds: [
+    notes: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Note",
+        noteId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Note",
+          required: true,
+        },
+        tf: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
       },
     ],
   },
   { timestamps: true }
 );
+
+// compound index for fast lookup
+SearchIndexSchema.index({ lemma: 1, "notes.noteId": 1 });
 
 export default mongoose.model("SearchIndex", SearchIndexSchema);

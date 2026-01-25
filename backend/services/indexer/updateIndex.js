@@ -1,30 +1,32 @@
 // indexer/updateIndex.js
 import SearchIndex from "../../model/searchIndex.model.js";
+import { extractKeywordFrequency } from "./textProcessor.js";
 
-export async function updateIndex(noteId, oldKeywords, newKeywords) {
-  const added = newKeywords.filter((w) => !oldKeywords.includes(w));
-  const removed = oldKeywords.filter((w) => !newKeywords.includes(w));
+/**
+ * Reindex a note completely (TF-safe)
+ */
+export async function updateIndex(noteId, text = "") {
+  // 1️⃣ Remove old index entries for this note
+  await SearchIndex.updateMany(
+    { "notes.noteId": noteId },
+    { $pull: { notes: { noteId } } },
+  );
 
-  const ops = [];
+  // 2️⃣ Recompute TF from scratch
+  const freqMap = extractKeywordFrequency(text);
 
-  for (const lemma of added) {
-    ops.push({
-      updateOne: {
-        filter: { lemma },
-        update: { $addToSet: { noteIds: noteId } },
-        upsert: true,
+  // 3️⃣ Insert fresh TF entries
+  const ops = Object.entries(freqMap).map(([lemma, tf]) => ({
+    updateOne: {
+      filter: { lemma },
+      update: {
+        $push: {
+          notes: { noteId, tf },
+        },
       },
-    });
-  }
-
-  for (const lemma of removed) {
-    ops.push({
-      updateOne: {
-        filter: { lemma },
-        update: { $pull: { noteIds: noteId } },
-      },
-    });
-  }
+      upsert: true,
+    },
+  }));
 
   if (ops.length) {
     await SearchIndex.bulkWrite(ops);

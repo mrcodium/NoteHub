@@ -5,10 +5,50 @@ import SearchIndex from "../model/searchIndex.model.js";
 import User from "../model/user.model.js";
 import { canAccessNote } from "../utils/permissions.js";
 import {
+  extractKeywordFrequency,
   extractKeywords,
   normalizeText,
 } from "../services/indexer/textProcessor.js";
 import { updateIndex } from "../services/indexer/updateIndex.js";
+import natural from "natural";
+const { LevenshteinDistance } = natural;
+
+export const getNote = async (req, res) => {
+  const { _id } = req.params;
+  const { user } = req;
+
+  if (!_id) {
+    return res.status(400).json({
+      message: "Note ID not provided",
+    });
+  }
+  if (!mongoose.Types.ObjectId.isValid(_id)) {
+    return res.status(400).json({
+      message: "Invalid note ID format",
+    });
+  }
+
+  try {
+    const note = await Note.findOne({ _id, userId: user._id });
+
+    if (!note) {
+      return res.status(404).json({
+        message: "Note not found or you don't have permission to access it",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Note retrieved successfully",
+      note,
+    });
+  } catch (error) {
+    console.error("Error in getNote controller:", error);
+    return res.status(500).json({
+      message: "Failed to retrieve note",
+      error: error.message,
+    });
+  }
+};
 
 export const createNote = async (req, res) => {
   const {
@@ -41,24 +81,31 @@ export const createNote = async (req, res) => {
       userId: user._id,
     });
 
-    // 2️⃣ Extract keywords from title + content
-    const keywords = extractKeywords(`${name} ${content}`);
+    // 2️⃣ Extract keyword frequency (title + content)
+    const freqMap = extractKeywordFrequency(`${name} ${content}`);
 
-    // 3️⃣ Index note
-    if (keywords.length) {
-      const ops = keywords.map((lemma) => ({
-        updateOne: {
-          filter: { lemma },
-          update: { $addToSet: { noteIds: note._id } },
-          upsert: true,
+    // 3️⃣ Build index operations
+    const ops = Object.entries(freqMap).map(([lemma, tf]) => ({
+      updateOne: {
+        filter: { lemma },
+        update: {
+          $push: {
+            notes: {
+              noteId: note._id,
+              tf,
+            },
+          },
         },
-      }));
+        upsert: true,
+      },
+    }));
 
+    if (ops.length) {
       await SearchIndex.bulkWrite(ops);
     }
 
     return res.status(201).json({
-      message: "Note created successfully",
+      message: "Note created & indexed successfully",
       note,
     });
   } catch (error) {
@@ -97,13 +144,13 @@ export const deleteNote = async (req, res) => {
 
     // 2️⃣ Remove noteId from all index docs
     await SearchIndex.updateMany(
-      { noteIds: note._id },
-      { $pull: { noteIds: note._id } },
+      { "notes.noteId": note._id },
+      { $pull: { notes: { noteId: note._id } } },
     );
 
     // 3️⃣ Cleanup empty index docs
     await SearchIndex.deleteMany({
-      noteIds: { $size: 0 },
+      notes: { $size: 0 },
     });
 
     return res.status(200).json({
@@ -119,38 +166,79 @@ export const deleteNote = async (req, res) => {
   }
 };
 
-export const getNote = async (req, res) => {
-  const { _id } = req.params;
+export const updateContent = async (req, res) => {
+  const { content, noteId } = req.body;
   const { user } = req;
 
-  if (!_id) {
+  if (!noteId || content === undefined) {
     return res.status(400).json({
-      message: "Note ID not provided",
-    });
-  }
-  if (!mongoose.Types.ObjectId.isValid(_id)) {
-    return res.status(400).json({
-      message: "Invalid note ID format",
+      message: "Note ID and content are required",
     });
   }
 
   try {
-    const note = await Note.findOne({ _id, userId: user._id });
-
+    // 1️⃣ Find note
+    const note = await Note.findOne({ _id: noteId, userId: user._id });
     if (!note) {
       return res.status(404).json({
-        message: "Note not found or you don't have permission to access it",
+        message: "Note not found or you don't have permission to update it",
       });
     }
 
+    // 2️⃣ Update content
+    note.content = content;
+    await note.save();
+
+    // 3️⃣ Reindex note (TF-safe)
+    await updateIndex(note._id, `${note.name} ${content}`);
+
     return res.status(200).json({
-      message: "Note retrieved successfully",
+      message: "Note content updated & reindexed successfully",
       note,
     });
   } catch (error) {
-    console.error("Error in getNote controller:", error);
+    console.error("Error in updateContent controller:", error);
     return res.status(500).json({
-      message: "Failed to retrieve note",
+      message: "Failed to update note content",
+      error: error.message,
+    });
+  }
+};
+
+export const renameNote = async (req, res) => {
+  const { noteId, newName } = req.body;
+  const { user } = req;
+
+  if (!noteId || !newName) {
+    return res.status(400).json({
+      message: "Note ID and new name are required",
+    });
+  }
+
+  try {
+    // 1️⃣ Fetch note
+    const note = await Note.findOne({ _id: noteId, userId: user._id });
+    if (!note) {
+      return res.status(404).json({
+        message: "Note not found or you don't have permission to rename it",
+      });
+    }
+
+    // 2️⃣ Rename
+    note.name = newName;
+    await note.save();
+
+    // 3️⃣ Reindex note (TF-safe)
+    await updateIndex(note._id, newName);
+
+    return res.status(200).json({
+      message: "Note renamed & reindexed successfully",
+      note,
+    });
+  } catch (error) {
+    console.error("Error in renameNote controller:", error);
+    return res.status(500).json({
+      message: "Failed to rename note",
       error: error.message,
     });
   }
@@ -285,96 +373,6 @@ export const getPublicNotes = async (req, res) => {
   }
 };
 
-export const updateContent = async (req, res) => {
-  const { content, noteId } = req.body;
-  const { user } = req;
-
-  if (!noteId || content === undefined) {
-    return res.status(400).json({
-      message: "Note ID and content are required",
-    });
-  }
-
-  try {
-    // 1️⃣ Find the note first
-    const note = await Note.findOne({ _id: noteId, userId: user._id });
-    if (!note) {
-      return res.status(404).json({
-        message: "Note not found or you don't have permission to update it",
-      });
-    }
-
-    // 2️⃣ Extract old keywords from current content
-    const oldKeywords = extractKeywords(`${note.name} ${note.content || ""}`);
-
-    // 3️⃣ Update content
-    note.content = content;
-    await note.save();
-
-    // 4️⃣ Extract new keywords from updated content
-    const newKeywords = extractKeywords(`${note.name} ${content}`);
-
-    // 5️⃣ Update search index
-    await updateIndex(note._id, oldKeywords, newKeywords);
-
-    return res.status(200).json({
-      message: "Note content updated and reindexed successfully",
-      note,
-    });
-  } catch (error) {
-    console.error("Error in updateContent controller:", error);
-    return res.status(500).json({
-      message: "Failed to update note content",
-      error: error.message,
-    });
-  }
-};
-
-export const renameNote = async (req, res) => {
-  const { noteId, newName } = req.body;
-  const { user } = req;
-
-  if (!noteId || !newName) {
-    return res.status(400).json({
-      message: "Note ID and new name are required",
-    });
-  }
-
-  try {
-    // 1️⃣ Fetch note first
-    const note = await Note.findOne({ _id: noteId, userId: user._id });
-    if (!note) {
-      return res.status(404).json({
-        message: "Note not found or you don't have permission to rename it",
-      });
-    }
-
-    // 2️⃣ Extract old keywords (title + content)
-    const oldKeywords = extractKeywords(`${note.name} ${note.content || ""}`);
-
-    // 3️⃣ Rename
-    note.name = newName;
-    await note.save();
-
-    // 4️⃣ Extract new keywords (updated title + content)
-    const newKeywords = extractKeywords(`${newName} ${note.content || ""}`);
-
-    // 5️⃣ Update search index
-    await updateIndex(note._id, oldKeywords, newKeywords);
-
-    return res.status(200).json({
-      message: "Note renamed and reindexed successfully",
-      note,
-    });
-  } catch (error) {
-    console.error("Error in renameNote controller:", error);
-    return res.status(500).json({
-      message: "Failed to rename note",
-      error: error.message,
-    });
-  }
-};
-
 export const moveTo = async (req, res) => {
   const { noteId, collectionId } = req.body;
   const { user } = req;
@@ -490,106 +488,91 @@ export const updateCollaborators = async (req, res) => {
   }
 };
 
+
 export const searchNotes = async (req, res) => {
   try {
     const { q, page = 1, limit = 10 } = req.query;
+    if (!q) return res.status(400).json({ message: "Query required" });
 
-    if (!q) {
-      return res.status(400).json({ message: "Query required" });
-    }
+    const requester = req.user || null;
+    const tokens = normalizeText(q);
+    if (!tokens.length) return res.json({ notes: [], pagination: {} });
 
     const currentPage = Number(page);
     const notesPerPage = Number(limit);
     const skip = (currentPage - 1) * notesPerPage;
 
-    const requester = req.user || null;
-    const tokens = normalizeText(q);
-
-    if (!tokens.length) {
-      return res.json({
-        notes: [],
-        pagination: {
-          currentPage,
-          totalPages: 0,
-          totalItems: 0,
-          notesPerPage,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-      });
-    }
-
     const scoreMap = new Map();
 
-    /* 1️⃣ Index-based search */
-    const indexDocs = await SearchIndex.find({
-      lemma: { $in: tokens },
-    });
+    // 🔹 Parallel search: index + title
+    const [indexDocs, titleNotes] = await Promise.all([
+      SearchIndex.find({ lemma: { $in: tokens } }).lean(),
+      Note.find({ name: new RegExp(tokens.join("|"), "i") })
+        .select("_id name")
+        .lean()
+    ]);
 
+    // 1️⃣ Index-based search (TF weighted)
     for (const doc of indexDocs) {
-      for (const id of doc.noteIds) {
-        const key = id.toString();
-        scoreMap.set(key, (scoreMap.get(key) || 0) + 1);
+      for (const { noteId, tf } of doc.notes) {
+        const key = noteId.toString();
+        scoreMap.set(key, (scoreMap.get(key) || 0) + tf * 1.5);
       }
     }
 
-    /* 2️⃣ Title-based search */
-    const titleTokens = tokens.filter((t) => t.length >= 2);
-    if (titleTokens.length) {
-      const titleRegex = titleTokens.map((t) => `(?=.*${t})`).join("");
-      const titleNotes = await Note.find({
-        name: { $regex: titleRegex, $options: "i" },
-      }).select("_id");
-
-      for (const note of titleNotes) {
-        const key = note._id.toString();
-        scoreMap.set(key, (scoreMap.get(key) || 0) + 3);
-      }
+    // 2️⃣ Title-based exact match boost
+    for (const note of titleNotes) {
+      const key = note._id.toString();
+      scoreMap.set(key, (scoreMap.get(key) || 0) + 5);
     }
 
-    /* 3️⃣ Sort by score */
+    // 3️⃣ Sort by relevance
     const sortedNoteIds = [...scoreMap.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([id]) => id);
 
-    /* 4️⃣ Fetch notes */
-    const notes = await Note.find({ _id: { $in: sortedNoteIds } })
+    if (!sortedNoteIds.length) return res.json({ notes: [], pagination: {} });
+
+    // 🔹 Pagination logic: only fetch IDs for current page
+    const totalNotes = sortedNoteIds.length;
+    const totalPages = Math.ceil(totalNotes / notesPerPage);
+    const pagedNoteIds = sortedNoteIds.slice(skip, skip + notesPerPage);
+
+    // 4️⃣ Fetch notes for current page only
+    const notes = await Note.find({ _id: { $in: pagedNoteIds } })
       .populate("userId", "_id userName fullName avatar")
       .populate("collectionId", "_id name slug visibility collaborators userId")
       .lean();
 
-    const accessibleNotes = notes.filter((note) =>
+    // 5️⃣ Access control
+    const accessibleNotes = notes.filter(note =>
       canAccessNote({
         requester,
         ownerId: note.userId._id,
         note,
-        collection: note.collectionId,
-      }),
+        collection: note.collectionId
+      })
     );
 
-    // Preserve ranking
-    const noteMap = new Map(accessibleNotes.map((n) => [n._id.toString(), n]));
-
-    const rankedNotes = sortedNoteIds
-      .map((id) => noteMap.get(id))
+    // preserve ranking order
+    const noteMap = new Map(accessibleNotes.map(n => [n._id.toString(), n]));
+    const rankedNotes = pagedNoteIds
+      .map(id => noteMap.get(id))
       .filter(Boolean);
 
-    /* 5️⃣ Pagination */
-    const totalNotes = rankedNotes.length;
-    const totalPages = Math.ceil(totalNotes / notesPerPage);
-    const paginatedNotes = rankedNotes.slice(skip, skip + notesPerPage);
-
+    // 6️⃣ Response
     res.json({
-      notes: paginatedNotes,
+      notes: rankedNotes,
       pagination: {
         currentPage,
         totalPages,
-        totalItems: totalNotes,
+        totalItems: totalNotes, // keeps total matches intact
         itemsPerPage: notesPerPage,
         hasNextPage: currentPage < totalPages,
-        hasPreviousPage: currentPage > 1,
-      },
+        hasPreviousPage: currentPage > 1
+      }
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Search failed" });
