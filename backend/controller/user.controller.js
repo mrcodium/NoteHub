@@ -266,7 +266,7 @@ export const updateFullName = async (req, res) => {
       message: "Name updated successfully.",
     });
   } catch (error) {
-    console.log("Error in updateFullName controller\n", error);
+    console.error("error in updateFullName controller\n", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };
@@ -293,7 +293,7 @@ export const updateUserName = async (req, res) => {
     if (error.message.includes("Username is already taken")) {
       return res.status(400).json({ message: error.message });
     }
-    console.log("Error in updateUserName controller\n", error);
+    console.error("error in updateUserName controller\n", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };

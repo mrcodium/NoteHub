@@ -100,7 +100,7 @@ export const sendSignupOtp = async (req, res) => {
     res.status(result.status).json({ message: result.message });
   } catch (err) {
     res.status(err.status || 500).json({ message: "Internal server error" });
-    console.log("error in sendSignupOtp\n", err);
+    console.error("error in sendSignupOtp\n", err);
   }
 };
 

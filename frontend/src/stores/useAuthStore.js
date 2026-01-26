@@ -320,7 +320,7 @@ export const useAuthStore = create((set, get) => ({
       toast.success(res.data.message);
       return { success: true };
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(error.response.data.message);
       return { success: false };
     }
@@ -338,8 +338,8 @@ export const useAuthStore = create((set, get) => ({
       return true;
     } catch (error) {
       toast.error(error.response.data.message || error.message);
-      console.log(error.response?.data?.message || error.message);
-      console.log(error);
+      console.error(error.response?.data?.message || error.message);
+      console.error(error);
       return false;
     }
   },
@@ -359,7 +359,7 @@ export const useAuthStore = create((set, get) => ({
       return res.data.user;
     } catch (error) {
       toast.error(error.response.data.message);
-      console.log(error);
+      console.error(error);
       return null;
     } finally {
       set({ isUploadingAvatar: false });
@@ -375,7 +375,7 @@ export const useAuthStore = create((set, get) => ({
       return res.data.user;
     } catch (error) {
       toast.error(error.response.data.message);
-      console.log(error);
+      console.error(error);
       return null;
     } finally {
       set({ isRemovingAvatar: false });
@@ -397,7 +397,7 @@ export const useAuthStore = create((set, get) => ({
       return res.data.user;
     } catch (error) {
       toast.error(error.response.data.message);
-      console.log(error);
+      console.error(error);
       return null;
     } finally {
       set({ isUploadingCover: false });
@@ -413,7 +413,7 @@ export const useAuthStore = create((set, get) => ({
       return res.data.user;
     } catch (error) {
       toast.error(error.response.data.message);
-      console.log(error);
+      console.error(error);
       return null;
     } finally {
       set({ isRemovingCover: false });
@@ -426,7 +426,7 @@ export const useAuthStore = create((set, get) => ({
       set({ emailStatus: res.data.status });
       return get().emailStatus;
     } catch (error) {
-      console.log(error.response.data.message);
+      console.error(error.response.data.message);
       set({ emailStatus: "" });
     }
   },

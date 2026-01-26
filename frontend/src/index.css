@@ -95,6 +95,10 @@ div:has(> .tiptap.ProseMirror) {
   @apply max-w-screen-md;
 }
 
+.ProseMirror input[type="checkbox"] {
+  cursor: pointer;
+}
+
 .tiptap {
   tab-size: 4;
   @apply !m-5;
@@ -121,6 +125,7 @@ div:has(> .tiptap.ProseMirror) {
   li p {
     margin-bottom: 0;
   }
+
   ul[data-type="taskList"] {
     list-style: none;
     margin-left: 0;
@@ -148,7 +153,7 @@ div:has(> .tiptap.ProseMirror) {
     }
 
     input[type="checkbox"] {
-      @apply cursor-pointer mt-1.5 overflow-hidden relative appearance-none w-4 h-4 border border-primary rounded-sm;
+      @apply mt-1.5 overflow-hidden relative appearance-none w-4 h-4 border border-primary rounded-sm;
     }
 
     li {
@@ -245,7 +250,7 @@ div:has(> .tiptap.ProseMirror) {
     @apply bg-input/30 text-primary dark:text-primary p-4 rounded-md;
 
     code {
-      @apply whitespace-pre p-0 m-0 leading-snug; /* tighter line height */
+      @apply whitespace-pre p-0 m-0 text-sm leading-relaxed; /* tighter line height */
       white-space: pre !important; /* ensure it sticks */
       display: block; /* prevent inline spacing issues */
     }

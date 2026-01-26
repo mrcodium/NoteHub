@@ -18,7 +18,7 @@ export const uploadImage = async (req, res) => {
             message: "Image uploaded successfully",
         });
     } catch (error) {
-        console.log("Error in uploadImage controller\n", error);
+        console.error("error in uploadImage controller\n", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }

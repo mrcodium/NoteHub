@@ -199,7 +199,11 @@ const DashboardHeader = () => {
                     >
                       {route.path === "/" && (
                         <div className="size-6">
-                          <img className="w-full h-full object-contain" src="/notehub.png" alt="" />
+                          <img
+                            className="w-full h-full object-contain"
+                            src="/notehub.png"
+                            alt=""
+                          />
                         </div>
                       )}
                       {route.name}
@@ -215,6 +219,18 @@ const DashboardHeader = () => {
 
         <div className="flex-shrink-0 mr-4 flex items-center gap-2">
           <SearchButton />
+
+          {!isMobile && (
+            <TooltipWrapper message="Source Code">
+              <a href="https://github.com/abhijeetSinghRajput/notehub">
+                <Button size="sm" className="p-2" variant="secondary">
+                  <GithubIcon />
+                  {githubStarCount || ""}
+                </Button>
+              </a>
+            </TooltipWrapper>
+          )}
+          
           {!authUser ? (
             <div className="flex gap-2">
               <ModeToggleMini className={"size-9"} />
@@ -229,16 +245,6 @@ const DashboardHeader = () => {
                   </Button>
                 }
               />
-              {!isMobile && (
-                <TooltipWrapper message="Source Code">
-                  <a href="https://github.com/abhijeetSinghRajput/notehub">
-                    <Button size="sm" className="p-2" variant="secondary">
-                      <GithubIcon />
-                      {githubStarCount || ""}
-                    </Button>
-                  </a>
-                </TooltipWrapper>
-              )}
 
               <Link to={`/user/${authUser?.userName}`}>
                 <Tooltip>

@@ -158,7 +158,7 @@ export const useNoteStore = create((set, get) => {
 
         toast.success(message);
       } catch (error) {
-        console.log("Error in updating content", error);
+        console.error("error in updating content", error);
         toast.error(error.response.data.message);
       } finally {
         setStatus("noteContent", { state: "idle", error: null });
@@ -255,7 +255,7 @@ export const useNoteStore = create((set, get) => {
         }
         return collections;
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
         return null;
       } finally {
@@ -281,7 +281,7 @@ export const useNoteStore = create((set, get) => {
         }));
         toast.success(message);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
       }
     },
@@ -299,7 +299,7 @@ export const useNoteStore = create((set, get) => {
         toast.success(message);
         return note._id;
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
         return null;
       } finally {
@@ -320,7 +320,7 @@ export const useNoteStore = create((set, get) => {
 
         toast.success(res.data.message);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
       }
     },
@@ -341,7 +341,7 @@ export const useNoteStore = create((set, get) => {
 
         toast.success(message);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
       }
     },
@@ -363,7 +363,7 @@ export const useNoteStore = create((set, get) => {
 
         toast.success(message);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
       } finally {
         setStatus("note", { state: "idle", error: null });
@@ -394,7 +394,7 @@ export const useNoteStore = create((set, get) => {
         }));
         toast.success(message);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(
           error.response.data.message || "Failed to update visibility"
         );
@@ -426,7 +426,7 @@ export const useNoteStore = create((set, get) => {
 
         toast.success(message);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
       } finally {
         setStatus("collaborator", { state: "idle", error: null });
@@ -447,7 +447,7 @@ export const useNoteStore = create((set, get) => {
 
         toast.success(message);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
       } finally {
         setStatus("collaborator", { state: "idle", error: null });
@@ -484,7 +484,7 @@ export const useNoteStore = create((set, get) => {
 
         return updatedNote.visibility;
       } catch (error) {
-        console.log(error);
+        console.error(error);
         toast.error(error.response.data.message);
       }
     },
