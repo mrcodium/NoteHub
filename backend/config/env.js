@@ -39,5 +39,4 @@ export const ENV = {
   GOOGLE_CLIENT_SECRET: required("GOOGLE_CLIENT_SECRET"),
   GOOGLE_REDIRECT_URI: required("GOOGLE_REDIRECT_URI"),
 
-  VITE_API_URL: required("VITE_API_URL"),
 };
