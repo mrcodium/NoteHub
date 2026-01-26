@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CollectionCard from "@/components/CollectionCard";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import SortSelector from "./collection/SortSelector";
+import { Helmet } from "react-helmet-async";
 
 const ProfilePage = () => {
   const { username } = useParams();
@@ -132,7 +133,7 @@ const ProfilePage = () => {
 
   const pinnedSet = React.useMemo(
     () => new Set(pinnedCollections),
-    [pinnedCollections]
+    [pinnedCollections],
   );
 
   const sortedCollections = React.useMemo(() => {
@@ -196,229 +197,258 @@ const ProfilePage = () => {
       : !Boolean(user?.cover) && !previewavatar;
 
   return (
-    <div className="p-4 overflow-auto bg-[#f5f5f5] dark:bg-background">
-      {/* Image Dialog */}
-      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent className="p-0 overflow-hidden max-w-[100vw] sm:max-w-none w-auto">
-          <DialogHeader className="p-0 hidden">
-            <DialogTitle>
-              {currentImageType === "avatar" ? "Profile Photo" : "Cover Photo"}
-            </DialogTitle>
-          </DialogHeader>
+    <>
+      <Helmet>
+        <title>{user.fullName} | NoteHub</title>
+        <meta
+          name="description"
+          content={`View notes and profile of ${user.fullName} (@${user.userName}) on NoteHub — a collaborative note-taking platform.`}
+        />
+        <meta name="author" content={user.fullName} />
+        <meta property="og:type" content="profile" />
+        <meta property="og:title" content={`${user.fullName} | NoteHub`} />
+        <meta
+          property="og:description"
+          content={`Explore ${user.fullName}'s notes and contributions on NoteHub.`}
+        />
+        <meta property="og:image" content={user.avatar} />
+        <meta property="profile:username" content={user.userName} />
 
-          <div className="flex flex-col p-0">
-            {noPhoto ? (
-              <div className="relative w-[300px] h-[300px] p-4">
-                <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground h-full">
-                  <div className="p-8 rounded-full bg-input/30">
-                    <ImageOff className="size-16 stroke-1" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${user.fullName} | NoteHub`} />
+        <meta
+          name="twitter:description"
+          content={`Check out ${user.fullName}'s notes on NoteHub, the collaborative note-taking platform.`}
+        />
+        <meta name="twitter:image" content={user.avatar} />
+      </Helmet>
+
+      <div className="p-4 overflow-auto bg-[#f5f5f5] dark:bg-background">
+        {/* Image Dialog */}
+        <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+          <DialogContent className="p-0 overflow-hidden max-w-[100vw] sm:max-w-none w-auto">
+            <DialogHeader className="p-0 hidden">
+              <DialogTitle>
+                {currentImageType === "avatar"
+                  ? "Profile Photo"
+                  : "Cover Photo"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex flex-col p-0">
+              {noPhoto ? (
+                <div className="relative w-[300px] h-[300px] p-4">
+                  <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground h-full">
+                    <div className="p-8 rounded-full bg-input/30">
+                      <ImageOff className="size-16 stroke-1" />
+                    </div>
+                    <p className="text-center text-sm">No {currentImageType}</p>
                   </div>
-                  <p className="text-center text-sm">No {currentImageType}</p>
                 </div>
-              </div>
-            ) : (
-              <div className="bg-accent flex justify-center items-center">
-                <img
-                  src={
-                    (currentImageType === "avatar"
-                      ? user?.avatar
-                      : user?.cover) || "/avatar.svg"
-                  }
-                  alt={`user ${currentImageType}`}
-                  className="max-w-[100vw] max-h-[80vh] min-h-[300px] object-contain"
-                  style={{
-                    width:
-                      currentImageType === "avatar"
-                        ? "min(400px, 100vw)"
-                        : "min(800px, 100vw)",
-                    height: "auto",
-                  }}
-                />
-              </div>
-            )}
+              ) : (
+                <div className="bg-accent flex justify-center items-center">
+                  <img
+                    src={
+                      (currentImageType === "avatar"
+                        ? user?.avatar
+                        : user?.cover) || "/avatar.svg"
+                    }
+                    alt={`user ${currentImageType}`}
+                    className="max-w-[100vw] max-h-[80vh] min-h-[300px] object-contain"
+                    style={{
+                      width:
+                        currentImageType === "avatar"
+                          ? "min(400px, 100vw)"
+                          : "min(800px, 100vw)",
+                      height: "auto",
+                    }}
+                  />
+                </div>
+              )}
 
-            {isOwner && (
-              <DialogFooter className="p-4 border-t sticky bottom-0 bg-background">
-                <div className="grid grid-cols-2 gap-2 w-full">
-                  <Label htmlFor={currentImageType} className="contents">
-                    <input
-                      type="file"
-                      id={currentImageType}
-                      accept="image/*"
-                      className="hidden"
-                      disabled={disableImageUpload}
-                      onChange={(e) =>
-                        handleUploadImage(
-                          e,
+              {isOwner && (
+                <DialogFooter className="p-4 border-t sticky bottom-0 bg-background">
+                  <div className="grid grid-cols-2 gap-2 w-full">
+                    <Label htmlFor={currentImageType} className="contents">
+                      <input
+                        type="file"
+                        id={currentImageType}
+                        accept="image/*"
+                        className="hidden"
+                        disabled={disableImageUpload}
+                        onChange={(e) =>
+                          handleUploadImage(
+                            e,
+                            currentImageType === "avatar"
+                              ? setPreviewavatar
+                              : setPreviewCover,
+                            currentImageType === "avatar"
+                              ? uploadUserAvatar
+                              : uploadUserCover,
+                          )
+                        }
+                      />
+                      <div
+                        className={cn(
+                          "button cursor-pointer w-full",
+                          disableImageUpload && "disabled",
+                        )}
+                      >
+                        {disableImageUpload ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Uploading
+                          </>
+                        ) : (
+                          "Upload"
+                        )}
+                      </div>
+                    </Label>
+
+                    <Button
+                      onClick={() =>
+                        handleRemoveImage(
                           currentImageType === "avatar"
                             ? setPreviewavatar
                             : setPreviewCover,
                           currentImageType === "avatar"
-                            ? uploadUserAvatar
-                            : uploadUserCover
+                            ? removeUserAvatar
+                            : removeUserCover,
                         )
                       }
-                    />
-                    <div
-                      className={cn(
-                        "button cursor-pointer w-full",
-                        disableImageUpload && "disabled"
-                      )}
+                      disabled={disableImageRemove}
+                      variant="secondary"
+                      className="w-full"
                     >
-                      {disableImageUpload ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Uploading
-                        </>
+                      {isRemovingAvatar || isRemovingCover ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        "Upload"
+                        "Remove"
                       )}
-                    </div>
-                  </Label>
-
-                  <Button
-                    onClick={() =>
-                      handleRemoveImage(
-                        currentImageType === "avatar"
-                          ? setPreviewavatar
-                          : setPreviewCover,
-                        currentImageType === "avatar"
-                          ? removeUserAvatar
-                          : removeUserCover
-                      )
-                    }
-                    disabled={disableImageRemove}
-                    variant="secondary"
-                    className="w-full"
-                  >
-                    {isRemovingAvatar || isRemovingCover ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Remove"
-                    )}
-                  </Button>
-                </div>
-              </DialogFooter>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Profile Card */}
-      <Card
-        className={cn(
-          "max-w-screen-md mx-auto overflow-hidden shadow-sm",
-          isLoading && "animate-pulse"
-        )}
-      >
-        <Avatar
-          className="relative rounded-none max-h-48 h-full w-full overflow-hidden cursor-pointer"
-          style={{ aspectRatio: "3/1" }}
-          onClick={() => {
-            setCurrentImageType("cover");
-            setIsImageDialogOpen(true);
-          }}
-        >
-          <AvatarImage
-            src={user?.cover}
-            alt="User cover"
-            className="w-full h-full max-h-48 object-cover"
-            style={{ aspectRatio: "3/1" }}
-          />
-          <AvatarFallback className="rounded-none brightness-[0.2]">
-            <img
-              src="/placeholder.svg"
-              alt="placeholder"
-              className="w-full h-full object-cover"
-              style={{ aspectRatio: "3/1" }}
-            />
-          </AvatarFallback>
-        </Avatar>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row items-start sm:gap-8 gap-2 sm:items-center">
-            <Avatar
-              className="relative shadow-md size-28 sm:size-48 shrink-0 border-4 sm:border-8 border-background -mt-14 rounded-full cursor-pointer"
-              onClick={() => {
-                setCurrentImageType("avatar");
-                setIsImageDialogOpen(true);
-              }}
-            >
-              <AvatarImage
-                className="w-full h-full object-cover rounded-full bg-background"
-                src={previewUrl || user?.avatar}
-                alt={user?.fullName || "user profile"}
-              />
-              <AvatarFallback className="text-4xl">
-                <img
-                  className="w-full h-full object-cover dark:brightness-[0.2]"
-                  src="/avatar.svg"
-                  alt="user-profile"
-                />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex m-0 justify-between w-full items-start">
-              <div>
-                <h2 className="text-base sm:text-xl font-semibold">
-                  {user?.fullName}
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground">
-                  @{user?.userName}
-                </p>
-              </div>
-              {isOwner && (
-                <TooltipWrapper message="Edit Profile">
-                  <Link
-                    to="/settings/personal-details"
-                    className="hover:bg-muted rounded-md size-10 flex justify-center items-center"
-                  >
-                    <Pencil size={18} />
-                  </Link>
-                </TooltipWrapper>
+                    </Button>
+                  </div>
+                </DialogFooter>
               )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </DialogContent>
+        </Dialog>
 
-      {/* Collections Section */}
-      <div className="max-w-screen-md mx-auto mt-8">
-        {status.collection.state === "loading" ? (
-          <CollectionSkeleton />
-        ) : collections.length === 0 ? (
-          <Card className="py-12 text-center">
-            <p className="text-muted-foreground">No collections found</p>
-          </Card>
-        ) : (
-          <>
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold">Collections</h2>
-                <div className="text-sm text-muted-foreground">
-                  {collections.length}{" "}
-                  {collections.length === 1 ? "collection" : "collections"}
-                </div>
-              </div>
-              <SortSelector
-                sortBy={sortBy}
-                sortDirection={sortDirection}
-                setSortBy={setSortBy}
-                toggleSortDirection={toggleSortDirection}
+        {/* Profile Card */}
+        <Card
+          className={cn(
+            "max-w-screen-md mx-auto overflow-hidden shadow-sm",
+            isLoading && "animate-pulse",
+          )}
+        >
+          <Avatar
+            className="relative rounded-none max-h-48 h-full w-full overflow-hidden cursor-pointer"
+            style={{ aspectRatio: "3/1" }}
+            onClick={() => {
+              setCurrentImageType("cover");
+              setIsImageDialogOpen(true);
+            }}
+          >
+            <AvatarImage
+              src={user?.cover}
+              alt="User cover"
+              className="w-full h-full max-h-48 object-cover"
+              style={{ aspectRatio: "3/1" }}
+            />
+            <AvatarFallback className="rounded-none brightness-[0.2]">
+              <img
+                src="/placeholder.svg"
+                alt="placeholder"
+                className="w-full h-full object-cover"
+                style={{ aspectRatio: "3/1" }}
               />
-            </div>
-            <div className="space-y-0">
-              {sortedCollections.map((collection) => (
-                <CollectionCard
-                  key={collection._id}
-                  collection={collection}
-                  isOwner={isOwner}
-                  pinnedCollections={pinnedCollections}
+            </AvatarFallback>
+          </Avatar>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row items-start sm:gap-8 gap-2 sm:items-center">
+              <Avatar
+                className="relative shadow-md size-28 sm:size-48 shrink-0 border-4 sm:border-8 border-background -mt-14 rounded-full cursor-pointer"
+                onClick={() => {
+                  setCurrentImageType("avatar");
+                  setIsImageDialogOpen(true);
+                }}
+              >
+                <AvatarImage
+                  className="w-full h-full object-cover rounded-full bg-background"
+                  src={previewUrl || user?.avatar}
+                  alt={user?.fullName || "user profile"}
                 />
-              ))}
+                <AvatarFallback className="text-4xl">
+                  <img
+                    className="w-full h-full object-cover dark:brightness-[0.2]"
+                    src="/avatar.svg"
+                    alt="user-profile"
+                  />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex m-0 justify-between w-full items-start">
+                <div>
+                  <h2 className="text-base sm:text-xl font-semibold">
+                    {user?.fullName}
+                  </h2>
+                  <p className="text-sm sm:text-base text-muted-foreground">
+                    @{user?.userName}
+                  </p>
+                </div>
+                {isOwner && (
+                  <TooltipWrapper message="Edit Profile">
+                    <Link
+                      to="/settings/personal-details"
+                      className="hover:bg-muted rounded-md size-10 flex justify-center items-center"
+                    >
+                      <Pencil size={18} />
+                    </Link>
+                  </TooltipWrapper>
+                )}
+              </div>
             </div>
-          </>
-        )}
+          </CardContent>
+        </Card>
+
+        {/* Collections Section */}
+        <div className="max-w-screen-md mx-auto mt-8">
+          {status.collection.state === "loading" ? (
+            <CollectionSkeleton />
+          ) : collections.length === 0 ? (
+            <Card className="py-12 text-center">
+              <p className="text-muted-foreground">No collections found</p>
+            </Card>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">Collections</h2>
+                  <div className="text-sm text-muted-foreground">
+                    {collections.length}{" "}
+                    {collections.length === 1 ? "collection" : "collections"}
+                  </div>
+                </div>
+                <SortSelector
+                  sortBy={sortBy}
+                  sortDirection={sortDirection}
+                  setSortBy={setSortBy}
+                  toggleSortDirection={toggleSortDirection}
+                />
+              </div>
+              <div className="space-y-0">
+                {sortedCollections.map((collection) => (
+                  <CollectionCard
+                    key={collection._id}
+                    collection={collection}
+                    isOwner={isOwner}
+                    pinnedCollections={pinnedCollections}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

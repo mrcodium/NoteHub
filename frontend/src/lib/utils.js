@@ -261,3 +261,11 @@ export function fuzzyFilter(query, items, key = "label") {
     .sort((a, b) => b.score - a.score)
     .map((result) => result.item);
 }
+
+
+// strip HTML tags
+export function stripHTML(html) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}

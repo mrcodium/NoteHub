@@ -23,6 +23,7 @@ import { REGEXP_ONLY_DIGITS } from "input-otp";
 import validator from "validator";
 import BaseHeader from "@/components/BaseHeader";
 import { LabledInput } from "@/components/ui/labeled-input";
+import { Helmet } from "react-helmet-async";
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -223,154 +224,183 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
-      <BaseHeader />
-      <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Signup</CardTitle>
-            <CardDescription>
-              Fill this form to create an account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleFormSubmit}>
-              <div className="flex flex-col gap-5">
-                {/* Name Field */}
-                <LabledInput
-                  id="fullName"
-                  label="Full Name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  disabled={isSigningUp}
-                  error={errors.name}
-                  inputClassName={errors.name && "ring-2 ring-red-500"}
-                />
+    <>
+      <Helmet>
+        <title>Sign Up | NoteHub</title>
+        <meta
+          name="description"
+          content="Create your NoteHub account to organize, write, and share notes with ease."
+        />
+        <meta property="og:title" content="Sign Up | NoteHub" />
+        <meta
+          property="og:description"
+          content="Create your NoteHub account to organize, write, and share notes with ease."
+        />
+        <meta
+          property="og:url"
+          content="https://notehub-38kp.onrender.com/signup"
+        />
 
-                {/* Email Field */}
-                <LabledInput
-                  id="email"
-                  label="Email Address"
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isSigningUp}
-                  error={errors.email}
-                  inputClassName={errors.email && "ring-2 ring-red-500"}
-                  loading={isCheckingEmail}
-                  rightElement={
-                    !isCheckingEmail && emailStatus === "available" ? (
-                      <Check className="size-4 text-green-500" />
-                    ) : null
-                  }
-                />
+        <meta name="twitter:title" content="Sign Up | NoteHub" />
+        <meta
+          name="twitter:description"
+          content="Create your NoteHub account to organize, write, and share notes with ease."
+        />
+      </Helmet>
 
-                {/* Password Field */}
-                <LabledInput
-                  id="password"
-                  label="Password"
-                  type="password"
-                  placeholder="Create a secure password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={isSigningUp}
-                  error={errors.password}
-                  showPasswordToggle
-                  inputClassName={errors.password && "ring-2 ring-red-500"}
-                />
+      <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
+        <BaseHeader />
+        <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Signup</CardTitle>
+              <CardDescription>
+                Fill this form to create an account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleFormSubmit}>
+                <div className="flex flex-col gap-5">
+                  {/* Name Field */}
+                  <LabledInput
+                    id="fullName"
+                    label="Full Name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    disabled={isSigningUp}
+                    error={errors.name}
+                    inputClassName={errors.name && "ring-2 ring-red-500"}
+                  />
 
-                {/* OTP Input */}
-                <div className="flex flex-col gap-1">
-                  <div
-                    className="grid relative gap-2"
-                    style={{ gridTemplateColumns: "2fr 1fr" }}
-                  >
-                    <InputOTP
-                      maxLength={6}
-                      id="otp"
-                      value={formData.otp}
-                      onChange={(value) =>
-                        setFormData((prev) => ({ ...prev, otp: value }))
-                      }
-                      pattern={REGEXP_ONLY_DIGITS}
-                      disabled={false}
+                  {/* Email Field */}
+                  <LabledInput
+                    id="email"
+                    label="Email Address"
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isSigningUp}
+                    error={errors.email}
+                    inputClassName={errors.email && "ring-2 ring-red-500"}
+                    loading={isCheckingEmail}
+                    rightElement={
+                      !isCheckingEmail && emailStatus === "available" ? (
+                        <Check className="size-4 text-green-500" />
+                      ) : null
+                    }
+                  />
+
+                  {/* Password Field */}
+                  <LabledInput
+                    id="password"
+                    label="Password"
+                    type="password"
+                    placeholder="Create a secure password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    disabled={isSigningUp}
+                    error={errors.password}
+                    showPasswordToggle
+                    inputClassName={errors.password && "ring-2 ring-red-500"}
+                  />
+
+                  {/* OTP Input */}
+                  <div className="flex flex-col gap-1">
+                    <div
+                      className="grid relative gap-2"
+                      style={{ gridTemplateColumns: "2fr 1fr" }}
                     >
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                      </InputOTPGroup>
-                      <InputOTPSeparator />
-                      <InputOTPGroup>
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      type="button"
-                      onClick={handleSendotp}
-                      disabled={
-                        cooldown > 0 || isSendingOtp || emailStatus === "taken"
-                      }
-                    >
-                      {isSendingOtp ? (
-                        <Loader2 className="animate-spin mr-2 size-4" />
-                      ) : cooldown > 0 ? (
-                        cooldown
-                      ) : (
-                        "Send OTP"
+                      <InputOTP
+                        maxLength={6}
+                        id="otp"
+                        value={formData.otp}
+                        onChange={(value) =>
+                          setFormData((prev) => ({ ...prev, otp: value }))
+                        }
+                        pattern={REGEXP_ONLY_DIGITS}
+                        disabled={false}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                        </InputOTPGroup>
+                        <InputOTPSeparator />
+                        <InputOTPGroup>
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        type="button"
+                        onClick={handleSendotp}
+                        disabled={
+                          cooldown > 0 ||
+                          isSendingOtp ||
+                          emailStatus === "taken"
+                        }
+                      >
+                        {isSendingOtp ? (
+                          <Loader2 className="animate-spin mr-2 size-4" />
+                        ) : cooldown > 0 ? (
+                          cooldown
+                        ) : (
+                          "Send OTP"
+                        )}
+                      </Button>
+                      {errors.otp && (
+                        <p className="text-xs absolute left-0 -bottom-4 text-red-500">
+                          {errors.otp}
+                        </p>
                       )}
-                    </Button>
-                    {errors.otp && (
-                      <p className="text-xs absolute left-0 -bottom-4 text-red-500">
-                        {errors.otp}
-                      </p>
-                    )}
+                    </div>
                   </div>
-                </div>
 
-                <Button
-                  type="submit"
-                  className="w-full h-12 font-semibold rounded-xl"
-                  disabled={isSigningUp || emailStatus === "taken"}
+                  <Button
+                    type="submit"
+                    className="w-full h-12 font-semibold rounded-xl"
+                    disabled={isSigningUp || emailStatus === "taken"}
+                  >
+                    {isSigningUp ? (
+                      <>
+                        <Loader2 className="animate-spin mr-2 size-4" />
+                        Creating Account...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
+                  </Button>
+                </div>
+              </form>
+              <GoogleLoginButton
+                className={"mt-4 h-12 font-semibold rounded-xl"}
+              />
+              <div className="mt-4 text-center text-sm text-muted-foreground">
+                Already have an account?{" "}
+                <Link
+                  to={"/login"}
+                  className="underline font-semibold text-foreground"
                 >
-                  {isSigningUp ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2 size-4" />
-                      Creating Account...
-                    </>
-                  ) : (
-                    "Create Account"
-                  )}
-                </Button>
+                  Login
+                </Link>
               </div>
-            </form>
-            <GoogleLoginButton className={"mt-4 h-12 font-semibold rounded-xl"} />
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                to={"/login"}
-                className="underline font-semibold text-foreground"
-              >
-                Login
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-        <div className="text-muted-foreground mt-6 *:[a]:hover:text-primary text-center text-sm text-balance *:[a]:underline *:[a]:underline-offset-4">
-          By clicking continue, you agree to our{" "}
-          <Link to={"/privacy-policy"} className="underline">
-            Privacy Policy
-          </Link>
+            </CardContent>
+          </Card>
+          <div className="text-muted-foreground mt-6 *:[a]:hover:text-primary text-center text-sm text-balance *:[a]:underline *:[a]:underline-offset-4">
+            By clicking continue, you agree to our{" "}
+            <Link to={"/privacy-policy"} className="underline">
+              Privacy Policy
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

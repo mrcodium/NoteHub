@@ -29,7 +29,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Footer from "@/components/Footer";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn, formatDate, formatTimeAgo } from "@/lib/utils";
+import { cn, formatDate, formatTimeAgo, stripHTML } from "@/lib/utils";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -49,6 +49,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import EditorTypographyControls from "@/components/editor/EditorTypographyControls";
 import ShareNotePopover from "@/components/ShareNotePopover";
+import { Helmet } from "react-helmet-async";
 
 const NotePage = () => {
   const { id: noteId } = useParams();
@@ -114,10 +115,10 @@ const NotePage = () => {
 
       // Apply syntax highlighting
       document
-              .querySelectorAll("pre code:not([data-highlighted])")
-              .forEach((block) => {
-                hljs.highlightElement(block);
-              });
+        .querySelectorAll("pre code:not([data-highlighted])")
+        .forEach((block) => {
+          hljs.highlightElement(block);
+        });
 
       // Render KaTeX
       document
@@ -271,196 +272,216 @@ const NotePage = () => {
   }
 
   return (
-    <div
-      className={cn(
-        "h-full flex flex-col justify-between",
-        !content.trim() && "empty",
-      )}
-    >
-      <div className="max-w-screen-md w-full mx-auto relative">
-        <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
-          <div className="flex items-center justify-between">
-            <Link
-              to={`/user/${authUser?.userName}`}
-              className="flex flex-row items-center w-max gap-3"
-            >
-              <Avatar className="size-12 bg-muted">
-                <AvatarImage
-                  className="w-full h-full object-cover !m-0"
-                  src={authUser?.avatar}
-                  alt={authUser?.fullName}
-                />
-                <AvatarFallback>
-                  {(authUser?.fullName || "U").charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
-                  <span>{authUser?.fullName}</span>
-                  <Badge
-                    variant="ghost"
-                    className={"p-1 border-none text-muted-foreground"}
-                  >
-                    {note.visibility === "public" ? (
-                      <Globe size={16} strokeWidth={3} />
-                    ) : (
-                      <Lock
-                        size={16}
-                        strokeWidth={3}
-                        className="fill-destructive/20 stroke-destructive"
-                      />
-                    )}
-                  </Badge>
+    <>
+      <Helmet>
+        <title>{note.name} | NoteHub</title>
+        <meta name="description" content={stripHTML(note.content).slice(0, 160)} />
+
+        {/* Open Graph */}
+        <meta property="og:title" content={note.name} />
+        <meta property="og:description" content={stripHTML(note.content).slice(0, 160)} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={window.location.href} />
+
+        {/* Twitter */}
+        <meta name="twitter:title" content={note.name} />
+        <meta name="twitter:description" content={stripHTML(note.content).slice(0, 160)} />
+      </Helmet>
+      <div
+        className={cn(
+          "h-full flex flex-col justify-between",
+          !content.trim() && "empty",
+        )}
+      >
+        <div className="max-w-screen-md w-full mx-auto relative">
+          <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
+            <div className="flex items-center justify-between">
+              <Link
+                to={`/user/${authUser?.userName}`}
+                className="flex flex-row items-center w-max gap-3"
+              >
+                <Avatar className="size-12 bg-muted">
+                  <AvatarImage
+                    className="w-full h-full object-cover !m-0"
+                    src={authUser?.avatar}
+                    alt={authUser?.fullName}
+                  />
+                  <AvatarFallback>
+                    {(authUser?.fullName || "U").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
+                    <span>{authUser?.fullName}</span>
+                    <Badge
+                      variant="ghost"
+                      className={"p-1 border-none text-muted-foreground"}
+                    >
+                      {note.visibility === "public" ? (
+                        <Globe size={16} strokeWidth={3} />
+                      ) : (
+                        <Lock
+                          size={16}
+                          strokeWidth={3}
+                          className="fill-destructive/20 stroke-destructive"
+                        />
+                      )}
+                    </Badge>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {`@${authUser?.userName}`}
+                  </span>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {`@${authUser?.userName}`}
-                </span>
+              </Link>
+              <Button
+                onClick={() => navigate(`/note/${note?._id}/editor`)}
+                variant="secondary"
+                size="lg"
+                className="rounded-full px-6 border bg-muted"
+              >
+                <Pencil />
+                <span>Edit</span>
+              </Button>
+            </div>
+            <div className="flex justify-around gap-8">
+              {/* Created Date */}
+              <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
+                <div className="flex gap-2 items-center">
+                  <Calendar className="size-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Created
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span
+                    className="text-sm font-medium"
+                    title={formatDate(note?.createdAt)}
+                  >
+                    {format(new Date(note?.createdAt), "MMM d, yyyy")}
+                  </span>
+                </div>
               </div>
-            </Link>
+
+              {/* Last Modified */}
+              <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
+                <div className="flex gap-2 items-center">
+                  <Clock className="size-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Last Modified
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span
+                    className="text-sm font-medium"
+                    title={formatDate(note?.contentUpdatedAt)}
+                  >
+                    {formatTimeAgo(
+                      new Date(note?.contentUpdatedAt),
+                      "MMM d, yyyy",
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <Dialog
+            open={!!selectedImage}
+            onOpenChange={(open) => !open && setSelectedImage(null)}
+          >
+            <DialogContent
+              closeButtonClassName="top-2 left-2 right-auto bg-black md:size-6 flex items-center justify-center bg-neutral-200 text-neutral-600"
+              className="p-0 border-none w-auto h-auto max-w-[100vw] max-h-[100vh] overflow-hidden sm:rounded-lg"
+            >
+              <DialogTitle className="hidden">Image Dialog</DialogTitle>
+              <div className="flex items-center justify-center w-full h-full">
+                {selectedImage && (
+                  <img
+                    src={selectedImage}
+                    alt="Preview"
+                    className="object-contain w-auto h-auto max-w-[100vw] max-h-[100vh]"
+                  />
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <div
+            className="tiptap"
+            style={{
+              fontSize: fontSize.size,
+              fontFamily: editorFontFamily,
+              lineHeight: "1.7",
+            }}
+          >
+            {parse(note?.content || "")}
+          </div>
+          <div className="flex gap-2 items-center fixed bottom-4 right-4">
+            {toc.length > 1 && (
+              <Popover open={tocOpen} onOpenChange={setTocOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    className="hover:bg-primary h-11 gap-4 rounded-full py-1.5 px-2 pl-4"
+                    variant="default"
+                  >
+                    <div className="flex items-center gap-2">
+                      <TextQuote />
+                      Index{" "}
+                      <ChevronsUpDown className="text-primary-foreground" />
+                    </div>
+                    <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
+                      {Number(progress || 0)}%
+                    </div>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  sideOffset={10}
+                  alignOffset={-50}
+                  className="rounded-2xl min-w-max pr-1"
+                >
+                  <ScrollArea>
+                    <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
+                      <div className="space-y-2">
+                        {toc.map((item) => (
+                          <p
+                            key={item.id}
+                            onClick={() => {
+                              document.getElementById(item.id)?.scrollIntoView({
+                                behavior: "smooth",
+                              });
+                              setTocOpen(false);
+                            }}
+                            className={cn(
+                              "cursor-pointer line-clamp-1 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
+                              activeId === item.id &&
+                                "text-primary font-semibold",
+                            )}
+                          >
+                            {item.text}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
+            )}
+            <EditorTypographyControls />
+            <ShareNotePopover note={note} shareLink={generateSharableLink()} />
             <Button
-              onClick={() => navigate(`/note/${note?._id}/editor`)}
-              variant="secondary"
-              size="lg"
-              className="rounded-full px-6 border bg-muted"
+              onClick={() => navigate(`/note/${note._id}/editor`)}
+              size="icon"
+              tooltip="Edit Content"
+              className="size-11 rounded-full"
             >
               <Pencil />
-              <span>Edit</span>
             </Button>
           </div>
-          <div className="flex justify-around gap-8">
-            {/* Created Date */}
-            <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
-              <div className="flex gap-2 items-center">
-                <Calendar className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Created
-                </span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span
-                  className="text-sm font-medium"
-                  title={formatDate(note?.createdAt)}
-                >
-                  {format(new Date(note?.createdAt), "MMM d, yyyy")}
-                </span>
-              </div>
-            </div>
-
-            {/* Last Modified */}
-            <div className="flex gap-1 flex-col md:gap-4 md:flex-row items-center">
-              <div className="flex gap-2 items-center">
-                <Clock className="size-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Last Modified
-                </span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span
-                  className="text-sm font-medium"
-                  title={formatDate(note?.contentUpdatedAt)}
-                >
-                  {formatTimeAgo(new Date(note?.contentUpdatedAt), "MMM d, yyyy")}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
-        <Dialog
-          open={!!selectedImage}
-          onOpenChange={(open) => !open && setSelectedImage(null)}
-        >
-          <DialogContent
-            closeButtonClassName="top-2 left-2 right-auto bg-black md:size-6 flex items-center justify-center bg-neutral-200 text-neutral-600"
-            className="p-0 border-none w-auto h-auto max-w-[100vw] max-h-[100vh] overflow-hidden sm:rounded-lg"
-          >
-            <DialogTitle className="hidden">Image Dialog</DialogTitle>
-            <div className="flex items-center justify-center w-full h-full">
-              {selectedImage && (
-                <img
-                  src={selectedImage}
-                  alt="Preview"
-                  className="object-contain w-auto h-auto max-w-[100vw] max-h-[100vh]"
-                />
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <div
-          className="tiptap"
-          style={{
-            fontSize: fontSize.size,
-            fontFamily: editorFontFamily,
-            lineHeight: "1.7",
-          }}
-        >
-          {parse(note?.content || "")}
-        </div>
-        <div className="flex gap-2 items-center fixed bottom-4 right-4">
-          {toc.length > 1 && (
-            <Popover open={tocOpen} onOpenChange={setTocOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  className="hover:bg-primary h-11 gap-4 rounded-full py-1.5 px-2 pl-4"
-                  variant="default"
-                >
-                  <div className="flex items-center gap-2">
-                    <TextQuote />
-                    Index <ChevronsUpDown className="text-primary-foreground" />
-                  </div>
-                  <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
-                    {Number(progress || 0)}%
-                  </div>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                sideOffset={10}
-                alignOffset={-50}
-                className="rounded-2xl min-w-max pr-1"
-              >
-                <ScrollArea>
-                  <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
-                    <div className="space-y-2">
-                      {toc.map((item) => (
-                        <p
-                          key={item.id}
-                          onClick={() => {
-                            document.getElementById(item.id)?.scrollIntoView({
-                              behavior: "smooth",
-                            });
-                            setTocOpen(false);
-                          }}
-                          className={cn(
-                            "cursor-pointer line-clamp-1 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
-                            activeId === item.id &&
-                              "text-primary font-semibold",
-                          )}
-                        >
-                          {item.text}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                </ScrollArea>
-              </PopoverContent>
-            </Popover>
-          )}
-          <EditorTypographyControls />
-          <ShareNotePopover note={note} shareLink={generateSharableLink()} />
-          <Button
-            onClick={() => navigate(`/note/${note._id}/editor`)}
-            size="icon"
-            tooltip="Edit Content"
-            className="size-11 rounded-full"
-          >
-            <Pencil />
-          </Button>
-        </div>
+        <ScrollTopButton />
+        <Footer className={"pb-28"} />
       </div>
-      <ScrollTopButton />
-      <Footer className={"pb-28"} />
-    </div>
+    </>
   );
 };
 

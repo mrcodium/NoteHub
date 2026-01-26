@@ -8,7 +8,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { Loader2,  } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -141,158 +141,189 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
-      <BaseHeader />
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Forgot Password</CardTitle>
-          <CardDescription>
-            Enter your username or email to receive a password reset OTP
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6">
-            {/* User preview when identifier is valid */}
-            {user && (
-              <div className="flex gap-2 bg-accent/50 p-2 rounded-xl items-center">
-                <Avatar className="size-10">
-                  <AvatarImage
-                    className="w-full h-full object-cover rounded-full"
-                    src={user.avatar}
-                    alt={user.name}
-                    referrerPolicy="no-referrer"
-                  />
-                  <AvatarFallback className="bg-transparent">
-                    <img src="./avatar.svg" alt="" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-sm">
-                  <strong className="font-semibold">{user.fullName}</strong>
-                  <p className="text-muted-foreground text-xs">{user.email}</p>
+    <>
+      <Helmet>
+        <title>Reset Password | NoteHub</title>
+        <meta
+          name="description"
+          content="Reset your NoteHub password securely to regain access to your notes and collections."
+        />
+        <meta property="og:title" content="Reset Password | NoteHub" />
+        <meta
+          property="og:description"
+          content="Reset your NoteHub password securely to regain access to your notes and collections."
+        />
+
+        <meta
+          property="og:url"
+          content="https://notehub-38kp.onrender.com/forgot-password"
+        />
+
+        <meta name="twitter:title" content="Reset Password | NoteHub" />
+        <meta
+          name="twitter:description"
+          content="Reset your NoteHub password securely to regain access to your notes and collections."
+        />
+      </Helmet>
+      
+      <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
+        <BaseHeader />
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl">Forgot Password</CardTitle>
+            <CardDescription>
+              Enter your username or email to receive a password reset OTP
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6">
+              {/* User preview when identifier is valid */}
+              {user && (
+                <div className="flex gap-2 bg-accent/50 p-2 rounded-xl items-center">
+                  <Avatar className="size-10">
+                    <AvatarImage
+                      className="w-full h-full object-cover rounded-full"
+                      src={user.avatar}
+                      alt={user.name}
+                      referrerPolicy="no-referrer"
+                    />
+                    <AvatarFallback className="bg-transparent">
+                      <img src="./avatar.svg" alt="" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-sm">
+                    <strong className="font-semibold">{user.fullName}</strong>
+                    <p className="text-muted-foreground text-xs">
+                      {user.email}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Identifier Field */}
-            <LabledInput
-              id="identifier"
-              label="Username or Email"
-              type="text"
-              placeholder="Enter username or email"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value.trim())}
-              disabled={isSendingOtp || isResettingPassword}
-              loading={isCheckingIdentifier}
-              error={identifierError}
-            />
-
-            {/* Password Field */}
-            <LabledInput
-              id="password"
-              label="New Password"
-              type="password"
-              placeholder="Enter new password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setPasswordError(
-                  validatePassword(e.target.value)
-                    ? ""
-                    : "Password must be at least 6 characters."
-                );
-              }}
-              disabled={isResettingPassword}
-              error={passwordError}
-              showPasswordToggle
-            />
-
-            {/* Confirm Password Field */}
-            <LabledInput
-              id="confirmPassword"
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm new password"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                setConfirmPasswordError(
-                  validateConfirmPassword(password, e.target.value)
-                    ? ""
-                    : "Passwords do not match."
-                );
-              }}
-              disabled={isResettingPassword}
-              error={confirmPasswordError}
-              showPasswordToggle
-            />
-
-            {/* OTP Field */}
-            <div className="space-y-2">
-              <div className="relative grid grid-cols-[3fr_1fr] items-center gap-4">
-                <InputOTP
-                  maxLength={6}
-                  value={otp}
-                  onChange={setOtp}
-                  pattern={REGEXP_ONLY_DIGITS}
-                  disabled={isResettingPassword}
-                >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                  </InputOTPGroup>
-                  <InputOTPSeparator />
-                  <InputOTPGroup>
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
-                <Button
-                  variant="outline"
-                  onClick={handleSendOtp}
-                  disabled={
-                    !user || cooldown > 0 || isSendingOtp || !isValidIdentifier
-                  }
-                >
-                  {isSendingOtp ? (
-                    <Loader2 className="animate-spin mr-2 size-4" />
-                  ) : cooldown > 0 ? (
-                    cooldown
-                  ) : (
-                    "Get OTP"
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Enter the 6-digit OTP sent to your email
-              </p>
-            </div>
-
-            {/* Reset Password Button */}
-            <Button
-              onClick={handleResetPassword}
-              className="h-12 font-semibold rounded-xl"
-              disabled={
-                isResettingPassword ||
-                passwordError ||
-                confirmPasswordError ||
-                otp.length !== 6
-              }
-            >
-              {isResettingPassword ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 size-4" />
-                  Resetting...
-                </>
-              ) : (
-                "Reset Password"
               )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+
+              {/* Identifier Field */}
+              <LabledInput
+                id="identifier"
+                label="Username or Email"
+                type="text"
+                placeholder="Enter username or email"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value.trim())}
+                disabled={isSendingOtp || isResettingPassword}
+                loading={isCheckingIdentifier}
+                error={identifierError}
+              />
+
+              {/* Password Field */}
+              <LabledInput
+                id="password"
+                label="New Password"
+                type="password"
+                placeholder="Enter new password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError(
+                    validatePassword(e.target.value)
+                      ? ""
+                      : "Password must be at least 6 characters.",
+                  );
+                }}
+                disabled={isResettingPassword}
+                error={passwordError}
+                showPasswordToggle
+              />
+
+              {/* Confirm Password Field */}
+              <LabledInput
+                id="confirmPassword"
+                label="Confirm Password"
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setConfirmPasswordError(
+                    validateConfirmPassword(password, e.target.value)
+                      ? ""
+                      : "Passwords do not match.",
+                  );
+                }}
+                disabled={isResettingPassword}
+                error={confirmPasswordError}
+                showPasswordToggle
+              />
+
+              {/* OTP Field */}
+              <div className="space-y-2">
+                <div className="relative grid grid-cols-[3fr_1fr] items-center gap-4">
+                  <InputOTP
+                    maxLength={6}
+                    value={otp}
+                    onChange={setOtp}
+                    pattern={REGEXP_ONLY_DIGITS}
+                    disabled={isResettingPassword}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                    </InputOTPGroup>
+                    <InputOTPSeparator />
+                    <InputOTPGroup>
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                  <Button
+                    variant="outline"
+                    onClick={handleSendOtp}
+                    disabled={
+                      !user ||
+                      cooldown > 0 ||
+                      isSendingOtp ||
+                      !isValidIdentifier
+                    }
+                  >
+                    {isSendingOtp ? (
+                      <Loader2 className="animate-spin mr-2 size-4" />
+                    ) : cooldown > 0 ? (
+                      cooldown
+                    ) : (
+                      "Get OTP"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Enter the 6-digit OTP sent to your email
+                </p>
+              </div>
+
+              {/* Reset Password Button */}
+              <Button
+                onClick={handleResetPassword}
+                className="h-12 font-semibold rounded-xl"
+                disabled={
+                  isResettingPassword ||
+                  passwordError ||
+                  confirmPasswordError ||
+                  otp.length !== 6
+                }
+              >
+                {isResettingPassword ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2 size-4" />
+                    Resetting...
+                  </>
+                ) : (
+                  "Reset Password"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 };
 

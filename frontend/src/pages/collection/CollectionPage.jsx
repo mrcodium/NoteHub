@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowUpAZ, Type } from "lucide-react";
 import SortSelector from "./SortSelector";
+import { Helmet } from "react-helmet-async";
 
 const CollectionPage = () => {
   const { username, collectionSlug: rawSlug } = useParams();
@@ -124,31 +125,71 @@ const CollectionPage = () => {
   if (errorStatus === 404 || !collection) return <NotFound />;
 
   return (
-    <div className="px-4 py-8 min-h-svh overflow-y-auto bg-[#f5f5f5] dark:bg-background">
-      <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
-        <div className="flex justify-between items-end">
-          <CollectionHeader
-            user={user}
-            collection={collection}
-            isOwner={isOwner}
-          />
-        </div>
+    <>
+      <Helmet>
+        <title>{collection?.name || "Collection"} | NoteHub</title>
+        <meta
+          name="description"
+          content={
+            collection?.description ||
+            "Explore notes in this collection on NoteHub."
+          }
+        />
+        <meta
+          property="og:title"
+          content={`${collection?.name || "Collection"} | NoteHub`}
+        />
+        <meta
+          property="og:description"
+          content={
+            collection?.description ||
+            "Explore notes in this collection on NoteHub."
+          }
+        />
+        <meta
+          property="og:url"
+          content={`https://notehub-38kp.onrender.com/${username}/${collectionSlug}`}
+        />
+
+        <meta
+          name="twitter:title"
+          content={`${collection?.name || "Collection"} | NoteHub`}
+        />
+        <meta
+          name="twitter:description"
+          content={
+            collection?.description ||
+            "Explore notes in this collection on NoteHub."
+          }
+        />
+      </Helmet>
+
+      <div className="px-4 py-8 min-h-svh overflow-y-auto bg-[#f5f5f5] dark:bg-background">
+        <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
+          <div className="flex justify-between items-end">
+            <CollectionHeader
+              user={user}
+              collection={collection}
+              isOwner={isOwner}
+            />
+          </div>
           <SortSelector
             sortBy={sortBy}
             sortDirection={sortDirection}
             setSortBy={setSortBy}
             toggleSortDirection={toggleSortDirection}
           />
-        <CollectionNotesGrid
-          notes={notes}
-          sortedNotes={sortedNotes}
-          isOwner={isOwner}
-          username={username}
-          collectionSlug={collectionSlug}
-          collection={collection}
-        />
+          <CollectionNotesGrid
+            notes={notes}
+            sortedNotes={sortedNotes}
+            isOwner={isOwner}
+            username={username}
+            collectionSlug={collectionSlug}
+            collection={collection}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -79,7 +79,6 @@ export function UserDetailDrawer({ user, open, onOpenChange }) {
     <Drawer
       open={open}
       onOpenChange={(open) => {
-        console.log(open);
         onOpenChange(open);
       }}
     >
