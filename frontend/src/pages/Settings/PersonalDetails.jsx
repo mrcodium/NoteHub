@@ -41,22 +41,73 @@ function Field({ label, field, apiEndPoint }) {
   const { authUser, updateUserField } = useAuthStore();
   const [value, setValue] = useState(authUser[field] || "");
   const [valid, setValid] = useState(false);
+  const [error, setError] = useState("");
   const inputRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
+  const validateUsername = (val) => {
+    const v = val.trim();
+
+    if (!v) {
+      setError("Username is required.");
+      return false;
+    }
+
+    if (/[A-Z]/.test(v)) {
+      setError("Only lowercase letters are allowed.");
+      return false;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(v)) {
+      setError("Only letters, numbers, and hyphens are allowed.");
+      return false;
+    }
+
+    if (v.startsWith("-")) {
+      setError("Username cannot start with a hyphen.");
+      return false;
+    }
+
+    if (v.endsWith("-")) {
+      setError("Username cannot end with a hyphen.");
+      return false;
+    }
+
+    if (v.includes("--")) {
+      setError("Consecutive hyphens are not allowed.");
+      return false;
+    }
+
+    if (v.length > 39) {
+      setError("Username cannot be longer than 39 characters.");
+      return false;
+    }
+
+    setError("");
+    return true;
+  };
+
   const isValid = (val) => {
     const trimmedValue = val.trim();
+
     if (!trimmedValue || trimmedValue === authUser[field]) {
+      setValid(false);
+      setError("");
+      return false;
+    }
+
+    if (field === "userName" && !validateUsername(trimmedValue)) {
       setValid(false);
       return false;
     }
+
     setValid(true);
     return true;
   };
 
   const handleiInputChange = (e) => {
-    isValid(e.target.value);
     setValue(e.target.value);
+    isValid(e.target.value);
   };
 
   const handleSave = async () => {
@@ -68,15 +119,18 @@ function Field({ label, field, apiEndPoint }) {
     setLoading(true);
     const data = { [field]: value.trim() };
     const result = await updateUserField(apiEndPoint, data);
+
     if (!result) {
       setValue(authUser[field]);
     }
+
     setLoading(false);
     setValid(false);
   };
 
   const handleEnter = (e) => {
     if (e.key === "Enter") {
+      handleSave();
       e.preventDefault();
       inputRef.current?.blur();
     }
@@ -92,10 +146,11 @@ function Field({ label, field, apiEndPoint }) {
         placeholder={`Enter ${label.toLowerCase()}`}
         value={value}
         onChange={handleiInputChange}
-        // onBlur={handleSave}
         onKeyDown={handleEnter}
         inputClassName="pr-12"
+        error={error}   // 👈 no UI change, just passes message
       />
+
       {valid && (
         <Button
           disabled={loading}
@@ -110,5 +165,6 @@ function Field({ label, field, apiEndPoint }) {
     </div>
   );
 }
+
 
 export default PersonalDetails;

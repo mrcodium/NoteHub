@@ -360,16 +360,15 @@ export const getNoteBySlug = async (req, res) => {
 };
 
 export const getPublicNotes = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+  const page = Math.max(parseInt(req.query.page) || 1, 1);
+  const limit = Math.max(parseInt(req.query.limit) || 10, 1);
   const skip = (page - 1) * limit;
-
   const requester = req.user || null;
   const requesterId = requester?._id;
-
-  const cacheKey = `public:notes:page:${page}:limit${limit}:user:${requesterId || "guest"}`;
+  const cacheKey = `public:notes:page:${page}:limit:${limit}:user:${requesterId || "guest"}`;
 
   try {
+    // ✅ Check cache
     const cached = await getCache(cacheKey);
     if (cached) {
       return res.status(200).json({
@@ -379,46 +378,80 @@ export const getPublicNotes = async (req, res) => {
       });
     }
 
-    // Get all collections the user has access to
-    const accessibleCollections = await Collection.find({
+    // ✅ Build collection query
+    const collectionQuery = {
       $or: [
         { visibility: "public" },
-        {
-          visibility: "private",
-          $or: [{ userId: requesterId }, { collaborators: requesterId }],
-        },
+        ...(requesterId
+          ? [{ visibility: "private", userId: requesterId }]
+          : []),
       ],
-    })
-      .select("_id visibility collaborators userId")
+    };
+
+    const accessibleCollections = await Collection.find(collectionQuery)
+      .select("_id visibility userId")
       .lean();
 
-    // Get notes from these collections
-    const collectionIds = accessibleCollections.map((c) => c._id);
+    if (!accessibleCollections.length) {
+      const emptyResponse = {
+        notes: [],
+        pagination: {
+          currentPage: page,
+          totalPages: 0,
+          totalNotes: 0,
+          notesPerPage: limit,
+          hasMore: false,
+        },
+      };
+      await setCache(cacheKey, emptyResponse, 60);
+      return res.status(200).json({ success: true, data: emptyResponse });
+    }
 
-    const notes = await Note.find({
-      collectionId: { $in: collectionIds },
-    })
+    const collectionIds = accessibleCollections.map((c) => c._id.toString());
+    const collectionMap = new Map(
+      accessibleCollections.map((c) => [c._id.toString(), c]),
+    );
+
+    // ✅ Fetch notes with buffer
+    const bufferMultiplier = 3;
+    const fetchLimit = limit * bufferMultiplier;
+
+    const notes = await Note.find({ collectionId: { $in: collectionIds } })
       .populate("userId", "_id userName fullName avatar")
-      .populate("collectionId", "_id name slug visibility collaborators userId")
+      .populate("collectionId", "_id name slug visibility userId")
       .sort({ contentUpdatedAt: -1 })
+      .skip(0) // fetch from start, slice later
+      .limit(skip + fetchLimit)
       .lean();
 
-    // Filter notes based on access rules
+    // ✅ Filter accessible notes
     const accessibleNotes = notes.filter((note) => {
-      const collection = accessibleCollections.find(
-        (c) => c._id.toString() === note.collectionId._id.toString(),
+      const collection = collectionMap.get(note.collectionId._id.toString());
+      return (
+        collection &&
+        canAccessNote({
+          requester,
+          ownerId: note.userId._id,
+          note,
+          collection,
+        })
       );
-      return canAccessNote({
-        requester,
-        ownerId: note.userId._id,
-        note,
-        collection: collection || note.collectionId,
-      });
     });
 
-    // Apply pagination
+    // ✅ Paginate
     const paginatedNotes = accessibleNotes.slice(skip, skip + limit);
-    const totalNotes = accessibleNotes.length;
+
+    // ✅ Count total notes efficiently
+    let totalNotes = accessibleNotes.length;
+    if (
+      notes.length >= skip + fetchLimit &&
+      accessibleNotes.length >= skip + limit
+    ) {
+      totalNotes = await Note.countDocuments({
+        collectionId: { $in: collectionIds },
+      });
+    }
+
     const totalPages = Math.ceil(totalNotes / limit);
 
     const responseData = {
@@ -432,12 +465,9 @@ export const getPublicNotes = async (req, res) => {
       },
     };
 
-    await setCache(cacheKey, responseData, 45);
+    await setCache(cacheKey, responseData, 300);
 
-    return res.status(200).json({
-      success: true,
-      data: responseData,
-    });
+    return res.status(200).json({ success: true, data: responseData });
   } catch (error) {
     console.error("Error in getPublicNotes controller:", error);
     return res.status(500).json({
@@ -630,7 +660,7 @@ export const searchNotes = async (req, res) => {
 
     const normalizedQueryKey = [...new Set(tokens)].sort().join("_");
     const cacheKey = `search:${userKey}:q:${normalizedQueryKey}:p:${page}:l:${limit}`;
-    
+
     // 1️⃣ Check cache first
     const cached = await getCache(cacheKey);
     if (cached) {
@@ -639,7 +669,6 @@ export const searchNotes = async (req, res) => {
         cache: true,
       });
     }
-
 
     const currentPage = Number(page);
     const notesPerPage = Number(limit);
