@@ -193,6 +193,7 @@ export const updateContent = async (req, res) => {
 
     // after updating content
     note.content = content;
+    note.contentUpdatedAt = new Date();
     await note.save();
 
     // 1️⃣ Reindex
@@ -399,7 +400,7 @@ export const getPublicNotes = async (req, res) => {
     })
       .populate("userId", "_id userName fullName avatar")
       .populate("collectionId", "_id name slug visibility collaborators userId")
-      .sort({ updatedAt: -1 })
+      .sort({ contentUpdatedAt: -1 })
       .lean();
 
     // Filter notes based on access rules

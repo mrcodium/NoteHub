@@ -81,7 +81,7 @@ async function generateSitemap() {
       return `
   <url>
     <loc>${SITE_URL}/user/${userName}/${collectionSlug}/${note.slug}</loc>
-    <lastmod>${note.updatedAt.toISOString().split("T")[0]}</lastmod>
+    <lastmod>${note.contentUpdatedAt.toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`;

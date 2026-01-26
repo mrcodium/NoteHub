@@ -137,7 +137,7 @@ export function ArticleCard({
                 )}
               </div>
               <span className="text-sm text-muted-foreground">
-                {`@${author?.userName}`} • {formatTimeAgo(note.updatedAt)}
+                {`@${author?.userName}`} • {formatTimeAgo(note.contentUpdatedAt)}
               </span>
             </div>
           </Link>
@@ -160,7 +160,7 @@ export function ArticleCard({
                 to={`/user/${author?.userName}/${collection.slug}`}
                 className="text-muted-foreground hover:underline"
               >
-                {collection.slug}
+                {collection.name}
               </Link>
               {" / "}
               <Link

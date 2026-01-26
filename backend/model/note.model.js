@@ -37,7 +37,11 @@ const noteSchema = new mongoose.Schema(
     slug: {
       type: String,
       sparse: true // no unique here
-    }
+    },
+    contentUpdatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,

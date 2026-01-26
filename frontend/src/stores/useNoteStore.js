@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import { toast } from "sonner";
-import { FONT_SIZE, useEditorStore } from "./useEditorStore";
 
 export const useNoteStore = create((set, get) => {
   const setStatus = (key, value) =>
@@ -154,7 +153,7 @@ export const useNoteStore = create((set, get) => {
         // Update the note in notes array (if present)
         updateNoteInNotesArray(note._id, {
           content: note.content,
-          updatedAt: note.updatedAt,
+          contentUpdatedAt: note.contentUpdatedAt,
         });
 
         toast.success(message);

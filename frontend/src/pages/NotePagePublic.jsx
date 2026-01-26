@@ -392,9 +392,9 @@ const NotePagePublic = () => {
               <div className="flex flex-col gap-0.5">
                 <span
                   className="text-sm font-medium"
-                  title={formatDate(note?.updatedAt)}
+                  title={formatDate(note?.contentUpdatedAt)}
                 >
-                  {formatTimeAgo(new Date(note?.updatedAt), "MMM d, yyyy")}
+                  {formatTimeAgo(new Date(note?.contentUpdatedAt), "MMM d, yyyy")}
                 </span>
               </div>
             </div>
