@@ -74,7 +74,7 @@ const DashboardHeader = () => {
         setGithubStarCount(formatCompactNumber(starCount));
       } catch (error) {
         setGithubStarCount(null);
-        console.log(error);
+        console.error(error);
       }
     };
     fetchStars();

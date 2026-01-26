@@ -14,7 +14,7 @@ export const useImageStore = create((set, get) => {
         const { images: galleryImages } = res.data;
         set({ galleryImages });
       } catch (error) {
-        console.log(error);
+        console.error(error);
         throw new Error("error");
       } finally {
         set({ isLoadingImages: false });

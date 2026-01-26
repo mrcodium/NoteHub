@@ -22,7 +22,7 @@ export const useEditorStore = create((set) => ({
 
   editorFontSizeIndex: Number(localStorage.getItem("editorFontSizeIndex") ?? 1),
   editorFontSize: localStorage.getItem("editorFontSize") || FONT_SIZE.medium,
-  editorFontFamily: localStorage.getItem("editorFontFamily") || "Roboto",
+  editorFontFamily: localStorage.getItem("editorFontFamily") || "Roboto, sans-serif",
 
   setFontSize: (index) => {
     localStorage.setItem("editorFontSizeIndex", index);

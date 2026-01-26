@@ -93,7 +93,6 @@ const NotePagePublic = () => {
           `/note/${username}/${collectionSlug}/${noteSlug}`,
         );
         const { note, author } = response.data;
-        console.log(response.data);
         setNote(note);
         setAuthor(author);
         setIsOwner(authUser?._id === note.userId);
@@ -133,9 +132,11 @@ const NotePagePublic = () => {
       setToc(tocData);
 
       // Apply syntax highlighting
-      document.querySelectorAll("pre code").forEach((block) => {
-        hljs.highlightElement(block);
-      });
+      document
+        .querySelectorAll("pre code:not([data-highlighted])")
+        .forEach((block) => {
+          hljs.highlightElement(block);
+        });
 
       // Render KaTeX
       document

@@ -79,7 +79,7 @@ const CollectionPage = () => {
       if (error.response) {
         setErrorStatus(error.response.status);
       }
-      console.log(error);
+      console.error(error);
       return null;
     }
   };
