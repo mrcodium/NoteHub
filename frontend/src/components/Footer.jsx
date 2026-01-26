@@ -29,7 +29,7 @@ const Footer = ({className}) => {
 
       {/* Copyright */}
       <div className="text-muted-foreground text-sm text-center">
-        © {new Date().getFullYear()} NoteHub. All rights reserved.
+        © 2024 NoteHub. All rights reserved.
       </div>
 
       {/* Brand Name */}
