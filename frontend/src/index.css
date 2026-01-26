@@ -241,6 +241,7 @@ div:has(> .tiptap.ProseMirror) {
     white-space: pre; /* preserve all spaces */
     overflow-x: auto;
     tab-size: 4;
+    display: flex;
     @apply bg-input/30 text-primary dark:text-primary p-4 rounded-md;
 
     code {

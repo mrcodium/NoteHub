@@ -113,9 +113,11 @@ const NotePage = () => {
       setToc(tocData);
 
       // Apply syntax highlighting
-      document.querySelectorAll("pre code").forEach((block) => {
-        hljs.highlightElement(block);
-      });
+      document
+              .querySelectorAll("pre code:not([data-highlighted])")
+              .forEach((block) => {
+                hljs.highlightElement(block);
+              });
 
       // Render KaTeX
       document
