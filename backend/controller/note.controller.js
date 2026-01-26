@@ -610,43 +610,61 @@ export const updateCollaborators = async (req, res) => {
   }
 };
 
+// controllers/search.controller.js
 export const searchNotes = async (req, res) => {
   try {
     const { q, page = 1, limit = 10 } = req.query;
     if (!q) return res.status(400).json({ message: "Query required" });
 
     const requester = req.user || null;
-    const cacheKey = `search:q:${q.toLowerCase()}:page:${page}:limit:${limit}:user:${requester?._id || 'guest'}`;
+    const userKey = requester?._id?.toString() || "guest";
 
+    const tokens = normalizeText(q);
+    if (!tokens.length) {
+      return res.json({
+        notes: [],
+        pagination: { currentPage: 1, totalPages: 0, totalItems: 0 },
+      });
+    }
+
+    const normalizedQueryKey = [...new Set(tokens)].sort().join("_");
+    const cacheKey = `search:${userKey}:q:${normalizedQueryKey}:p:${page}:l:${limit}`;
+    
     // 1️⃣ Check cache first
     const cached = await getCache(cacheKey);
     if (cached) {
       return res.status(200).json({
         ...JSON.parse(cached),
-        cache: true, // optional flag
+        cache: true,
       });
     }
 
-    const tokens = normalizeText(q);
-    if (!tokens.length) return res.json({ notes: [], pagination: {} });
 
     const currentPage = Number(page);
     const notesPerPage = Number(limit);
     const skip = (currentPage - 1) * notesPerPage;
 
-    const scoreMap = new Map();
     const queryTokenSet = new Set(tokens);
+    const uniqueTokens = [...queryTokenSet];
 
-    // 🔹 Parallel fetch
+    // 🔹 Parallel fetch with optimized queries
     const [indexDocs, titleNotes, TOTAL_NOTES] = await Promise.all([
-      SearchIndex.find({ lemma: { $in: tokens } }).lean(),
-      Note.find({ name: new RegExp(tokens.join("|"), "i") })
+      SearchIndex.find({ lemma: { $in: uniqueTokens } })
+        .select("lemma notes")
+        .lean(),
+      Note.find({
+        name: new RegExp(uniqueTokens.join("|"), "i"),
+      })
         .select("_id name")
         .lean(),
       Note.countDocuments(),
     ]);
 
-    // TF-IDF & title scoring logic (same as before)
+    // 🎯 Enhanced scoring with multiple signals
+    const scoreMap = new Map();
+    const noteMetrics = new Map(); // Track individual scoring components
+
+    // === SIGNAL 1: Content TF-IDF (weighted: 2x) ===
     for (const doc of indexDocs) {
       const df = doc.notes.length;
       const idf = Math.log((TOTAL_NOTES + 1) / (df + 1));
@@ -654,45 +672,118 @@ export const searchNotes = async (req, res) => {
       for (const { noteId, tf } of doc.notes) {
         const key = noteId.toString();
         const tfidf = tf * idf;
-        scoreMap.set(key, (scoreMap.get(key) || 0) + tfidf * 2);
+        const contentScore = tfidf * 2;
+
+        scoreMap.set(key, (scoreMap.get(key) || 0) + contentScore);
+
+        // Track metrics
+        if (!noteMetrics.has(key)) {
+          noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+        }
+        noteMetrics.get(key).content += contentScore;
       }
     }
 
+    // === SIGNAL 2: Title Matching (weighted: 6x per term) ===
     for (const note of titleNotes) {
       const key = note._id.toString();
       const titleTokens = normalizeText(note.name);
+      const titleLower = note.name.toLowerCase();
 
       let titleScore = 0;
       const matched = new Set();
+
+      // Term frequency in title
       for (const token of tokens) {
         const tf = titleTokens.filter((t) => t === token).length;
-        if (tf > 0) matched.add(token);
-        titleScore += tf * 6;
+        if (tf > 0) {
+          matched.add(token);
+          titleScore += tf * 6;
+        }
       }
 
-      if (matched.size === queryTokenSet.size) titleScore += 8;
+      // === SIGNAL 3: Full query coverage bonus (+8) ===
+      if (matched.size === queryTokenSet.size) {
+        titleScore += 8;
+        if (!noteMetrics.has(key)) {
+          noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+        }
+        noteMetrics.get(key).coverage = 8;
+      }
 
+      // === SIGNAL 4: Exact phrase match (+10, stronger) ===
       const phraseRegex = new RegExp(tokens.join("\\s+"), "i");
-      if (phraseRegex.test(note.name)) titleScore += 5;
+      if (phraseRegex.test(note.name)) {
+        titleScore += 10;
+        if (!noteMetrics.has(key)) {
+          noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+        }
+        noteMetrics.get(key).exact = 10;
+      }
 
-      if (titleScore > 0) scoreMap.set(key, (scoreMap.get(key) || 0) + titleScore);
+      // === SIGNAL 5: Title starts with query (high relevance) (+5) ===
+      if (titleLower.startsWith(q.toLowerCase())) {
+        titleScore += 5;
+      }
+
+      // === SIGNAL 6: Query token order preserved (+3) ===
+      let lastIndex = -1;
+      let orderPreserved = true;
+      for (const token of tokens) {
+        const idx = titleTokens.indexOf(token, lastIndex + 1);
+        if (idx === -1 || idx <= lastIndex) {
+          orderPreserved = false;
+          break;
+        }
+        lastIndex = idx;
+      }
+      if (orderPreserved && tokens.length > 1) {
+        titleScore += 3;
+      }
+
+      if (titleScore > 0) {
+        scoreMap.set(key, (scoreMap.get(key) || 0) + titleScore);
+        if (!noteMetrics.has(key)) {
+          noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+        }
+        noteMetrics.get(key).title += titleScore;
+      }
     }
 
+    // Sort by total score (descending)
     const sortedNoteIds = [...scoreMap.entries()]
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => {
+        const scoreDiff = b[1] - a[1];
+        // Tie-breaker: prefer notes with title matches
+        if (Math.abs(scoreDiff) < 0.01) {
+          const aMetrics = noteMetrics.get(a[0]) || {};
+          const bMetrics = noteMetrics.get(b[0]) || {};
+          return (bMetrics.title || 0) - (aMetrics.title || 0);
+        }
+        return scoreDiff;
+      })
       .map(([id]) => id);
 
-    if (!sortedNoteIds.length) return res.json({ notes: [], pagination: {} });
+    if (!sortedNoteIds.length) {
+      const emptyResult = {
+        notes: [],
+        pagination: { currentPage, totalPages: 0, totalItems: 0 },
+      };
+      await setCache(cacheKey, emptyResult, 300); // Cache empty results longer
+      return res.json(emptyResult);
+    }
 
     const totalNotes = sortedNoteIds.length;
     const totalPages = Math.ceil(totalNotes / notesPerPage);
     const pagedNoteIds = sortedNoteIds.slice(skip, skip + notesPerPage);
 
+    // Fetch full note details (only for current page)
     const notes = await Note.find({ _id: { $in: pagedNoteIds } })
       .populate("userId", "_id userName fullName avatar")
       .populate("collectionId", "_id name slug visibility collaborators userId")
       .lean();
 
+    // Permission filtering
     const accessibleNotes = notes.filter((note) =>
       canAccessNote({
         requester,
@@ -702,8 +793,11 @@ export const searchNotes = async (req, res) => {
       }),
     );
 
+    // Preserve ranking order
     const noteMap = new Map(accessibleNotes.map((n) => [n._id.toString(), n]));
-    const rankedNotes = pagedNoteIds.map((id) => noteMap.get(id)).filter(Boolean);
+    const rankedNotes = pagedNoteIds
+      .map((id) => noteMap.get(id))
+      .filter(Boolean);
 
     const responseData = {
       notes: rankedNotes,
@@ -715,15 +809,19 @@ export const searchNotes = async (req, res) => {
         hasNextPage: currentPage < totalPages,
         hasPreviousPage: currentPage > 1,
       },
+      meta: {
+        query: q,
+        tokensMatched: uniqueTokens.length,
+      },
     };
 
-    // 2️⃣ Store result in cache (TTL e.g., 60s)
-    await setCache(cacheKey, responseData, 60);
+    // 2️⃣ Smart cache TTL based on result size
+    const cacheTTL = totalNotes === 0 ? 300 : totalNotes < 10 ? 120 : 60;
+    await setCache(cacheKey, responseData, cacheTTL);
 
     res.status(200).json(responseData);
   } catch (err) {
-    console.error(err);
+    console.error("Search error:", err);
     res.status(500).json({ message: "Search failed" });
   }
 };
-
