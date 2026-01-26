@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import Collection from "../model/collection.model.js";
 import Note from "../model/note.model.js";
 import User from "../model/user.model.js";
+import { ENV } from "../config/env.js";
 
 // load env from backend/.env
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
@@ -14,7 +15,7 @@ const SITE_URL = "https://notehub-38kp.onrender.com";
 
 // Mongo connection
 await mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(ENV.MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);

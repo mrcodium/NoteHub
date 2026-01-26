@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../model/user.model.js";
+import { ENV } from "../config/env.js";
 
 // Socket.IO JWT auth middleware
 const socketAuthMiddleware = async (socket, next) => {
@@ -26,10 +27,10 @@ const socketAuthMiddleware = async (socket, next) => {
     // 2️⃣ Verify JWT
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      decoded = jwt.verify(token, ENV.JWT_SECRET, {
         algorithms: ["HS256"],
-        issuer: process.env.JWT_ISSUER,
-        audience: process.env.JWT_AUDIENCE,
+        issuer: ENV.JWT_ISSUER,
+        audience: ENV.JWT_AUDIENCE,
       });
     } catch (err) {
       return next(new Error("Invalid or expired token"));

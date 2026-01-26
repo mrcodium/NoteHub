@@ -2,6 +2,7 @@
 import jwt from "jsonwebtoken";
 import { config } from "dotenv";
 import { durationToMs } from "./time.util.js";
+import { ENV } from "../config/env.js";
 
 config();
 
@@ -10,11 +11,11 @@ config();
 export const setCookie = (res, name, value, options = {}) => {
   const defaultOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: ENV.NODE_ENV === "production",
     sameSite: "Strict",
     path: "/",
-    domain: process.env.COOKIE_DOMAIN || undefined,
-    maxAge: durationToMs(process.env.JWT_EXPIRY || "30d"),
+    domain: ENV.COOKIE_DOMAIN || undefined,
+    maxAge: durationToMs(ENV.JWT_EXPIRY || "30d"),
   };
 
   res.cookie(name, value, { ...defaultOptions, ...options });
@@ -23,9 +24,9 @@ export const setCookie = (res, name, value, options = {}) => {
 export const clearCookie = (res, name = "jwt") => {
   res.clearCookie(name, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: ENV.NODE_ENV === "production",
     path: "/",
-    domain: process.env.COOKIE_DOMAIN || undefined,
+    domain: ENV.COOKIE_DOMAIN || undefined,
   });
 };
 
@@ -35,23 +36,23 @@ export const generateToken = (payload) => {
   return jwt.sign(
     {
       ...payload, // { userId }
-      iss: process.env.JWT_ISSUER || "notehub-api",
-      aud: process.env.JWT_AUDIENCE || "notehub-web",
+      iss: ENV.JWT_ISSUER || "notehub-api",
+      aud: ENV.JWT_AUDIENCE || "notehub-web",
     },
-    process.env.JWT_SECRET,
+    ENV.JWT_SECRET,
     {
-      expiresIn: process.env.JWT_EXPIRY || "30d",
+      expiresIn: ENV.JWT_EXPIRY || "30d",
       algorithm: "HS256",
-    }
+    },
   );
 };
 
 export const verifyToken = (token) => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET, {
+    return jwt.verify(token, ENV.JWT_SECRET, {
       algorithms: ["HS256"],
-      issuer: process.env.JWT_ISSUER || "your-app-name",
-      audience: process.env.JWT_AUDIENCE || "your-app-client",
+      issuer: ENV.JWT_ISSUER || "your-app-name",
+      audience: ENV.JWT_AUDIENCE || "your-app-client",
     });
   } catch {
     throw new Error("Invalid or expired token");

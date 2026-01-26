@@ -6,14 +6,12 @@ import User from "../model/user.model.js";
 import { canAccessNote } from "../utils/permissions.js";
 import {
   extractKeywordFrequency,
-  extractKeywords,
   normalizeText,
 } from "../services/indexer/textProcessor.js";
 import { updateIndex } from "../services/indexer/updateIndex.js";
-import natural from "natural";
-const { LevenshteinDistance } = natural;
+import { delCache, getCache, setCache } from "../services/cache.service.js";
 
-export const getNote = async (req, res) => {
+export const getNoteById = async (req, res) => {
   const { _id } = req.params;
   const { user } = req;
 
@@ -28,7 +26,16 @@ export const getNote = async (req, res) => {
     });
   }
 
+  const cacheKey = `note:id:${_id}:user:${user?._id || "guest"}`;
   try {
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        ...JSON.parse(cached),
+        cache: true, // optional flag
+      });
+    }
+
     const note = await Note.findOne({ _id, userId: user._id });
 
     if (!note) {
@@ -37,10 +44,13 @@ export const getNote = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
+    const responseData = {
       message: "Note retrieved successfully",
       note,
-    });
+    };
+
+    await setCache(cacheKey, responseData, 600); // TTL 10 min
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error("Error in getNote controller:", error);
     return res.status(500).json({
@@ -177,20 +187,32 @@ export const updateContent = async (req, res) => {
   }
 
   try {
-    // 1️⃣ Find note
-    const note = await Note.findOne({ _id: noteId, userId: user._id });
-    if (!note) {
-      return res.status(404).json({
-        message: "Note not found or you don't have permission to update it",
-      });
-    }
+    const note = await Note.findOne({ _id: noteId, userId: user._id })
+      .populate("collectionId", "slug")
+      .populate("userId", "userName");
 
-    // 2️⃣ Update content
+    // after updating content
     note.content = content;
     await note.save();
 
-    // 3️⃣ Reindex note (TF-safe)
+    // 1️⃣ Reindex
     await updateIndex(note._id, `${note.name} ${content}`);
+
+    // 2️⃣ Invalidate ID cache
+    await delCache(`note:id:${note._id}:user:${user._id}`);
+    await delCache(`note:id:${note._id}:user:guest`);
+
+    // 3️⃣ Invalidate SLUG cache
+    const username = note.userId.userName;
+    const collectionSlug = note.collectionId.slug;
+    const noteSlug = note.slug;
+
+    await delCache(
+      `note:slug:${username}:${collectionSlug}:${noteSlug}:user:${user._id}`,
+    );
+    await delCache(
+      `note:slug:${username}:${collectionSlug}:${noteSlug}:user:guest`,
+    );
 
     return res.status(200).json({
       message: "Note content updated & reindexed successfully",
@@ -216,20 +238,42 @@ export const renameNote = async (req, res) => {
   }
 
   try {
-    // 1️⃣ Fetch note
-    const note = await Note.findOne({ _id: noteId, userId: user._id });
+    // 1️⃣ Fetch note WITH required context
+    const note = await Note.findOne({
+      _id: noteId,
+      userId: user._id,
+    })
+      .populate("collectionId", "slug")
+      .populate("userId", "userName");
+
     if (!note) {
       return res.status(404).json({
         message: "Note not found or you don't have permission to rename it",
       });
     }
 
+    // 🔑 store old slug BEFORE rename
+    const oldSlug = note.slug;
+    const username = note.userId.userName;
+    const collectionSlug = note.collectionId.slug;
+
     // 2️⃣ Rename
     note.name = newName;
-    await note.save();
+    await note.save(); // slug regenerates here
 
-    // 3️⃣ Reindex note (TF-safe)
+    // 3️⃣ Reindex
     await updateIndex(note._id, newName);
+
+    // 4️⃣ cache invalidation
+    await delCache(`note:id:${note._id}:user:${user._id}`);
+    await delCache(`note:id:${note._id}:user:guest`);
+
+    await delCache(
+      `note:slug:${username}:${collectionSlug}:${oldSlug}:user:${user._id}`,
+    );
+    await delCache(
+      `note:slug:${username}:${collectionSlug}:${oldSlug}:user:guest`,
+    );
 
     return res.status(200).json({
       message: "Note renamed & reindexed successfully",
@@ -253,7 +297,17 @@ export const getNoteBySlug = async (req, res) => {
   const { username, collectionSlug, noteSlug } = req.params;
   const requester = req.user || null;
 
+  const cacheKey = `note:slug:${username}:${collectionSlug}:${noteSlug}:user:${requester?._id || "guest"}`;
+
   try {
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        ...JSON.parse(cached),
+        cache: true,
+      });
+    }
+
     const user = await User.findOne({
       userName: { $regex: new RegExp(`^${username}$`, "i") },
     });
@@ -288,11 +342,13 @@ export const getNoteBySlug = async (req, res) => {
         .json({ message: "You don't have access to this note" });
     }
 
-    return res.status(200).json({
+    const responseData = {
       message: "Note fetched successfully",
       note,
       author: user,
-    });
+    };
+    await setCache(cacheKey, responseData, 600); // TTL 600s = 10 min
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error("Error fetching note by slug:", error);
     return res.status(500).json({
@@ -306,10 +362,22 @@ export const getPublicNotes = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
+
   const requester = req.user || null;
   const requesterId = requester?._id;
 
+  const cacheKey = `public:notes:page:${page}:limit${limit}:user:${requesterId || "guest"}`;
+
   try {
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        success: true,
+        data: JSON.parse(cached),
+        cache: true,
+      });
+    }
+
     // Get all collections the user has access to
     const accessibleCollections = await Collection.find({
       $or: [
@@ -324,8 +392,10 @@ export const getPublicNotes = async (req, res) => {
       .lean();
 
     // Get notes from these collections
+    const collectionIds = accessibleCollections.map((c) => c._id);
+
     const notes = await Note.find({
-      collectionId: { $in: accessibleCollections.map((c) => c._id) },
+      collectionId: { $in: collectionIds },
     })
       .populate("userId", "_id userName fullName avatar")
       .populate("collectionId", "_id name slug visibility collaborators userId")
@@ -350,18 +420,22 @@ export const getPublicNotes = async (req, res) => {
     const totalNotes = accessibleNotes.length;
     const totalPages = Math.ceil(totalNotes / limit);
 
+    const responseData = {
+      notes: paginatedNotes,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalNotes,
+        notesPerPage: limit,
+        hasMore: page < totalPages,
+      },
+    };
+
+    await setCache(cacheKey, responseData, 45);
+
     return res.status(200).json({
       success: true,
-      data: {
-        notes: paginatedNotes,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalNotes,
-          notesPerPage: limit,
-          hasMore: page < totalPages,
-        },
-      },
+      data: responseData,
     });
   } catch (error) {
     console.error("Error in getPublicNotes controller:", error);
@@ -385,17 +459,37 @@ export const moveTo = async (req, res) => {
 
   try {
     // 1️⃣ Move the note
-    const note = await Note.findOneAndUpdate(
-      { _id: noteId, userId: user._id },
-      { collectionId },
-      { new: true },
-    );
+    const note = await Note.findOne({
+      _id: noteId,
+      userId: user._id,
+    })
+      .populate("collectionId", "slug")
+      .populate("userId", "userName");
 
     if (!note) {
       return res.status(404).json({
         message: "Note not found or you don't have permission to move it",
       });
     }
+
+    const oldCollectionSlug = note.collectionId.slug;
+    const oldNoteSlug = note.slug;
+    const username = note.userId.userName;
+
+    // move
+    note.collectionId = collectionId;
+    await note.save(); // slug may regenerate
+
+    // ❌ invalidate OLD cache
+    await delCache(`note:id:${note._id}:user:${user._id}`);
+    await delCache(`note:id:${note._id}:user:guest`);
+
+    await delCache(
+      `note:slug:${username}:${oldCollectionSlug}:${oldNoteSlug}:user:${user._id}`,
+    );
+    await delCache(
+      `note:slug:${username}:${oldCollectionSlug}:${oldNoteSlug}:user:guest`,
+    );
 
     // 2️⃣ Fetch ONLY required collection fields
     const collection = await Collection.findById(collectionId);
@@ -430,12 +524,27 @@ export const updateVisibility = async (req, res) => {
       { _id: noteId, userId: user._id },
       { visibility },
       { new: true },
-    );
+    )
+      .populate("collectionId", "slug")
+      .populate("userId", "userName");
+
     if (!note) {
       return res.status(404).json({
         message: "note not found or you don't have permission to update it",
       });
     }
+
+    // invalidate
+    await delCache(`note:id:${note._id}:user:${user._id}`);
+    await delCache(`note:id:${note._id}:user:guest`);
+
+    await delCache(
+      `note:slug:${note.userId.userName}:${note.collectionId.slug}:${note.slug}:user:${user._id}`,
+    );
+    await delCache(
+      `note:slug:${note.userId.userName}:${note.collectionId.slug}:${note.slug}:user:guest`,
+    );
+
     return res.status(200).json({
       message: `visiblity updated to ${note.visibility}`,
       note,
@@ -462,18 +571,31 @@ export const updateCollaborators = async (req, res) => {
   collaborators = [...new Set(collaborators)];
 
   try {
-    // Update the note's collaborators
     const updatedNote = await Note.findOneAndUpdate(
       { _id: noteId, userId: user._id },
       { collaborators },
       { new: true },
-    ).populate("collaborators", "fullName userName email avatar _id");
+    )
+      .populate("collectionId", "slug")
+      .populate("userId", "userName")
+      .populate("collaborators", "fullName userName email avatar _id");
 
     if (!updatedNote) {
       return res.status(404).json({
         message: "note not found or you don't have permission to update it",
       });
     }
+
+    // invalidate
+    await delCache(`note:id:${updatedNote._id}:user:${user._id}`);
+    await delCache(`note:id:${updatedNote._id}:user:guest`);
+
+    await delCache(
+      `note:slug:${updatedNote.userId.userName}:${updatedNote.collectionId.slug}:${updatedNote.slug}:user:${user._id}`,
+    );
+    await delCache(
+      `note:slug:${updatedNote.userId.userName}:${updatedNote.collectionId.slug}:${updatedNote.slug}:user:guest`,
+    );
 
     return res.status(200).json({
       message: "Collaborators updated and populated successfully",
@@ -488,13 +610,23 @@ export const updateCollaborators = async (req, res) => {
   }
 };
 
-
 export const searchNotes = async (req, res) => {
   try {
     const { q, page = 1, limit = 10 } = req.query;
     if (!q) return res.status(400).json({ message: "Query required" });
 
     const requester = req.user || null;
+    const cacheKey = `search:q:${q.toLowerCase()}:page:${page}:limit:${limit}:user:${requester?._id || 'guest'}`;
+
+    // 1️⃣ Check cache first
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        ...JSON.parse(cached),
+        cache: true, // optional flag
+      });
+    }
+
     const tokens = normalizeText(q);
     if (!tokens.length) return res.json({ notes: [], pagination: {} });
 
@@ -503,78 +635,95 @@ export const searchNotes = async (req, res) => {
     const skip = (currentPage - 1) * notesPerPage;
 
     const scoreMap = new Map();
+    const queryTokenSet = new Set(tokens);
 
-    // 🔹 Parallel search: index + title
-    const [indexDocs, titleNotes] = await Promise.all([
+    // 🔹 Parallel fetch
+    const [indexDocs, titleNotes, TOTAL_NOTES] = await Promise.all([
       SearchIndex.find({ lemma: { $in: tokens } }).lean(),
       Note.find({ name: new RegExp(tokens.join("|"), "i") })
         .select("_id name")
-        .lean()
+        .lean(),
+      Note.countDocuments(),
     ]);
 
-    // 1️⃣ Index-based search (TF weighted)
+    // TF-IDF & title scoring logic (same as before)
     for (const doc of indexDocs) {
+      const df = doc.notes.length;
+      const idf = Math.log((TOTAL_NOTES + 1) / (df + 1));
+
       for (const { noteId, tf } of doc.notes) {
         const key = noteId.toString();
-        scoreMap.set(key, (scoreMap.get(key) || 0) + tf * 1.5);
+        const tfidf = tf * idf;
+        scoreMap.set(key, (scoreMap.get(key) || 0) + tfidf * 2);
       }
     }
 
-    // 2️⃣ Title-based exact match boost
     for (const note of titleNotes) {
       const key = note._id.toString();
-      scoreMap.set(key, (scoreMap.get(key) || 0) + 5);
+      const titleTokens = normalizeText(note.name);
+
+      let titleScore = 0;
+      const matched = new Set();
+      for (const token of tokens) {
+        const tf = titleTokens.filter((t) => t === token).length;
+        if (tf > 0) matched.add(token);
+        titleScore += tf * 6;
+      }
+
+      if (matched.size === queryTokenSet.size) titleScore += 8;
+
+      const phraseRegex = new RegExp(tokens.join("\\s+"), "i");
+      if (phraseRegex.test(note.name)) titleScore += 5;
+
+      if (titleScore > 0) scoreMap.set(key, (scoreMap.get(key) || 0) + titleScore);
     }
 
-    // 3️⃣ Sort by relevance
     const sortedNoteIds = [...scoreMap.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([id]) => id);
 
     if (!sortedNoteIds.length) return res.json({ notes: [], pagination: {} });
 
-    // 🔹 Pagination logic: only fetch IDs for current page
     const totalNotes = sortedNoteIds.length;
     const totalPages = Math.ceil(totalNotes / notesPerPage);
     const pagedNoteIds = sortedNoteIds.slice(skip, skip + notesPerPage);
 
-    // 4️⃣ Fetch notes for current page only
     const notes = await Note.find({ _id: { $in: pagedNoteIds } })
       .populate("userId", "_id userName fullName avatar")
       .populate("collectionId", "_id name slug visibility collaborators userId")
       .lean();
 
-    // 5️⃣ Access control
-    const accessibleNotes = notes.filter(note =>
+    const accessibleNotes = notes.filter((note) =>
       canAccessNote({
         requester,
         ownerId: note.userId._id,
         note,
-        collection: note.collectionId
-      })
+        collection: note.collectionId,
+      }),
     );
 
-    // preserve ranking order
-    const noteMap = new Map(accessibleNotes.map(n => [n._id.toString(), n]));
-    const rankedNotes = pagedNoteIds
-      .map(id => noteMap.get(id))
-      .filter(Boolean);
+    const noteMap = new Map(accessibleNotes.map((n) => [n._id.toString(), n]));
+    const rankedNotes = pagedNoteIds.map((id) => noteMap.get(id)).filter(Boolean);
 
-    // 6️⃣ Response
-    res.json({
+    const responseData = {
       notes: rankedNotes,
       pagination: {
         currentPage,
         totalPages,
-        totalItems: totalNotes, // keeps total matches intact
+        totalItems: totalNotes,
         itemsPerPage: notesPerPage,
         hasNextPage: currentPage < totalPages,
-        hasPreviousPage: currentPage > 1
-      }
-    });
+        hasPreviousPage: currentPage > 1,
+      },
+    };
 
+    // 2️⃣ Store result in cache (TTL e.g., 60s)
+    await setCache(cacheKey, responseData, 60);
+
+    res.status(200).json(responseData);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Search failed" });
   }
 };
+

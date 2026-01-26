@@ -16,9 +16,10 @@ export function normalizeText(text) {
     text
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
-      .split(/\s+/)
-      .filter(w => w.length > 2)
-  ).map(w => PorterStemmer.stem(w));
+      .split(/\s+/),
+  )
+    .filter((w) => w.trim().length > 0 && (w.length > 2 || /^\d+$/.test(w))) // keep numbers, remove short words
+    .map((w) => PorterStemmer.stem(w));
 }
 
 /**

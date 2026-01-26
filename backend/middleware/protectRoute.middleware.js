@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../model/user.model.js";
+import { ENV } from "../config/env.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
@@ -16,10 +17,10 @@ export const protectRoute = async (req, res, next) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      decoded = jwt.verify(token, ENV.JWT_SECRET, {
         algorithms: ["HS256"],
-        issuer: process.env.JWT_ISSUER,
-        audience: process.env.JWT_AUDIENCE,
+        issuer: ENV.JWT_ISSUER,
+        audience: ENV.JWT_AUDIENCE,
       });
     } catch (err) {
       return res.status(401).json({

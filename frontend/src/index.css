@@ -81,11 +81,7 @@ body *::-webkit-scrollbar-thumb {
 .tiptap .pre-wrapper {
   @apply rounded-2xl overflow-hidden my-4;
 }
-.tiptap pre {
-  white-space: pre;
-  overflow-x: auto;
-  tab-size: 4;
-}
+
 .node-codeBlock {
   @apply my-4;
 }
@@ -242,14 +238,15 @@ div:has(> .tiptap.ProseMirror) {
   }
 
   pre {
-    @apply bg-input/30 text-primary dark:text-primary p-4 overflow-x-auto;
+    white-space: pre; /* preserve all spaces */
+    overflow-x: auto;
+    tab-size: 4;
+    @apply bg-input/30 text-primary dark:text-primary p-4 rounded-md;
 
     code {
-      @apply whitespace-nowrap p-0 leading-relaxed;
-    }
-
-    code {
-      white-space: pre !important;
+      @apply whitespace-pre p-0 m-0 leading-snug; /* tighter line height */
+      white-space: pre !important; /* ensure it sticks */
+      display: block; /* prevent inline spacing issues */
     }
   }
 

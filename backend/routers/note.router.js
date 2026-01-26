@@ -3,7 +3,7 @@ import { protectRoute } from "../middleware/protectRoute.middleware.js";
 import {
     createNote,
     deleteNote,
-    getNote,
+    getNoteById,
     getPublicNotes,
     updateContent,
     renameNote,
@@ -20,7 +20,7 @@ const router = express.Router();
 router.get('/', requester, getPublicNotes);
 router.get('/search', requester, searchNotes);
 router.get('/:username/:collectionSlug/:noteSlug', requester, getNoteBySlug);
-router.get('/:_id', protectRoute, getNote);
+router.get('/:_id', protectRoute, getNoteById);
 
 router.post('/', protectRoute, createNote);
 router.delete('/:_id', protectRoute, deleteNote);

@@ -15,9 +15,11 @@ import { app, server } from "./libs/socketio.js";
 
 import "./model/Image.model.js";
 import path from "path";
+import { ENV } from "./config/env.js";
+import { connectRedis } from "./config/redis.js";
 
 config();
-const PORT = process.env.PORT;
+const PORT = ENV.PORT;
 const __dirname = path.resolve();
 
 app.use(express.json({ limit: "10mb" }));
@@ -46,7 +48,7 @@ app.use("/api/collection",   collectionRoutes);
 app.use("/api/note",         noteRoutes);
 app.use("/api/images",       ImageRoutes);
 
-if(process.env.NODE_ENV === "production"){
+if(ENV.NODE_ENV === "production"){
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
   app.get("*", (req, res)=>{
@@ -54,7 +56,9 @@ if(process.env.NODE_ENV === "production"){
   })
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`running on http://localhost:${PORT}`);
-  connectToDb();
+  
+  await connectToDb();
+  await connectRedis();
 });

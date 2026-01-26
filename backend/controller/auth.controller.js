@@ -4,6 +4,7 @@ import { clearCookie, generateToken, setCookie } from "../utils/jwt.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
 import { OAuth2Client } from "google-auth-library";
 import validator from "validator";
+import { ENV } from "../config/env.js";
 
 // common response functions
 const sendAuthResponse = (res, user) => {
@@ -131,8 +132,8 @@ export const login = async (req, res) => {
 
 // Initialize without redirect URI
 const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
+  ENV.GOOGLE_CLIENT_ID,
+  ENV.GOOGLE_CLIENT_SECRET,
 );
 
 export const googleLogin = async (req, res) => {
@@ -142,7 +143,7 @@ export const googleLogin = async (req, res) => {
     return res.status(400).json({ message: "All fields required." });
   }
 
-  if (redirectUri !== process.env.GOOGLE_REDIRECT_URI) {
+  if (redirectUri !== ENV.GOOGLE_REDIRECT_URI) {
     return res.status(400).json({
       message: "Redirect URI mismatch",
     });
@@ -153,8 +154,8 @@ export const googleLogin = async (req, res) => {
     const tokenEndpoint = `https://oauth2.googleapis.com/token`;
     const params = new URLSearchParams();
     params.append("code", code);
-    params.append("client_id", process.env.GOOGLE_CLIENT_ID);
-    params.append("client_secret", process.env.GOOGLE_CLIENT_SECRET);
+    params.append("client_id", ENV.GOOGLE_CLIENT_ID);
+    params.append("client_secret", ENV.GOOGLE_CLIENT_SECRET);
     params.append("redirect_uri", redirectUri);
     params.append("grant_type", "authorization_code");
     params.append("code_verifier", codeVerifier);
@@ -178,7 +179,7 @@ export const googleLogin = async (req, res) => {
     // Verify ID token using the library
     const ticket = await client.verifyIdToken({
       idToken: tokens.id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: ENV.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();

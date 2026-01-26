@@ -93,6 +93,7 @@ const NotePagePublic = () => {
           `/note/${username}/${collectionSlug}/${noteSlug}`,
         );
         const { note, author } = response.data;
+        console.log(response.data);
         setNote(note);
         setAuthor(author);
         setIsOwner(authUser?._id === note.userId);

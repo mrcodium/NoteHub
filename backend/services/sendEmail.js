@@ -1,16 +1,18 @@
+import { ENV } from "../config/env.js";
+
 export const sendEmail = async (email, subject, text, html) => {
   try {
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        "api-key": process.env.BREVO_API_KEY,
+        "api-key": ENV.BREVO_API_KEY,
         "Content-Type": "application/json",
         accept: "application/json",
       },
       body: JSON.stringify({
         sender: {
           name: "NoteHub",
-          email: process.env.EMAIL_SENDER, 
+          email: ENV.EMAIL_SENDER, 
         },
         to: [{ email }],
         subject,

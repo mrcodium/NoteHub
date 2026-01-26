@@ -10,7 +10,7 @@ import { extractKeywordFrequency } from "./textProcessor.js";
 async function reindex() {
   try {
     console.log("🔌 connecting...");
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(ENV.MONGO_URI);
 
     console.log("⚠️ Clearing existing search index...");
     await SearchIndex.deleteMany({});
