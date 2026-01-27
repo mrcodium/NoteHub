@@ -1,7 +1,13 @@
 import React, { useState, useRef } from "react";
 
 // UI components
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LabledInput } from "@/components/ui/labeled-input";
 import { Button } from "@/components/ui/button";
 import { Check, Loader2 } from "lucide-react";
@@ -9,30 +15,39 @@ import { Check, Loader2 } from "lucide-react";
 // Store
 import { useAuthStore } from "@/stores/useAuthStore";
 import UpdateEmailCard from "@/components/UpdateEmailCard";
+import { Label } from "@/components/ui/label";
 
-const PersonalDetails = () => {
+const Profile = () => {
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Personal Details</CardTitle>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            Edit your name, username, and email.
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <Field
-            label="Full Name"
-            field="fullName"
-            apiEndPoint="user/update-fullname"
-          />
+        <CardContent className="space-y-8">
+          <div className="space-y-2">
+            <Label>Personal Detail</Label>
+            <div className="space-y-4">
+              <Field
+                label="Full Name"
+                field="fullName"
+                apiEndPoint="user/update-fullname"
+              />
 
-          <Field
-            label="Username"
-            field="userName"
-            apiEndPoint="user/update-username"
-          />
+              <Field
+                label="Username"
+                field="userName"
+                apiEndPoint="user/update-username"
+              />
+            </div>
+          </div>
+          <UpdateEmailCard />
         </CardContent>
       </Card>
-      <UpdateEmailCard />
     </div>
   );
 };
@@ -148,7 +163,7 @@ function Field({ label, field, apiEndPoint }) {
         onChange={handleiInputChange}
         onKeyDown={handleEnter}
         inputClassName="pr-12"
-        error={error}   // 👈 no UI change, just passes message
+        error={error} // 👈 no UI change, just passes message
       />
 
       {valid && (
@@ -166,5 +181,4 @@ function Field({ label, field, apiEndPoint }) {
   );
 }
 
-
-export default PersonalDetails;
+export default Profile;

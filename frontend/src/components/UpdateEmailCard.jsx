@@ -26,6 +26,7 @@ import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Label } from "./ui/label";
 
 const UpdateEmailCard = () => {
   const {
@@ -118,13 +119,9 @@ const UpdateEmailCard = () => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Update Email</CardTitle>
-        <CardDescription>Verify your new email with an OTP</CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
+    <div className="space-y-2">
+      <Label>Personal Detail</Label>
+      <div className="space-y-4">
         <div className="flex gap-2 bg-accent/50 p-2 rounded-xl items-center">
           <Avatar className="size-10">
             <AvatarImage
@@ -158,7 +155,7 @@ const UpdateEmailCard = () => {
           disabled={isUpdatingEmail}
         />
 
-        <div className="grid grid-cols-[3fr_1fr] gap-4 items-center">
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
           <InputOTP
             maxLength={6}
             value={otp}
@@ -213,8 +210,8 @@ const UpdateEmailCard = () => {
             "Update Email"
           )}
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

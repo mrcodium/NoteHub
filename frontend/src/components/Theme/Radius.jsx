@@ -14,7 +14,7 @@ const Radius = () => {
   }, [selectedRadius]);
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <Label>Radius</Label>
       <div className="flex gap-2 flex-wrap">
         {radius.map((r) => (

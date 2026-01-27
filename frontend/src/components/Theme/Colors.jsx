@@ -30,7 +30,7 @@ const Colors = () => {
   }, [theme]);
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <Label>Color</Label>
       <div className="grid grid-cols-3 gap-2">
         {colors.map(({ name, color }) => (

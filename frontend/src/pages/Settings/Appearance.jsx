@@ -1,18 +1,18 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ModeToggle } from "@/components/mode-toggle";
 import Colors from "@/components/Theme/Colors";
 import Radius from "@/components/Theme/Radius";
 
-const Personalization = () => {
+const Appearance = () => {
   return (
     <Card>
       <CardHeader className="flex justify-between flex-row">
-        <div>
+        <div className="space-y-1.5">
           <CardTitle>Cutomize Theme</CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <CardDescription className="text-sm text-muted-foreground">
             Pick a style and color for your components.
-          </p>
+          </CardDescription>
         </div>
         <ModeToggle />
       </CardHeader>
@@ -25,6 +25,4 @@ const Personalization = () => {
   );
 };
 
-
-
-export default Personalization
+export default Appearance;

@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
@@ -7,7 +13,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import imageCompression from "browser-image-compression";
 
-const PhotoAndCover = () => {
+const Photos = () => {
   const {
     authUser,
     uploadUserAvatar,
@@ -61,12 +67,15 @@ const PhotoAndCover = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle></CardTitle>
+        <CardTitle>Photos & Cover</CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
+          Update your profile and cover photos.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-10">
         {/* AVATAR SECTION  */}
         <div className="space-y-4">
-          <Label className="text-base">Your Photo</Label>
+          <Label>Your Photo</Label>
           <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center">
             <Avatar className="relative aspect-square shadow-md size-44 shrink-0 border-background rounded-full">
               <AvatarImage
@@ -142,12 +151,13 @@ const PhotoAndCover = () => {
 
         {/* COVER SECTION  */}
         <div className="space-y-4">
-          <Label className="text-base">Profile Page Cover</Label>
-          <div className="flex flex-col sm:flex-row gap-8 items-start">
-            <div className="relative aspect-video shadow-md h-44 sm:h-auto sm:w-44 shrink-0 rounded-xl overflow-hidden border-background">
+          <Label>Profile Page Cover</Label>
+          <div className="flex flex-col sm:flex-col gap-8 items-start">
+            {/* relative aspect-video shadow-md h-44 sm:h-auto sm:w-44 shrink-0 */}
+            <div className="rounded-xl overflow-hidden">
               <img
                 className="w-full h-full object-cover bg-background"
-                src={previewCover || authUser?.cover}
+                src={previewCover || authUser?.cover || "/profile-cover.svg"}
                 alt="background-cover-image"
                 onError={(e) => {
                   e.currentTarget.src = "/profile-cover.svg";
@@ -217,4 +227,4 @@ const PhotoAndCover = () => {
   );
 };
 
-export default PhotoAndCover;
+export default Photos;

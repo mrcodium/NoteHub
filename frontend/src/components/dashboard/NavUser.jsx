@@ -104,7 +104,7 @@ const NavUser = () => {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <Link to="/settings/personalization">
+              <Link to="/settings">
                 <DropdownMenuItem>
                   <Settings />
                   Settings

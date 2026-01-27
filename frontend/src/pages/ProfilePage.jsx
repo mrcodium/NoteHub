@@ -397,7 +397,7 @@ const ProfilePage = () => {
                 {isOwner && (
                   <TooltipWrapper message="Edit Profile">
                     <Link
-                      to="/settings/personal-details"
+                      to="/settings/profile"
                       className="hover:bg-muted rounded-md size-10 flex justify-center items-center"
                     >
                       <Pencil size={18} />

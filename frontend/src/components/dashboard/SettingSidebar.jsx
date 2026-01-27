@@ -17,29 +17,7 @@ import {
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
-const settings = [
-  {
-    name: "Personalization",
-    url: "/settings/personalization",
-    icon: PaintbrushVertical,
-  },
-  {
-    name: "Photo and cover",
-    url: "/settings/photo-and-cover",
-    icon: Camera,
-  },
-  {
-    name: "Personal Details",
-    url: "/settings/personal-details",
-    icon: CircleUserRound,
-  },
 
-  {
-    name: "Security",
-    url: "/settings/security",
-    icon: KeyRound,
-  },
-];
 
 const SettingSidebar = () => {
 const { closeSidebar, isMobile } = useSidebar();

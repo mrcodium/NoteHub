@@ -22,10 +22,10 @@ import NotePage from "./pages/NotePage";
 import { useRouteStore } from "./stores/useRouteStore";
 import { useNoteStore } from "./stores/useNoteStore";
 import NotFoundPage from "./pages/NotFoundPage";
-import PersonalDetails from "./pages/Settings/PersonalDetails";
-import Personalization from "./pages/Settings/Personalization";
+import PersonalDetails from "./pages/Settings/Profile";
+import Personalization from "./pages/Settings/Appearance";
 import Security from "./pages/Settings/Security";
-import PhotoAndCover from "./pages/Settings/PhotoAndCover";
+import PhotoAndCover from "./pages/Settings/Photos";
 import OAuthCallback from "./pages/OAuthCallback";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import UsersPage from "./pages/admin/user";
@@ -136,19 +136,10 @@ function App() {
                     />
                     <Route path="settings" element={<SettingsPage />}>
                       <Route index element={<Personalization />} />
-                      <Route
-                        path="personal-details"
-                        element={<PersonalDetails />}
-                      />
-                      <Route
-                        path="personalization"
-                        element={<Personalization />}
-                      />
-                      <Route path="security" element={<Security />} />
-                      <Route
-                        path="photo-and-cover"
-                        element={<PhotoAndCover />}
-                      />
+                      <Route path="appearance" element={<PersonalDetails />} />
+                      <Route path="profile" element={<Personalization />} />
+                      <Route path="photos" element={<Security />} />
+                      <Route path="security" element={<PhotoAndCover />} />
                     </Route>
                   </>
                 )}

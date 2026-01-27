@@ -30,7 +30,6 @@ const AppSidebar = (props) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { collapseAll } = useLocalStorage();
   const { closeSidebar, isMobile } = useSidebar();
-  
 
   useEffect(() => {
     getAllCollections({
@@ -70,8 +69,10 @@ const AppSidebar = (props) => {
             <div className="flex gap-2 items-center">
               <SidebarCloseTrigger tooltip={"Close Sidebar Ctrl M"} />
               <Link
-              onClick={() => isMobile && closeSidebar()}
-               to="/" className="logo truncate font">
+                onClick={() => isMobile && closeSidebar()}
+                to="/"
+                className="logo truncate font"
+              >
                 NoteHub
               </Link>
             </div>
@@ -79,25 +80,25 @@ const AppSidebar = (props) => {
             <div className="flex buttons-container">
               {!location.pathname.startsWith("/settings") && (
                 <>
-                    <Button
-                      message="Collapse All"
-                      className="size-8 text-sidebar-accent-foreground/70"
-                      variant="ghost"
-                      onClick={collapseAll}
-                    >
-                      <CopyMinus />
-                    </Button>
+                  <Button
+                    message="Collapse All"
+                    className="size-8 text-sidebar-accent-foreground/70"
+                    variant="ghost"
+                    onClick={collapseAll}
+                  >
+                    <CopyMinus />
+                  </Button>
 
-                    <Button
-                      message="Search File"
-                      className="size-8 text-sidebar-accent-foreground/70"
-                      variant="ghost"
-                      onClick={() => {
-                        setShowSearch(true);
-                      }}
-                    >
-                      <Search />
-                    </Button>
+                  <Button
+                    message="Search File"
+                    className="size-8 text-sidebar-accent-foreground/70"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowSearch(true);
+                    }}
+                  >
+                    <Search />
+                  </Button>
                 </>
               )}
               <ModeToggleMini className={"text-accent-foreground/70"} />
@@ -107,14 +108,7 @@ const AppSidebar = (props) => {
       </SidebarHeader>
 
       <SidebarContent>
-        {location.pathname.startsWith("/settings") ? (
-          <SettingSidebar />
-        ) : (
-          <MemoizedNavMain
-            collections={collections}
-            searchQuery={searchQuery}
-          />
-        )}
+        <MemoizedNavMain collections={collections} searchQuery={searchQuery} />
       </SidebarContent>
 
       <SidebarFooter className="border-t">

@@ -12,17 +12,17 @@ import {
 } from "@/components/ui/card";
 import { LabledInput } from "@/components/ui/labeled-input";
 import { Link } from "react-router-dom";
+import { Label } from "@/components/ui/label";
 
 const Security = () => {
   const { updatePassword, isResettingPassword } = useAuthStore();
 
   return (
-    <div className="container mx-auto">
-      <Card className="max-w-4xl mx-auto">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Security Settings</CardTitle>
           <CardDescription>
-            Manage your account security
+            Change your password and security settings.
           </CardDescription>
         </CardHeader>
 
@@ -33,7 +33,6 @@ const Security = () => {
           />
         </CardContent>
       </Card>
-    </div>
   );
 };
 
@@ -104,8 +103,8 @@ function PasswordUpdateSection({ updatePassword, isResettingPassword }) {
   };
 
   return (
-    <div className="space-y-6">
-      <h4 className="font-medium">Change Password</h4>
+    <div className="space-y-2">
+      <Label>Change Password</Label>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Current Password */}
         <LabledInput
