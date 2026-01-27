@@ -22,10 +22,10 @@ import NotePage from "./pages/NotePage";
 import { useRouteStore } from "./stores/useRouteStore";
 import { useNoteStore } from "./stores/useNoteStore";
 import NotFoundPage from "./pages/NotFoundPage";
-import PersonalDetails from "./pages/Settings/Profile";
-import Personalization from "./pages/Settings/Appearance";
+import Profile from "./pages/Settings/Profile";
+import Appearance from "./pages/Settings/Appearance";
 import Security from "./pages/Settings/Security";
-import PhotoAndCover from "./pages/Settings/Photos";
+import Photos from "./pages/Settings/Photos";
 import OAuthCallback from "./pages/OAuthCallback";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import UsersPage from "./pages/admin/user";
@@ -135,11 +135,11 @@ function App() {
                       element={<NotificationPage />}
                     />
                     <Route path="settings" element={<SettingsPage />}>
-                      <Route index element={<Personalization />} />
-                      <Route path="appearance" element={<PersonalDetails />} />
-                      <Route path="profile" element={<Personalization />} />
-                      <Route path="photos" element={<Security />} />
-                      <Route path="security" element={<PhotoAndCover />} />
+                      <Route index element={<Appearance />} />
+                      <Route path="appearance" element={<Appearance />} />
+                      <Route path="profile" element={<Profile />} />
+                      <Route path="photos" element={<Photos />} />
+                      <Route path="security" element={<Security />} />
                     </Route>
                   </>
                 )}
