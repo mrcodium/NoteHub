@@ -53,8 +53,8 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="">
-      <div className="space-y-2 sm:space-y-4 max-w-screen-lg mx-auto">
+    <div className="p-2">
+      <div className="space-y-3 sm:space-y-4 max-w-screen-lg mx-auto">
         {/* Render transformed notes */}
         {articles.map((note) => (
           <ArticleCard

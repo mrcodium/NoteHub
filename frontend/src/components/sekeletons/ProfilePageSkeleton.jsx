@@ -27,8 +27,8 @@ export const CollectionSkeleton = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div className="space-y-1">
-          <Skeleton className={"h-9 w-32"} />
-          <Skeleton className="h-4 w-20" />
+          <Skeleton className={"h-8 w-32"} />
+          <Skeleton className="h-5 w-20" />
           <div className="text-sm text-muted-foreground"></div>
         </div>
 
@@ -38,13 +38,13 @@ export const CollectionSkeleton = () => {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-0">
         {Array(5)
           .fill(null)
           .map((_, index) => (
-            <Card
+            <div
               key={index}
-              className="h-20 mx-auto overflow-hidden shadow-sm animate-pulse"
+              className="h-20 rounded-none bg-card mx-auto border-b-[1px] border-primary/30 overflow-hidden shadow-sm animate-pulse"
             />
           ))}
       </div>

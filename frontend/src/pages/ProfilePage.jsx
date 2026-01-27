@@ -223,7 +223,7 @@ const ProfilePage = () => {
         <meta name="twitter:image" content={user.avatar} />
       </Helmet>
 
-      <div className="">
+      <div className="p-4">
         {/* Image Dialog */}
         <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
           <DialogContent className="p-0 overflow-hidden max-w-[100vw] sm:max-w-none w-auto">

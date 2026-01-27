@@ -101,6 +101,7 @@ div:has(> .tiptap.ProseMirror) {
 
 .tiptap {
   tab-size: 4;
+  @apply !m-5;
   /* @apply relative whitespace-pre-wrap w-full border-none outline-none mx-auto bg-background text-foreground font-sans leading-relaxed overflow-x-hidden p-4; */
 
   img {

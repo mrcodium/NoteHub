@@ -33,7 +33,7 @@ export function ArticleCardSkeleton() {
             </div>
             
             {/* Read more link skeleton */}
-            <Skeleton className="h-9 w-28 mt-2" />
+            <Skeleton className="h-8 w-[106px] mt-2" />
           </div>
 
           {/* Image carousel skeleton */}

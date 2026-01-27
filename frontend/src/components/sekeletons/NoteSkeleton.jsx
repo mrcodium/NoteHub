@@ -12,7 +12,7 @@ const NoteSkeleton = () => {
   return (
     <div className="h-svh flex w-full justify-center">
       <div className="max-w-screen-md w-full">
-        <div className="py-8 space-y-6 border-b border-dashed mb-12">
+        <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
           <div className="flex  items-center justify-between">
             <div className="flex flex-row items-center w-max gap-3">
               <Skeleton className={"size-12 rounded-full"} />
@@ -24,7 +24,7 @@ const NoteSkeleton = () => {
                 <Skeleton className={"h-4 w-28"} />
               </div>
             </div>
-            <Skeleton className={"h-10 w-24 rounded-full"} />
+            <Skeleton className={"h-10 w-10 sm:w-24 rounded-full"} />
           </div>
 
           <div className="flex justify-around gap-8">
@@ -34,7 +34,7 @@ const NoteSkeleton = () => {
                 <Skeleton className={"h-4 w-20"} />
               </div>
               <div className="flex flex-col gap-0.5">
-                <Skeleton className={"h-4 w-24"} />
+                <Skeleton className={"h-5 w-24"} />
               </div>
             </div>
 
@@ -44,13 +44,13 @@ const NoteSkeleton = () => {
                 <Skeleton className={"h-4 w-20"} />
               </div>
               <div className="flex flex-col gap-0.5">
-                <Skeleton className={"h-4 w-24"} />
+                <Skeleton className={"h-5 w-24"} />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="">
+        <div className="px-4">
           <Skeleton className="h-12 w-[80%] mb-8" />
           <div className="list space-y-2 my-12">
             <Skeleton className={`h-8 w-48 mb-4`} />

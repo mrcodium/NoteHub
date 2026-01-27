@@ -153,7 +153,7 @@ const CollectionPage = () => {
         />
       </Helmet>
 
-      <div className="min-h-svh">
+      <div className="px-4 py-8 min-h-svh">
         <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
           <div className="flex justify-between items-end">
             <CollectionHeader

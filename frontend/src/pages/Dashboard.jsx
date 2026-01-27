@@ -74,7 +74,7 @@ const Dashboard = () => {
           {/* ✅ ACTUAL scroll container */}
           <div
             ref={scrollRef}
-            className="scrollRef h-full overflow-y-auto overflow-x-hidden p-4 bg-[#f5f5f5] dark:bg-background"
+            className="scrollRef h-full overflow-y-auto overflow-x-hidden"
           >
             <Outlet />
           </div>

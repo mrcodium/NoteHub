@@ -251,7 +251,7 @@ const NotePagePublic = () => {
     return () => el.removeEventListener("scroll", onScroll);
   }, [toc, scrollRef]);
 
-  if (isLoading ||0) {
+  if (isLoading) {
     return <NoteSkeleton />;
   }
 
@@ -304,17 +304,26 @@ const NotePagePublic = () => {
     <>
       <Helmet>
         <title>{note.name} | NoteHub</title>
-        <meta name="description" content={stripHTML(note.content).slice(0, 160)} />
+        <meta
+          name="description"
+          content={stripHTML(note.content).slice(0, 160)}
+        />
 
         {/* Open Graph */}
         <meta property="og:title" content={note.name} />
-        <meta property="og:description" content={stripHTML(note.content).slice(0, 160)} />
+        <meta
+          property="og:description"
+          content={stripHTML(note.content).slice(0, 160)}
+        />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={window.location.href} />
 
         {/* Twitter */}
         <meta name="twitter:title" content={note.name} />
-        <meta name="twitter:description" content={stripHTML(note.content).slice(0, 160)} />
+        <meta
+          name="twitter:description"
+          content={stripHTML(note.content).slice(0, 160)}
+        />
       </Helmet>
 
       <div
@@ -324,7 +333,7 @@ const NotePagePublic = () => {
         )}
       >
         <div className="max-w-screen-md w-full mx-auto relative">
-          <div className="py-8 space-y-6 border-b border-dashed mb-12">
+          <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
             <div className="flex items-center justify-between">
               <Link
                 to={`/user/${author?.userName}`}

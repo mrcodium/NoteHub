@@ -194,15 +194,15 @@ export function ArticleCard({
               {description}
             </p>
             <div className="mt-2 flex items-center gap-2">
+              <Button asChild size="sm" variant="secondary" className="bg-primary/10">
               <Link
                 to={`/user/${author?.userName}/${collection.slug}/${note.slug}`}
                 className="block w-fit"
               >
-                <Button className="w-full">
                   Read More
                   <ChevronRight />
-                </Button>
               </Link>
+                </Button>
             </div>
           </div>
 
