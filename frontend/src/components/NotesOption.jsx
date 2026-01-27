@@ -151,9 +151,9 @@ const NotesOption = React.memo(
                 <CommandList className="min-h-[50svh] overflow-y-auto">
                   <CommandEmpty>No collections found</CommandEmpty>
                   <CommandGroup>
-                    {filteredCollections.map((collection) => (
+                    {filteredCollections.map((collection, index) => (
                       <CommandItem
-                        key={collection._id}
+                        key={collection._id || index}
                         value={collection.name}
                         onSelect={() => handleMove(collection._id)}
                         className="group flex cursor-pointer items-center gap-4 border-b p-3 rounded-none transition-all hover:bg-muted/50 hover:shadow-sm"

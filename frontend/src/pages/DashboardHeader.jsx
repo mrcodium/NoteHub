@@ -9,9 +9,8 @@ import {
 import { SidebarOpenTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
-import axios from "axios";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +20,6 @@ import {
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useRouteStore } from "@/stores/useRouteStore";
-import { formatCompactNumber } from "@/lib/utils";
 import AddNoteDrawer from "@/components/AddNoteDrawer";
 import { SearchButton } from "@/components/SearchButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,14 +31,17 @@ import {
 } from "@/components/ui/tooltip";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import GithubIcon from "@/components/githubIcon";
+import { useGithubStore } from "@/stores/useGithubStore";
+import { cn } from "@/lib/utils";
 
 const DashboardHeader = () => {
   const navigate = useNavigate();
   const { routes } = useRouteStore();
   const { authUser } = useAuthStore();
   const { isSidebarOpen, isMobile } = useSidebar();
-  const [githubStarCount, setGithubStarCount] = useState(null);
   const [visibleBreadcrumbs, setVisibleBreadcrumbs] = useState(3);
+  const githubStarCount = useGithubStore((s) => s.starCount);
+  const location = useLocation();
 
   // Determine number of visible breadcrumbs based on viewport width
   useEffect(() => {
@@ -62,22 +63,6 @@ const DashboardHeader = () => {
     updateVisibleBreadcrumbs();
     window.addEventListener("resize", updateVisibleBreadcrumbs);
     return () => window.removeEventListener("resize", updateVisibleBreadcrumbs);
-  }, []);
-
-  useEffect(() => {
-    const fetchStars = async () => {
-      try {
-        const response = await axios.get(
-          "https://api.github.com/repos/abhijeetSinghRajput/notehub",
-        );
-        const starCount = response.data?.stargazers_count;
-        setGithubStarCount(formatCompactNumber(starCount));
-      } catch (error) {
-        setGithubStarCount(null);
-        console.error(error);
-      }
-    };
-    fetchStars();
   }, []);
 
   // Calculate which breadcrumbs to show
@@ -195,7 +180,9 @@ const DashboardHeader = () => {
                       to={route.path}
                       className={`truncate flex items-center gap-2 min-w-0 ${
                         index === visible.length - 1 ? "text-foreground" : ""
-                      }`}
+                      }
+                      ${route.path === "/" ? "logo" : ""}
+                      `}
                     >
                       {route.path === "/" && (
                         <div className="size-6">
@@ -206,7 +193,17 @@ const DashboardHeader = () => {
                           />
                         </div>
                       )}
-                      {route.name}
+                      <span
+                        className={cn("truncate",
+                          route.path === "/"
+                            ? location.pathname === "/"
+                              ? "inline"
+                              : "hidden" // hide home name if not on /
+                            : "inline", // all other route names visible
+                        )}
+                      >
+                        {route.name}
+                      </span>
                     </Link>
                   </BreadcrumbItem>
 
@@ -230,7 +227,7 @@ const DashboardHeader = () => {
               </a>
             </TooltipWrapper>
           )}
-          
+
           {!authUser ? (
             <div className="flex gap-2">
               <ModeToggleMini className={"size-9"} />
@@ -240,7 +237,7 @@ const DashboardHeader = () => {
             <>
               <AddNoteDrawer
                 trigger={
-                  <Button className={`size-8`}>
+                  <Button tooltip="Create Notes" className={`size-8`}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 }

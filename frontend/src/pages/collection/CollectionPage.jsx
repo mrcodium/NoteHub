@@ -1,31 +1,20 @@
 // src > pages > collection > CollectionPage.jsx
 import CollectionPageSkeleton from "@/components/sekeletons/CollectionPageSkeleton";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { CollectionHeader } from "./CollectionHeader";
-import { CollectionNotesGrid } from "./CollectionNotesGrid";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { axiosInstance } from "@/lib/axios";
 import { Forbidden, NotFound } from "./ErrorStates";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ArrowUpAZ, Type } from "lucide-react";
 import SortSelector from "./SortSelector";
 import { Helmet } from "react-helmet-async";
+import NoteCard from "./NoteCard";
 
 const CollectionPage = () => {
   const { username, collectionSlug: rawSlug } = useParams();
   const collectionSlug = rawSlug?.toLowerCase();
 
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [guestCollection, setGuestCollection] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -164,7 +153,7 @@ const CollectionPage = () => {
         />
       </Helmet>
 
-      <div className="px-4 py-8 min-h-svh overflow-y-auto bg-[#f5f5f5] dark:bg-background">
+      <div className="min-h-svh">
         <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
           <div className="flex justify-between items-end">
             <CollectionHeader
@@ -179,14 +168,18 @@ const CollectionPage = () => {
             setSortBy={setSortBy}
             toggleSortDirection={toggleSortDirection}
           />
-          <CollectionNotesGrid
-            notes={notes}
-            sortedNotes={sortedNotes}
-            isOwner={isOwner}
-            username={username}
-            collectionSlug={collectionSlug}
-            collection={collection}
-          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedNotes.map((note) => (
+              <NoteCard
+                key={note._id}
+                note={note}
+                isOwner={isOwner}
+                username={username}
+                collectionSlug={collectionSlug}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </>

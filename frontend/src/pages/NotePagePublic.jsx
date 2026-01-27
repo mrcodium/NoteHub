@@ -251,7 +251,7 @@ const NotePagePublic = () => {
     return () => el.removeEventListener("scroll", onScroll);
   }, [toc, scrollRef]);
 
-  if (isLoading) {
+  if (isLoading ||0) {
     return <NoteSkeleton />;
   }
 
@@ -324,7 +324,7 @@ const NotePagePublic = () => {
         )}
       >
         <div className="max-w-screen-md w-full mx-auto relative">
-          <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
+          <div className="py-8 space-y-6 border-b border-dashed mb-12">
             <div className="flex items-center justify-between">
               <Link
                 to={`/user/${author?.userName}`}
@@ -372,10 +372,10 @@ const NotePagePublic = () => {
                   onClick={() => navigate(`/note/${note?._id}/editor`)}
                   variant="secondary"
                   size="lg"
-                  className="rounded-full px-6 border bg-muted"
+                  className="rounded-full w-10 p-0 sm:w-auto sm:px-6 border bg-muted"
                 >
                   <Pencil />
-                  <span>Edit</span>
+                  <span className="hidden sm:inline-block">Edit</span>
                 </Button>
               )}
             </div>

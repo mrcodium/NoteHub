@@ -78,7 +78,6 @@ const SignupPage = () => {
 
   useEffect(() => {
     const checkEmailAvailability = async () => {
-      console.count("callback");
       const trimmedEmail = formData.email.trim();
       if (!trimmedEmail || !validator.isEmail(trimmedEmail)) {
         setEmailStatus(null);
@@ -248,8 +247,8 @@ const SignupPage = () => {
         />
       </Helmet>
 
-      <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
-        <BaseHeader />
+      <BaseHeader />
+      <div className="flex p-4 pt-8 items-center justify-center bg-[#f5f5f5] dark:bg-background">
         <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
           <Card>
             <CardHeader>
@@ -309,10 +308,7 @@ const SignupPage = () => {
 
                   {/* OTP Input */}
                   <div className="flex flex-col gap-1">
-                    <div
-                      className="grid relative gap-2"
-                      style={{ gridTemplateColumns: "2fr 1fr" }}
-                    >
+                    <div className="relative flex flex-col sm:flex-row items-center gap-4">
                       <InputOTP
                         maxLength={6}
                         id="otp"
@@ -336,14 +332,13 @@ const SignupPage = () => {
                         </InputOTPGroup>
                       </InputOTP>
                       <Button
-                        className="w-full"
                         variant="outline"
                         type="button"
                         onClick={handleSendotp}
                         disabled={
                           cooldown > 0 ||
                           isSendingOtp ||
-                          emailStatus === "taken"
+                          emailStatus !== "available"
                         }
                       >
                         {isSendingOtp ? (

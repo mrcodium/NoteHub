@@ -39,9 +39,15 @@ import CollectionPage from "./pages/collection/CollectionPage";
 import { CollaboratorManagerProvider } from "./contex/CollaboratorManagerContext";
 import { CollaboratorsDialog } from "./pages/collection/CollaboratorsDialog";
 import { ThemeShortcut } from "./components/theme-shortcut";
+import { useGithubStore } from "./stores/useGithubStore";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+  const fetchStars = useGithubStore((s) => s.fetchStars);
+
+  useEffect(() => {
+    fetchStars();
+  }, []);
 
   useEffect(() => {
     checkAuth();
@@ -93,7 +99,7 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <ThemeShortcut/>
+      <ThemeShortcut />
       <CollaboratorManagerProvider>
         <TooltipProvider>
           <CollaboratorsDialog />

@@ -239,7 +239,7 @@ export function SearchButton() {
     <>
       {/* Square search button */}
       <Button
-        toolip="Ctrl + K"
+        tooltip="Ctrl + K"
         variant="ghost"
         size="icon"
         className="h-9 w-9 rounded-md"
@@ -346,9 +346,9 @@ export function SearchButton() {
                         Results
                       </h3>
                       <div>
-                        {memoizedNotes.map((note) => (
+                        {memoizedNotes.map((note, index) => (
                           <div
-                            key={note._id}
+                            key={note._id || index}
                             className="flex border-b border-primary/20 hover:bg-primary/10 items-start gap-3 p-2 px-4  group cursor-pointer"
                             onClick={() => {
                               navigate(
@@ -427,9 +427,9 @@ export function SearchButton() {
                         Results
                       </h3>
                       <div className="space-y-1">
-                        {searchResults.users.map((user) => (
+                        {searchResults.users.map((user, index) => (
                           <div
-                            key={user._id}
+                            key={user._id || index}
                             onClick={() => {
                               addSearchHistory(user);
                               navigate(`/user/${user.userName}`);
@@ -492,9 +492,9 @@ export function SearchButton() {
                         </Button>
                       </div>
                       <div className="space-y-1">
-                        {searchHistory.map((user) => (
+                        {searchHistory.map((user, index) => (
                           <div
-                            key={user._id}
+                            key={user._id || index}
                             onClick={() => {
                               navigate(`/user/${user.userName}`);
                               setOpen(false);

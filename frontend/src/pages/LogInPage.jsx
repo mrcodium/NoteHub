@@ -81,8 +81,8 @@ const LogInPage = () => {
         />
       </Helmet>
 
-      <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
-        <BaseHeader />
+      <BaseHeader />
+      <div className="flex p-4 pt-10 items-center justify-center bg-[#f5f5f5] dark:bg-background">
         <div className={cn("flex flex-col gap-2 max-w-[440px] w-full m-auto")}>
           <Card>
             <CardHeader>

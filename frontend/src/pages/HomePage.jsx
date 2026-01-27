@@ -53,7 +53,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="p-2 sm:p-4 h-full overflow-y-auto bg-[#f5f5f5] dark:bg-background">
+    <div className="">
       <div className="space-y-2 sm:space-y-4 max-w-screen-lg mx-auto">
         {/* Render transformed notes */}
         {articles.map((note) => (

@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import BaseHeader from "@/components/BaseHeader";
 import { LabledInput } from "@/components/ui/labeled-input";
+import { Helmet } from "react-helmet-async";
 
 const ForgotPasswordPage = () => {
   const {
@@ -165,9 +166,9 @@ const ForgotPasswordPage = () => {
           content="Reset your NoteHub password securely to regain access to your notes and collections."
         />
       </Helmet>
-      
-      <div className="flex pt-8 items-center justify-center h-svh bg-[#f5f5f5] dark:bg-background">
-        <BaseHeader />
+
+      <BaseHeader />
+      <div className="flex p-4 pt-8 items-center justify-center bg-[#f5f5f5] dark:bg-background">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl">Forgot Password</CardTitle>
@@ -255,26 +256,31 @@ const ForgotPasswordPage = () => {
 
               {/* OTP Field */}
               <div className="space-y-2">
-                <div className="relative grid grid-cols-[3fr_1fr] items-center gap-4">
-                  <InputOTP
-                    maxLength={6}
-                    value={otp}
-                    onChange={setOtp}
-                    pattern={REGEXP_ONLY_DIGITS}
-                    disabled={isResettingPassword}
-                  >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                    </InputOTPGroup>
-                    <InputOTPSeparator />
-                    <InputOTPGroup>
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
+                <div className="relative flex flex-col sm:flex-row items-center gap-4">
+                  <div className="space-y-1">
+                    <InputOTP
+                      maxLength={6}
+                      value={otp}
+                      onChange={setOtp}
+                      pattern={REGEXP_ONLY_DIGITS}
+                      disabled={isResettingPassword}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                      </InputOTPGroup>
+                      <InputOTPSeparator />
+                      <InputOTPGroup>
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                    <p className="text-xs text-muted-foreground">
+                      Enter the 6-digit OTP sent to your email
+                    </p>
+                  </div>
                   <Button
                     variant="outline"
                     onClick={handleSendOtp}
@@ -294,9 +300,6 @@ const ForgotPasswordPage = () => {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Enter the 6-digit OTP sent to your email
-                </p>
               </div>
 
               {/* Reset Password Button */}

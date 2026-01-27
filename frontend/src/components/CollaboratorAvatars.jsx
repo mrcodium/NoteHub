@@ -57,9 +57,9 @@ const AvatarStack = ({ collaborators = [], maxVisible = 5, size = "md" }) => {
         </TooltipWrapper>
       )}
 
-      {collaborators.slice(0, visibleAvatars).reverse().map((collaborator) => (
+      {collaborators.slice(0, visibleAvatars).reverse().map((collaborator, index) => (
         <TooltipWrapper
-          key={collaborator._id}
+          key={collaborator._id || index}
           message={`@${collaborator.userName}`}
         >
           <Avatar className={cn(
