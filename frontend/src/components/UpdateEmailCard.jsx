@@ -120,7 +120,7 @@ const UpdateEmailCard = () => {
 
   return (
     <div className="space-y-2">
-      <Label>Personal Detail</Label>
+      <Label>Update Email Address</Label>
       <div className="space-y-4">
         <div className="flex gap-2 bg-accent/50 p-2 rounded-xl items-center">
           <Avatar className="size-10">
