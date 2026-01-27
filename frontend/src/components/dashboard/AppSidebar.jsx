@@ -47,7 +47,7 @@ const AppSidebar = (props) => {
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader className="p-2 pl-4 h-16 justify-center">
+      <SidebarHeader className="py-2 px-4 h-16 justify-center">
         {showSearch ? (
           <div className="flex gap-2 items-center">
             <SidebarSearch
@@ -77,31 +77,31 @@ const AppSidebar = (props) => {
               </Link>
             </div>
 
-            <div className="flex buttons-container">
-              {!location.pathname.startsWith("/settings") && (
-                <>
-                  <Button
-                    message="Collapse All"
-                    className="size-8 text-sidebar-accent-foreground/70"
-                    variant="ghost"
-                    onClick={collapseAll}
-                  >
-                    <CopyMinus />
-                  </Button>
+            <div className="flex buttons-container gap-1">
+              <Button
+                tooltip="Collapse All"
+                className="size-8 text-sidebar-accent-foreground/70"
+                variant="ghost"
+                onClick={collapseAll}
+              >
+                <CopyMinus />
+              </Button>
 
-                  <Button
-                    message="Search File"
-                    className="size-8 text-sidebar-accent-foreground/70"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowSearch(true);
-                    }}
-                  >
-                    <Search />
-                  </Button>
-                </>
-              )}
-              <ModeToggleMini className={"text-accent-foreground/70"} />
+              <ModeToggleMini
+                variant="ghost"
+                className={"text-accent-foreground/70"}
+              />
+
+              <Button
+                tooltip="Search File"
+                className="size-8 text-sidebar-accent-foreground/70"
+                variant="ghost"
+                onClick={() => {
+                  setShowSearch(true);
+                }}
+              >
+                <Search />
+              </Button>
             </div>
           </div>
         )}
