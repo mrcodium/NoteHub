@@ -104,13 +104,19 @@ const NavUser = () => {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <Link to="/settings">
+              <Link
+                to="/settings/appearance"
+                onClick={() => isMobile && closeSidebar()}
+              >
                 <DropdownMenuItem>
                   <Settings />
                   Settings
                 </DropdownMenuItem>
               </Link>
-              <Link to="/notifications">
+              <Link
+                to="/notifications"
+                onClick={() => isMobile && closeSidebar()}
+              >
                 <DropdownMenuItem>
                   <Bell />
                   Notifications

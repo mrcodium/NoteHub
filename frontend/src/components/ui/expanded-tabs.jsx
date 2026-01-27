@@ -30,9 +30,9 @@ export function ExpandedTabs({ tabs, className, activeColor = "", onChange }) {
 
   // keep selected in sync with active route
   React.useEffect(() => {
-    const activeIndex = tabs.findIndex((tab) =>
-      location.pathname.startsWith(tab.path),
-    );
+    const activeIndex = tabs.findIndex((tab) => {
+      return location.pathname.startsWith(tab.path);
+    });
 
     if (activeIndex !== -1) {
       setSelected(activeIndex);
