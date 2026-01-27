@@ -77,7 +77,7 @@ const Photos = () => {
         <div className="space-y-4">
           <Label>Your Photo</Label>
           <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center">
-            <Avatar className="relative aspect-square shadow-md size-44 shrink-0 border-background rounded-full">
+            <Avatar className="relative aspect-square shadow-md size-28 sm:size-44  shrink-0 border-background rounded-full">
               <AvatarImage
                 className="w-full h-full object-cover rounded-full bg-background"
                 src={previewavatar || authUser?.avatar}
