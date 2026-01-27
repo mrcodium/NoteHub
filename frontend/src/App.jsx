@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import "./stores/useNetworkStore";
 import { ThemeProvider } from "./components/theme-provider";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useAuthStore } from "./stores/useAuthStore";
 import { Toaster } from "sonner";
 
@@ -135,7 +135,7 @@ function App() {
                       element={<NotificationPage />}
                     />
                     <Route path="settings" element={<SettingsPage />}>
-                      <Route index element={<Appearance />} />
+                    <Route index element={<Navigate to="appearance" replace />} />
                       <Route path="appearance" element={<Appearance />} />
                       <Route path="profile" element={<Profile />} />
                       <Route path="photos" element={<Photos />} />
