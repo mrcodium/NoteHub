@@ -48,15 +48,15 @@ const DashboardHeader = () => {
     const updateVisibleBreadcrumbs = () => {
       const width = window.innerWidth;
       if (width >= 1536) {
-        setVisibleBreadcrumbs(5); // 2xl: show 5 breadcrumbs
+        setVisibleBreadcrumbs(6); // 2xl: show 5 breadcrumbs
       } else if (width >= 1280) {
-        setVisibleBreadcrumbs(4); // xl: show 4 breadcrumbs
+        setVisibleBreadcrumbs(5); // xl: show 4 breadcrumbs
       } else if (width >= 1024) {
-        setVisibleBreadcrumbs(3); // lg: show 3 breadcrumbs
+        setVisibleBreadcrumbs(4); // lg: show 3 breadcrumbs
       } else if (width >= 768) {
-        setVisibleBreadcrumbs(2); // md: show 2 breadcrumbs
+        setVisibleBreadcrumbs(3); // md: show 2 breadcrumbs
       } else {
-        setVisibleBreadcrumbs(1); // sm: show only current breadcrumb
+        setVisibleBreadcrumbs(2); // sm: show only current breadcrumb
       }
     };
 
@@ -92,6 +92,8 @@ const DashboardHeader = () => {
   };
 
   const { visible, hidden } = getBreadcrumbDisplay();
+  const shouldHideHomeOnlyDropdown =
+    hidden.length === 1 && hidden[0].path === "/";
 
   return (
     <header className="z-50 flex border-b sticky top-0 bg-background justify-between h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -108,41 +110,47 @@ const DashboardHeader = () => {
 
           <Breadcrumb className="flex-1 min-w-0">
             <BreadcrumbList className="flex-nowrap">
-              {hidden.length > 0 && visibleBreadcrumbs === 1 && (
-                <>
-                  <BreadcrumbItem>
-                    <DropdownMenu modal={true} className="z-50 transition-all">
-                      <DropdownMenuTrigger className="flex items-center gap-1">
-                        <BreadcrumbEllipsis className="size-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="min-w-32 transition-all"
-                        align="start"
+              {hidden.length > 0 &&
+                visibleBreadcrumbs === 1 &&
+                !shouldHideHomeOnlyDropdown && (
+                  <>
+                    <BreadcrumbItem>
+                      <DropdownMenu
+                        modal={true}
+                        className="z-50 transition-all"
                       >
-                        {hidden.map((hiddenRoute, hiddenIndex) => (
-                          <Link
-                            key={hiddenIndex}
-                            className="block truncate whitespace-nowrap w-full"
-                            to={hiddenRoute.path}
-                          >
-                            <DropdownMenuItem className="px-2 py-1 min-w-0">
-                              {hiddenRoute.name}
-                            </DropdownMenuItem>
-                          </Link>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                </>
-              )}
+                        <DropdownMenuTrigger className="flex items-center gap-1">
+                          <BreadcrumbEllipsis className="size-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="min-w-32 transition-all"
+                          align="start"
+                        >
+                          {hidden.map((hiddenRoute, hiddenIndex) => (
+                            <Link
+                              key={hiddenIndex}
+                              className="block truncate whitespace-nowrap w-full"
+                              to={hiddenRoute.path}
+                            >
+                              <DropdownMenuItem className="px-2 py-1 min-w-0">
+                                {hiddenRoute.name}
+                              </DropdownMenuItem>
+                            </Link>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                  </>
+                )}
 
               {visible.map((route, index) => (
                 <React.Fragment key={route.path}>
                   {index === 1 &&
                     hidden.length > 0 &&
-                    visibleBreadcrumbs > 1 && (
+                    visibleBreadcrumbs > 1 &&
+                    !shouldHideHomeOnlyDropdown && (
                       <>
                         <BreadcrumbItem>
                           <DropdownMenu
@@ -178,18 +186,18 @@ const DashboardHeader = () => {
                   <BreadcrumbItem className="min-w-0">
                     <Link
                       to={route.path}
-                      className={`truncate flex items-center gap-2 min-w-0 ${
+                      className={`truncate flex items-center gap-2 ${
                         index === visible.length - 1 ? "text-foreground" : ""
                       }
                       ${route.path === "/" ? "logo" : ""}
                       `}
                     >
                       {route.path === "/" && (
-                        <div className="size-6">
+                        <div className="h-6 w-6 flex items-center justify-center flex-shrink-0">
                           <img
-                            className="w-full h-full object-contain"
                             src="/notehub.png"
-                            alt=""
+                            alt="NoteHub"
+                            className="max-h-full max-w-full object-contain"
                           />
                         </div>
                       )}

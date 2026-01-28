@@ -44,24 +44,15 @@ const UpdateEmailCard = () => {
   const [emailError, setEmailError] = useState("");
   const [emailStatus, setEmailStatus] = useState(null); // "available" | "taken"
   const [checkingEmail, setCheckingEmail] = useState(false);
-
   const [cooldown, setCooldown] = useState(0);
 
   /* ------------------ Debounced email check ------------------ */
-  const debouncedCheckEmail = useMemo(
+  const debouncedCheckAvailability = useMemo(
     () =>
       debounce(async (email) => {
-        const trimmedEmail = email.trim();
-
-        if (!validator.isEmail(trimmedEmail)) {
-          setEmailStatus(null);
-          setEmailError("Invalid email format");
-          setCheckingEmail(false);
-          return;
-        }
-
+        setCheckingEmail(true);
         try {
-          const available = await isEmailAvailable(trimmedEmail);
+          const available = await isEmailAvailable(email);
           setEmailStatus(available ? "available" : "taken");
           setEmailError(available ? "" : "Email already in use");
         } catch {
@@ -77,17 +68,28 @@ const UpdateEmailCard = () => {
     if (!newEmail) {
       setEmailStatus(null);
       setEmailError("");
+      setCheckingEmail(false);
       return;
     }
 
-    setCheckingEmail(true);
-    setEmailStatus(null);
+    const trimmedEmail = newEmail.trim();
+
+    // ✅ instant format validation (NO debounce)
+    if (!validator.isEmail(trimmedEmail)) {
+      debouncedCheckAvailability.cancel();
+      setEmailStatus(null);
+      setEmailError("Invalid email format");
+      setCheckingEmail(false);
+      return;
+    }
+
+    // ✅ valid format → debounce API call
     setEmailError("");
+    setEmailStatus(null);
+    debouncedCheckAvailability(trimmedEmail);
 
-    debouncedCheckEmail(newEmail);
-
-    return () => debouncedCheckEmail.cancel();
-  }, [newEmail, debouncedCheckEmail]);
+    return () => debouncedCheckAvailability.cancel();
+  }, [newEmail, debouncedCheckAvailability]);
 
   /* ------------------ OTP cooldown ------------------ */
   useEffect(() => {
@@ -153,6 +155,7 @@ const UpdateEmailCard = () => {
           onChange={(e) => setNewEmail(e.target.value)}
           error={emailError}
           disabled={isUpdatingEmail}
+          loading={checkingEmail}
         />
 
         <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -197,7 +200,7 @@ const UpdateEmailCard = () => {
         </div>
 
         <Button
-          className="h-12 font-semibold rounded-xl"
+          className="w-full sm:w-max"
           onClick={handleConfirmEmail}
           disabled={isUpdatingEmail || otp.length !== 6}
         >

@@ -32,7 +32,6 @@ import UsersPage from "./pages/admin/user";
 import CommunicationPage from "./pages/admin/communication";
 import ReportsPage from "./pages/admin/reports";
 import TrashPage from "./pages/admin/trash";
-import NotificationPage from "./pages/NotificationPage";
 import NotePagePublic from "./pages/NotePagePublic";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import CollectionPage from "./pages/collection/CollectionPage";
@@ -130,10 +129,6 @@ function App() {
                   <>
                     <Route path="note/:id" element={<NotePage />} />
                     <Route path="note/:id/editor" element={<Tiptap />} />
-                    <Route
-                      path="notifications"
-                      element={<NotificationPage />}
-                    />
                     <Route path="settings" element={<SettingsPage />}>
                     <Route index element={<Navigate to="appearance" replace />} />
                       <Route path="appearance" element={<Appearance />} />

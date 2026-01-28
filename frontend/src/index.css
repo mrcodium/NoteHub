@@ -247,7 +247,7 @@ div:has(> .tiptap.ProseMirror) {
     overflow-x: auto;
     tab-size: 4;
     display: flex;
-    @apply bg-input/30 text-primary dark:text-primary p-4 rounded-md;
+    @apply bg-input/30 text-primary dark:text-primary p-4 ;
 
     code {
       @apply whitespace-pre p-0 m-0 text-sm leading-relaxed; /* tighter line height */

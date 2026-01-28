@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Link } from "react-router-dom";
+import { Separator } from "../ui/separator";
 
 const NavUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -70,12 +71,14 @@ const NavUser = () => {
 
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
+            side={"bottom"}
+            sideOffset={10}
           >
             <Link to={`/user/${authUser?.userName}`}>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => isMobile && closeSidebar()}
+                className="!h-auto"
+              >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
                     src={authUser?.avatar}
@@ -101,7 +104,7 @@ const NavUser = () => {
               </DropdownMenuItem>
             </Link>
 
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-primary/10 my-2" />
 
             <DropdownMenuGroup>
               <Link
@@ -111,15 +114,6 @@ const NavUser = () => {
                 <DropdownMenuItem>
                   <Settings />
                   Settings
-                </DropdownMenuItem>
-              </Link>
-              <Link
-                to="/notifications"
-                onClick={() => isMobile && closeSidebar()}
-              >
-                <DropdownMenuItem>
-                  <Bell />
-                  Notifications
                 </DropdownMenuItem>
               </Link>
             </DropdownMenuGroup>
