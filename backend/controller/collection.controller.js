@@ -156,6 +156,7 @@ const getCollectionsAggregatePipeline = (
           {
             $project: {
               _id: 1,
+              role: 1,
               fullName: 1,
               userName: 1,
               avatar: 1,
@@ -207,6 +208,7 @@ const getCollectionsAggregatePipeline = (
                       {
                         $project: {
                           _id: 1,
+                          role: 1,
                           fullName: 1,
                           userName: 1,
                           avatar: 1,
@@ -362,7 +364,7 @@ export const updateCollaborators = async (req, res) => {
       { _id: collectionId, userId: user._id },
       { collaborators },
       { new: true }
-    ).populate("collaborators", "fullName userName email avatar _id");
+    ).populate("collaborators", "role fullName userName email avatar _id");
 
     if (!updatedCollection) {
       return res.status(404).json({

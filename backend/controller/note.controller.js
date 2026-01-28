@@ -628,7 +628,7 @@ export const updateCollaborators = async (req, res) => {
     )
       .populate("collectionId", "slug")
       .populate("userId", "userName")
-      .populate("collaborators", "fullName userName email avatar _id");
+      .populate("collaborators", "role fullName userName email avatar _id");
 
     if (!updatedNote) {
       return res.status(404).json({
@@ -828,7 +828,7 @@ export const searchNotes = async (req, res) => {
 
     // Fetch full note details (only for current page)
     const notes = await Note.find({ _id: { $in: pagedNoteIds } })
-      .populate("userId", "_id userName fullName avatar")
+      .populate("userId", "_id userName role fullName avatar")
       .populate("collectionId", "_id name slug visibility collaborators userId")
       .lean();
 

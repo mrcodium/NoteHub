@@ -337,7 +337,7 @@ const UserInfo = ({ user, className = "" }) => (
       <AvatarFallback>{user?.fullName[0].toUpperCase()}</AvatarFallback>
     </Avatar>
     <div>
-      <div className="font-medium flex items-center justify-between">
+      <div className="font-medium flex gap-1.5 items-center justify-between">
         {user.fullName}
         {user.role === "admin" && (
           <BadgeIcon className="size-[14px] text-blue-500" />
