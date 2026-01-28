@@ -1,53 +1,77 @@
-import React, { useEffect, useState } from "react";
-import { extensions } from "./config/extensions.config";
+import React, { useEffect, useMemo, useState } from "react";
 import { EditorProvider } from "@tiptap/react";
 import { useParams } from "react-router-dom";
+import debounce from "lodash/debounce";
+
+import { extensions } from "./config/extensions.config";
 import { useNoteStore } from "@/stores/useNoteStore";
-import NoteSkeleton from "../sekeletons/NoteSkeleton";
-import { MenuBar } from "./MenuBar";
+import { useDraftStore } from "@/stores/useDraftStore";
 import { useImageStore } from "@/stores/useImageStore";
-import { migrateMathStrings } from "@tiptap/extension-mathematics";
 import { useEditorStore } from "@/stores/useEditorStore";
 
+import NoteSkeleton from "../sekeletons/NoteSkeleton";
+import { MenuBar } from "./MenuBar";
+import { migrateMathStrings } from "@tiptap/extension-mathematics";
+
 const Tiptap = () => {
-  const { getNoteContent, status } = useNoteStore();
-  const { getImages } = useImageStore();
   const { id: noteId } = useParams();
-  const [content, setContent] = useState("");
+
+  const { getNoteContent, status } = useNoteStore();
+  const { getDraft, setDraft } = useDraftStore();
+  const { getImages } = useImageStore();
+  const { editorFontFamily } = useEditorStore();
+
+  // Keep note as an object with `content` and `name`
+  const [note, setNote] = useState({ content: "", name: "" });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const { editorFontFamily } = useEditorStore();
+
+  // Debounced draft save
+  const saveDraft = useMemo(
+    () =>
+      debounce((noteObj) => {
+        // Save the entire note object, not just content/name
+        setDraft(noteId, noteObj);
+      }, 400),
+    [noteId],
+  );
 
   useEffect(() => {
     const fetchData = async () => {
-      if (noteId) {
-        const storedData = JSON.parse(localStorage.getItem("noteContent"));
-        if (storedData && storedData.noteId === noteId) {
-          setContent(storedData.content);
-        } else {
-          const note = await getNoteContent(noteId);
-          if (note === null) {
-            setNotFound(true);
-          } else {
-            setContent(note.content);
-          }
-        }
+      if (!noteId) return;
+
+      // 1️⃣ Try draft first
+      const draft = getDraft(noteId);
+      if (draft) {
+        setNote(draft); // draft is full object now
         setLoading(false);
+        return;
       }
+
+      // 2️⃣ Fallback to server
+      const serverNote = await getNoteContent(noteId);
+      console.log(serverNote);
+      if (!serverNote) {
+        setNotFound(true);
+      } else {
+        setNote(serverNote); // keep full object
+      }
+      setLoading(false);
     };
+
     getImages();
     fetchData();
-  }, [noteId, getNoteContent]);
+  }, [noteId, getNoteContent, getDraft]);
 
-  useEffect(() => {
-    if (content) {
-      const data = { noteId, content };
-      localStorage.setItem("noteContent", JSON.stringify(data));
-    }
-  }, [content, noteId]);
+  const handleUpdate = (html) => {
+    const updatedNote = {
+      ...note,
+      content: html,
+      updatedAt: Date.now(), // or new Date().toISOString()
+    };
 
-  const handleUpdate = (newContent) => {
-    setContent(newContent);
+    setNote(updatedNote);
+    saveDraft(updatedNote);
   };
 
   if (notFound) {
@@ -56,25 +80,23 @@ const Tiptap = () => {
         <img
           src="/404-not-found.svg"
           className="p-4 rounded-lg max-w-[500px]"
-        ></img>
+        />
       </div>
     );
   }
 
-  if (status.noteContent.state === "loading" || loading) {
+  if (loading || status.noteContent.state === "loading") {
     return <NoteSkeleton />;
   }
 
   return (
     <EditorProvider
-      className="h-full opacity-0"
+      className="h-full"
       slotBefore={<MenuBar noteId={noteId} />}
       extensions={extensions}
-      content={content}
+      content={note.content}
+      onCreate={({ editor }) => migrateMathStrings(editor)}
       onUpdate={({ editor }) => handleUpdate(editor.getHTML())}
-      onCreate={({ editor }) => {
-        migrateMathStrings(editor);
-      }}
       editorProps={{
         transformPastedHTML(html) {
           const doc = new DOMParser().parseFromString(html, "text/html");
@@ -83,12 +105,11 @@ const Tiptap = () => {
             el.style.removeProperty("font-family");
             el.style.removeProperty("font-size");
             el.style.removeProperty("line-height");
-
             if (!el.getAttribute("style")?.trim()) {
               el.removeAttribute("style");
             }
           });
-          console.count("hello");
+
           return doc.body.innerHTML;
         },
         attributes: {

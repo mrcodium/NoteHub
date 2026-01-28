@@ -35,6 +35,7 @@ import CollectionsOption from "../CollectionsOption";
 import { useLocalStorage } from "@/stores/useLocalStorage";
 import { HighlightMatch } from "../HighlightMatch";
 import { cn } from "@/lib/utils";
+import DraftsSection from "../DraftsSection";
 
 const NoteItem = ({ note }) => {
   const { closeSidebar, isMobile } = useSidebar();
@@ -284,19 +285,22 @@ const NavMain = ({ collections, searchQuery }) => {
   }
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Collections</SidebarGroupLabel>
-      <SidebarMenu>
-        {filteredCollections.map((collection) => (
-          <FolderCollapsible
-            key={collection._id}
-            collection={collection}
-            pinnedCollections={pinnedCollections}
-            searchQuery={searchQuery}
-          />
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
+    <>
+      <DraftsSection/>
+      <SidebarGroup>
+        <SidebarGroupLabel>Collections</SidebarGroupLabel>
+        <SidebarMenu>
+          {filteredCollections.map((collection) => (
+            <FolderCollapsible
+              key={collection._id}
+              collection={collection}
+              pinnedCollections={pinnedCollections}
+              searchQuery={searchQuery}
+            />
+          ))}
+        </SidebarMenu>
+      </SidebarGroup>
+    </>
   );
 };
 

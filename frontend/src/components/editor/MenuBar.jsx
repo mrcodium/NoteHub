@@ -32,11 +32,13 @@ import {
 import { LinkDialog } from "./LinkDialog";
 import MathDialog from "./MathDialog";
 import AddImageDialog from "./AddImageDialog";
+import { useDraftStore } from "@/stores/useDraftStore";
 
 export const MenuBar = ({ noteId }) => {
   const { editor } = useCurrentEditor();
   const navigate = useNavigate();
   const { updateContent, status, getNoteContent } = useNoteStore();
+  const { clearDraft } = useDraftStore();
 
   if (!editor) {
     return null;
@@ -84,6 +86,9 @@ export const MenuBar = ({ noteId }) => {
       noteId: noteId,
     });
 
+    // ✅ Clear draft ONLY after successful save
+    clearDraft(noteId);
+
     // navigate(`/note/${noteId}`);
     navigate(-1, { replace: true });
   };
@@ -97,16 +102,19 @@ export const MenuBar = ({ noteId }) => {
   const handleRevert = async () => {
     if (!noteId) return;
 
-    // 1. Clear the local storage for this note
-    localStorage.removeItem("noteContent");
-
-    // 2. Fetch fresh content from store (server or store cache)
+    // 1. Fetch fresh content from store (server or store cache)
     const note = await getNoteContent(noteId); // use your store function
     if (note !== null) {
       editor.commands.setContent(note.content, false); // replace editor content
     } else {
       editor.commands.clearContent(); // fallback if note not found
     }
+
+    // 2. Clear the local storage for this note
+    // clearing content or reverting to new content also create a new draft with fresh data,  so we are clearing the draft after reverting.
+    setTimeout(() => {
+      clearDraft(noteId);
+    }, 500);
   };
 
   return (
