@@ -388,14 +388,14 @@ export const getPublicNotes = async (req, res) => {
 
   try {
     // ✅ Check cache
-    // const cached = await getCache(cacheKey);
-    // if (cached) {
-    //   return res.status(200).json({
-    //     success: true,
-    //     data: JSON.parse(cached),
-    //     cache: true,
-    //   });
-    // }
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        success: true,
+        data: JSON.parse(cached),
+        cache: true,
+      });
+    }
 
     // ✅ Build collection query
     const collectionQuery = {
