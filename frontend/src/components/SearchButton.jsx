@@ -43,6 +43,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import BadgeIcon from "./icons/BadgeIcon";
 
 export function getFirstMatchSnippets(html, query, radius = 60, limit = 3) {
   if (!html || !query) return [];
@@ -164,7 +165,6 @@ export function SearchButton() {
             search: query,
           }),
         ]);
-
         setSearchResults({
           notes: notesResponse.data.notes || [],
           users: usersResponse.users || [],
@@ -382,7 +382,10 @@ export function SearchButton() {
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <div className="flex items-center gap-1">
                                     <Avatar className="size-4">
-                                      <AvatarImage src={note.userId?.avatar} alt="Author Profile Photo" />
+                                      <AvatarImage
+                                        src={note.userId?.avatar}
+                                        alt="Author Profile Photo"
+                                      />
                                       <AvatarFallback>
                                         {note.userId?.fullName?.charAt(0)}
                                       </AvatarFallback>
@@ -438,7 +441,10 @@ export function SearchButton() {
                             className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer"
                           >
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.avatar} alt={user.fullName || "User Profile Photo"} />
+                              <AvatarImage
+                                src={user.avatar}
+                                alt={user.fullName || "User Profile Photo"}
+                              />
                               <AvatarFallback>
                                 {user.fullName?.charAt(0) || (
                                   <User className="h-4 w-4" />
@@ -446,7 +452,12 @@ export function SearchButton() {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium">{user.fullName}</p>
+                              <p className="font-medium flex items-center gap-1.5">
+                                {user.fullName}
+                                {user.role === "admin" && (
+                                  <BadgeIcon className="size-4 text-blue-500" />
+                                )}
+                              </p>
                               <p className="text-xs text-muted-foreground">
                                 @{user.userName}
                               </p>
@@ -468,7 +479,7 @@ export function SearchButton() {
                     )}
                   </>
                 )}
-                
+
                 {/* Search History */}
                 {searchHistory.length > 0 && (
                   <>
@@ -503,7 +514,10 @@ export function SearchButton() {
                           >
                             <div className="relative">
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={user.avatar} alt={"Users Profile Photo"} />
+                                <AvatarImage
+                                  src={user.avatar}
+                                  alt={"Users Profile Photo"}
+                                />
                                 <AvatarFallback>
                                   {user.fullName?.charAt(0) || (
                                     <User className="h-4 w-4" />
@@ -513,7 +527,12 @@ export function SearchButton() {
                               <Clock className="absolute -bottom-1 -right-1 h-4 w-4 text-muted-foreground bg-muted rounded-full p-0.5" />
                             </div>
                             <div className="flex-1">
-                              <p className="font-medium">{user.fullName}</p>
+                              <p className="font-medium flex items-center gap-1.5">
+                                {user.fullName}
+                                {user.role === "admin" && (
+                                  <BadgeIcon className="size-4 text-blue-500" />
+                                )}
+                              </p>
                               <p className="text-xs text-muted-foreground">
                                 @{user.userName}
                               </p>

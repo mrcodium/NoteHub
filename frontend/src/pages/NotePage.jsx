@@ -50,6 +50,7 @@ import { Separator } from "@/components/ui/separator";
 import EditorTypographyControls from "@/components/editor/EditorTypographyControls";
 import ShareNotePopover from "@/components/ShareNotePopover";
 import { Helmet } from "react-helmet-async";
+import BadgeIcon from "@/components/icons/BadgeIcon";
 
 const NotePage = () => {
   const { id: noteId } = useParams();
@@ -312,7 +313,14 @@ const NotePage = () => {
                 </Avatar>
                 <div className="flex flex-col">
                   <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
-                    <span>{authUser?.fullName}</span>
+                    <div className="flex gap-2 items-center">
+                      <span>{authUser?.fullName}</span>
+                      <span>
+                        {authUser?.role === "admin" && (
+                          <BadgeIcon className="size-4 text-blue-500" />
+                        )}
+                      </span>
+                    </div>
                     <Badge
                       variant="ghost"
                       className={"p-1 border-none text-muted-foreground"}

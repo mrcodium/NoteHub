@@ -49,7 +49,7 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
             <h2 className="flex gap-2.5 items-center text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
               {user?.fullName}
               {user.role === "admin" && (
-                <BadgeIcon className="size-5 text-blue-500" />
+                <BadgeIcon className="size-4 sm:size-5 text-blue-500" />
               )}
             </h2>
             <div

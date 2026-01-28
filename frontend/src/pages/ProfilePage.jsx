@@ -406,7 +406,7 @@ const ProfilePage = () => {
                   <h1 className="text-base sm:text-xl font-semibold flex items-center gap-2">
                     {user?.fullName}
                     {user?.role === "admin" && (
-                      <BadgeIcon className="size-5 text-blue-500" />
+                      <BadgeIcon className="size-4 sm:size-5 text-blue-500" />
                     )}
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground">

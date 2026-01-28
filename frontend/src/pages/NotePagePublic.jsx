@@ -43,6 +43,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import EditorTypographyControls from "@/components/editor/EditorTypographyControls";
 import ShareNotePopover from "@/components/ShareNotePopover";
 import { Helmet } from "react-helmet-async";
+import BadgeIcon from "@/components/icons/BadgeIcon";
 
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
@@ -353,8 +354,15 @@ const NotePagePublic = () => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                  <div className="font-semibold flex gap-2 !text-primary items-center text-sm">
-                    <span>{author?.fullName}</span>
+                  <div className="font-semibold flex gap-4 !text-primary items-center text-sm">
+                    <div className="flex gap-2 items-center">
+                      <span>{author?.fullName}</span>
+                      <span>
+                        {author?.role === "admin" && (
+                          <BadgeIcon className="size-4 text-blue-500" />
+                        )}
+                      </span>
+                    </div>
                     {isOwner && (
                       <Badge
                         variant="ghost"
