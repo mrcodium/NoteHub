@@ -23,7 +23,7 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
         <Dialog>
           <DialogTrigger>
             <Avatar className="h-16 w-16 border-2 border-primary/20">
-              <AvatarImage src={user?.avatar} alt={user?.fullName} />
+              <AvatarImage src={user?.avatar} alt={user?.fullName || "User Profile Photo"} />
               <AvatarFallback className="bg-primary/10 text-primary font-medium">
                 {user?.fullName?.charAt(0).toUpperCase()}
               </AvatarFallback>
@@ -42,9 +42,9 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
         </Dialog>
         <div>
           <Link to={`/user/${user?.userName}`}>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
               {user?.fullName}
-            </h1>
+            </h2>
             <div
               to={`/user/${user?.userName}`}
               className="text-sm sm:text-base text-muted-foreground transition-colors"
@@ -101,9 +101,9 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
           {/* Collection Title Section */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                 {collection?.name}
-              </h2>
+              </h1>
               <Badge
                 variant="secondary"
                 className="px-3 py-1 whitespace-nowrap text-sm font-medium"

@@ -329,7 +329,7 @@ const UserItem = ({ user, isRemoved, onRemove, onAdd }) => {
 const UserInfo = ({ user, className = "" }) => (
   <div className={cn("flex gap-2 items-center", className)}>
     <Avatar>
-      <AvatarImage src={user?.avatar} />
+      <AvatarImage src={user?.avatar} alt={user?.fullName || "User Profile Photo"} />
       <AvatarFallback>{user?.fullName[0].toUpperCase()}</AvatarFallback>
     </Avatar>
     <div>

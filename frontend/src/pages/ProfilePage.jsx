@@ -221,6 +221,7 @@ const ProfilePage = () => {
           content={`Check out ${user.fullName}'s notes on NoteHub, the collaborative note-taking platform.`}
         />
         <meta name="twitter:image" content={user.avatar} />
+        <link rel="preload" as="image" href="/placeholder.svg" />
       </Helmet>
 
       <div className="p-4">
@@ -350,7 +351,9 @@ const ProfilePage = () => {
           >
             <AvatarImage
               src={user?.cover}
-              alt="User cover"
+              alt="User cover Photo"
+              loading="eager"
+              fetchPriority="high"
               className="w-full h-full max-h-48 object-cover"
               style={{ aspectRatio: "3/1" }}
             />
@@ -371,25 +374,37 @@ const ProfilePage = () => {
                   setCurrentImageType("avatar");
                   setIsImageDialogOpen(true);
                 }}
+                role="button"
+                aria-label="View profile photo"
               >
                 <AvatarImage
+                  src={previewUrl || user?.avatar || "/avatar.svg"}
+                  alt={`${user?.fullName || "User"} profile photo`}
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                   className="w-full h-full object-cover rounded-full bg-background"
-                  src={previewUrl || user?.avatar}
-                  alt={user?.fullName || "user profile"}
                 />
-                <AvatarFallback className="text-4xl">
+
+                <AvatarFallback
+                  className="text-4xl flex items-center justify-center bg-muted"
+                  aria-hidden="true"
+                >
                   <img
-                    className="w-full h-full object-cover dark:brightness-[0.2]"
                     src="/avatar.svg"
-                    alt="user-profile"
+                    alt=""
+                    loading="eager"
+                    decoding="async"
+                    className="w-full h-full object-cover dark:brightness-[0.2]"
                   />
                 </AvatarFallback>
               </Avatar>
+
               <div className="flex m-0 justify-between w-full items-start">
                 <div>
-                  <h2 className="text-base sm:text-xl font-semibold">
+                  <h1 className="text-base sm:text-xl font-semibold">
                     {user?.fullName}
-                  </h2>
+                  </h1>
                   <p className="text-sm sm:text-base text-muted-foreground">
                     @{user?.userName}
                   </p>
@@ -398,6 +413,7 @@ const ProfilePage = () => {
                   <TooltipWrapper message="Edit Profile">
                     <Link
                       to="/settings/profile"
+                      aria-label="Edit profile"
                       className="hover:bg-muted rounded-md size-10 flex justify-center items-center"
                     >
                       <Pencil size={18} />

@@ -81,7 +81,7 @@ const Photos = () => {
               <AvatarImage
                 className="w-full h-full object-cover rounded-full bg-background"
                 src={previewavatar || authUser?.avatar}
-                alt={authUser?.fullName || "user profile"}
+                alt={authUser?.fullName || "User Profile Photo"}
               />
               <AvatarFallback className="text-4xl">
                 <img

@@ -110,7 +110,10 @@ export function ArticleCard({
             className="flex flex-row items-center w-max gap-3"
           >
             <Avatar className="w-10 h-10">
-              <AvatarImage src={author?.avatar} alt={author?.fullName} />
+              <AvatarImage
+                src={author?.avatar}
+                alt={author?.fullName || "User Profile Photo"}
+              />
               <AvatarFallback>
                 {(author?.fullName || "U").charAt(0).toUpperCase()}
               </AvatarFallback>
@@ -137,7 +140,8 @@ export function ArticleCard({
                 )}
               </div>
               <span className="text-sm text-muted-foreground">
-                {`@${author?.userName}`} • {formatTimeAgo(note.contentUpdatedAt)}
+                {`@${author?.userName}`} •{" "}
+                {formatTimeAgo(note.contentUpdatedAt)}
               </span>
             </div>
           </Link>
@@ -181,7 +185,7 @@ export function ArticleCard({
                   </AccordionTrigger>
 
                   <AccordionContent className="pb-0 w-full">
-                    <TableOfContent data={headings}/>
+                    <TableOfContent data={headings} />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -194,15 +198,22 @@ export function ArticleCard({
               {description}
             </p>
             <div className="mt-2 flex items-center gap-2">
-              <Button asChild size="sm" variant="secondary" className="bg-primary/10">
-              <Link
-                to={`/user/${author?.userName}/${collection.slug}/${note.slug}`}
-                className="block w-fit"
+              <Button
+                asChild
+                size="sm"
+                variant="secondary"
+                className="bg-primary/10"
               >
-                  Read More
+                <Link
+                  to={`/user/${author?.userName}/${collection.slug}/${note.slug}`}
+                  className="block w-fit"
+                  aria-label={`Rad more about ${note.name}`}
+                >
+                  <span className="sr-only">{`Rad more about ${note.name}`}</span>
+                  <span aria-hidden="true">Read More</span>
                   <ChevronRight />
-              </Link>
-                </Button>
+                </Link>
+              </Button>
             </div>
           </div>
 

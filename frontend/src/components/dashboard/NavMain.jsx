@@ -82,7 +82,7 @@ const NoteItem = ({ note }) => {
         className={cn(
           "p-0 h-auto",
           note.visibility === "private" &&
-            "bg-destructive/10 hover:bg-destructive/20"
+            "bg-destructive/10 hover:bg-destructive/20",
         )}
         onClick={() => !isNoteRenaming && setselectedNote(note._id)}
       >
@@ -184,9 +184,19 @@ const FolderCollapsible = ({ collection, pinnedCollections, searchQuery }) => {
             <SidebarMenuButton tooltip={collection.name}>
               <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 size-4" />
               {searchQuery || openedCollections[collection._id] ? (
-                <FolderOpen className={collection.visibility === "private" && "text-destructive fill-destructive/30"} />
+                <FolderOpen
+                  className={
+                    collection.visibility === "private" &&
+                    "text-destructive fill-destructive/30"
+                  }
+                />
               ) : (
-                <Folder className={collection.visibility === "private" && "text-destructive fill-destructive/30"} />
+                <Folder
+                  className={
+                    collection.visibility === "private" &&
+                    "text-destructive fill-destructive/30"
+                  }
+                />
               )}
               <div className="flex-1 min-w-0">
                 {isCollectionRenaming ? (
@@ -213,7 +223,7 @@ const FolderCollapsible = ({ collection, pinnedCollections, searchQuery }) => {
 
           <CollectionsOption
             trigger={
-              <SidebarMenuAction>
+              <SidebarMenuAction aria-label="Open collection options menu">
                 <MoreHorizontal className="size-4" />
                 <span className="sr-only">More</span>
               </SidebarMenuAction>
@@ -245,7 +255,7 @@ const NavMain = ({ collections, searchQuery }) => {
       const processedNotes = searchQuery
         ? collection.notes
             .filter((note) =>
-              note.name.toLowerCase().includes(searchQuery.toLowerCase())
+              note.name.toLowerCase().includes(searchQuery.toLowerCase()),
             )
             .map((note) => ({
               ...note,

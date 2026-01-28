@@ -304,7 +304,7 @@ const NotePage = () => {
                   <AvatarImage
                     className="w-full h-full object-cover !m-0"
                     src={authUser?.avatar}
-                    alt={authUser?.fullName}
+                    alt={authUser?.fullName || "Author Profile Photo"}
                   />
                   <AvatarFallback>
                     {(authUser?.fullName || "U").charAt(0).toUpperCase()}

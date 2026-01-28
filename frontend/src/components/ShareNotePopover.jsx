@@ -90,6 +90,11 @@ export function ShareNotePopover({ shareLink }) {
                   onClick={copyToClipboard}
                   disabled={copied}
                   className="absolute hover:bg-transparent top-1/2 right-0 -translate-y-1/2"
+                  aria-label={
+                    copied
+                      ? "Note link copied to clipboard"
+                      : "Copy shareable note link"
+                  }
                 >
                   {copied ? <Check /> : <Copy className="h-4 w-4" />}
                 </Button>

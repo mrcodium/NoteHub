@@ -231,6 +231,7 @@ const NotesOption = React.memo(
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
+              aria-label="Open note options menu"
               className={cn(
                 "flex-shrink-0 p-1 size-6 text-muted-foreground hover:text-foreground",
                 className

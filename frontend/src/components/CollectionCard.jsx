@@ -61,14 +61,18 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
     <Card
       key={collection._id}
       className={cn(
-        "group rounded-none bg-transparent border-0 border-b hover:shadow-md hover:bg-muted/30 transition-all"
+        "group rounded-none bg-transparent border-0 border-b hover:shadow-md hover:bg-muted/30 transition-all",
       )}
     >
       <div className="flex items-center gap-2 justify-between p-4">
         <div className="flex items-start gap-4 flex-1">
           <div className="relative">
             {isPinned(collection._id) && (
-              <Bookmark className={cn("h-5 w-5 mt-1 absolute -bottom-1 -right-1 fill-primary stroke-primary")} />
+              <Bookmark
+                className={cn(
+                  "h-5 w-5 mt-1 absolute -bottom-1 -right-1 fill-primary stroke-primary",
+                )}
+              />
             )}
             <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
               <img
@@ -107,6 +111,7 @@ function CollectionCard({ collection, isOwner, pinnedCollections }) {
                   trigger={
                     <Button
                       variant="ghost"
+                      aria-label="Open collection options menu"
                       size="sm"
                       className="size-8 p-0 text-muted-foreground hover:text-foreground"
                     >

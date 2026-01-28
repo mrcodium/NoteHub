@@ -185,7 +185,7 @@ const ForgotPasswordPage = () => {
                     <AvatarImage
                       className="w-full h-full object-cover rounded-full"
                       src={user.avatar}
-                      alt={user.name}
+                      alt={user.name || "User Profile Photo"}
                       referrerPolicy="no-referrer"
                     />
                     <AvatarFallback className="bg-transparent">

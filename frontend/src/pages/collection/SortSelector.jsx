@@ -13,7 +13,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -38,7 +37,7 @@ const SortSelector = ({
   return (
     <div className="flex gap-2 items-center">
       <Select value={sortBy} onValueChange={(val) => setSortBy(val)}>
-        <SelectTrigger className="w-36">
+        <SelectTrigger className="w-36" aria-label="Sort items by">
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>
@@ -64,8 +63,16 @@ const SortSelector = ({
 
       {/* Sort Direction Button */}
       <Button
-      tooltip={sortDirection === "asc" ? "Ascending" : "Decending"}
-       size="icon" variant="secondary" onClick={toggleSortDirection}>
+        tooltip={sortDirection === "asc" ? "Ascending" : "Decending"}
+        size="icon"
+        variant="secondary"
+        onClick={toggleSortDirection}
+        aria-label={
+          sortDirection === "asc"
+            ? "Change sort direction to descending"
+            : "Change sort direction to ascending"
+        }
+      >
         {sortDirection === "asc" ? <ArrowUp /> : <ArrowDown />}
       </Button>
     </div>

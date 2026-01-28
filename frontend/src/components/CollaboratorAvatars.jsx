@@ -44,7 +44,7 @@ const AvatarStack = ({ collaborators = [], maxVisible = 5, size = "md" }) => {
             currentSize.margin,
             "border-background"
           )}>
-            <AvatarImage src={collaborators[maxVisible]?.avatar} />
+            <AvatarImage src={collaborators[maxVisible]?.avatar} alt="Collaborator Profile Photo" />
             <div className="absolute bg-black/50 inset-0 flex items-center justify-center rounded-full">
               <span className={cn(
                 "text-white font-medium",
@@ -71,7 +71,7 @@ const AvatarStack = ({ collaborators = [], maxVisible = 5, size = "md" }) => {
           )}>
             <AvatarImage
               src={collaborator.avatar}
-              alt={collaborator.fullName}
+              alt={collaborator.fullName || "Collaborator Profile Photo"}
             />
             <AvatarFallback className={cn("bg-muted", currentSize.text)}>
               {collaborator.fullName?.charAt(0).toUpperCase()}

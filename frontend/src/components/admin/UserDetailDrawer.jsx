@@ -87,7 +87,7 @@ export function UserDetailDrawer({ user, open, onOpenChange }) {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={user.avatar} referrerPolicy="no-referrer" />
+                <AvatarImage src={user.avatar} referrerPolicy="no-referrer" alt={user.fullName || "User Profile Photo"} />
                 <AvatarFallback>{user.fullName.charAt(0)}</AvatarFallback>
               </Avatar>
               {isOnline && (

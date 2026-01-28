@@ -27,6 +27,7 @@ const ScrollTopButton = () => {
       size="icon"
       className="fixed bottom-20 right-4 size-11 rounded-full"
       onClick={() => scrollRef.current.scrollTo({ top: 0, behavior: "smooth" })}
+      aria-label="Scroll back to top"
     >
       <ChevronUp className="!size-6" strokeWidth={3} />
     </Button>

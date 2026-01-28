@@ -86,6 +86,7 @@ export default ({ node: { attrs: { language: defaultLanguage } }, updateAttribut
           onClick={handleCopy}
           disabled={copied}
           className="gap-2 size-7"
+          aria-label={copied ? "Code copied" : "Copy code to clipboard"}
         >
           {copied ? <CopyCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         </Button>

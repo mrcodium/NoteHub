@@ -194,7 +194,8 @@ const DashboardHeader = () => {
                         </div>
                       )}
                       <span
-                        className={cn("truncate",
+                        className={cn(
+                          "truncate",
                           route.path === "/"
                             ? location.pathname === "/"
                               ? "inline"
@@ -243,11 +244,17 @@ const DashboardHeader = () => {
                 }
               />
 
-              <Link to={`/user/${authUser?.userName}`}>
+              <Link
+                to={`/user/${authUser?.userName}`}
+                aria-label={`Go to ${authUser?.fullName || "user"} profile`}
+              >
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Avatar className="w-8 h-8">
-                      <AvatarImage src={authUser?.avatar} />
+                      <AvatarImage
+                        src={authUser?.avatar}
+                        alt={authUser?.fullName || "User Profile Photo"}
+                      />
                       <AvatarFallback>
                         {(authUser?.fullName || "U").charAt(0).toUpperCase()}
                       </AvatarFallback>

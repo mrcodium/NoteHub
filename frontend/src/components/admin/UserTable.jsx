@@ -70,6 +70,7 @@ export const UserTable = ({
                     <Avatar>
                       <AvatarImage
                         src={user.avatar}
+                        alt={user.fullName || "User Profile Photo"}
                         referrerPolicy="no-referrer"
                       />
                       <AvatarFallback>

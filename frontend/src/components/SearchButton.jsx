@@ -244,7 +244,7 @@ export function SearchButton() {
         size="icon"
         className="h-9 w-9 rounded-md"
         onClick={() => setOpen(true)}
-        aria-label="Search"
+        aria-label="Search Notes and Users"
       >
         <Search className="h-4 w-4" />
       </Button>
@@ -382,7 +382,7 @@ export function SearchButton() {
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <div className="flex items-center gap-1">
                                     <Avatar className="size-4">
-                                      <AvatarImage src={note.userId?.avatar} />
+                                      <AvatarImage src={note.userId?.avatar} alt="Author Profile Photo" />
                                       <AvatarFallback>
                                         {note.userId?.fullName?.charAt(0)}
                                       </AvatarFallback>
@@ -438,7 +438,7 @@ export function SearchButton() {
                             className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer"
                           >
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.avatar} />
+                              <AvatarImage src={user.avatar} alt={user.fullName || "User Profile Photo"} />
                               <AvatarFallback>
                                 {user.fullName?.charAt(0) || (
                                   <User className="h-4 w-4" />
@@ -503,7 +503,7 @@ export function SearchButton() {
                           >
                             <div className="relative">
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={user.avatar} />
+                                <AvatarImage src={user.avatar} alt={"Users Profile Photo"} />
                                 <AvatarFallback>
                                   {user.fullName?.charAt(0) || (
                                     <User className="h-4 w-4" />
