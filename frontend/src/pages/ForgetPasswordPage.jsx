@@ -22,6 +22,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import BaseHeader from "@/components/BaseHeader";
 import { LabledInput } from "@/components/ui/labeled-input";
 import { Helmet } from "react-helmet-async";
+import BadgeIcon from "@/components/icons/BadgeIcon";
 
 const ForgotPasswordPage = () => {
   const {
@@ -193,7 +194,12 @@ const ForgotPasswordPage = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="text-sm">
-                    <strong className="font-semibold">{user.fullName}</strong>
+                    <div className="flex gap-1.5 items-center">
+                      <strong className="font-semibold">{user.fullName}</strong>
+                      {user.role === "admin" && (
+                        <BadgeIcon className="size-[14px] text-blue-500" />
+                      )}
+                    </div>
                     <p className="text-muted-foreground text-xs">
                       {user.email}
                     </p>

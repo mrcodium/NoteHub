@@ -20,6 +20,7 @@ import {
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Link } from "react-router-dom";
 import { Separator } from "../ui/separator";
+import BadgeIcon from "../icons/BadgeIcon";
 
 const NavUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -46,7 +47,10 @@ const NavUser = () => {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={authUser?.avatar} alt={authUser?.fullName || "User Profile Photo"}  />
+                <AvatarImage
+                  src={authUser?.avatar}
+                  alt={authUser?.fullName || "User Profile Photo"}
+                />
                 <AvatarFallback className="rounded-lg">
                   {authUser?.fullName
                     ? authUser.fullName
@@ -60,9 +64,14 @@ const NavUser = () => {
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {authUser?.fullName}
-                </span>
+                 <div className="flex gap-1.5 items-center">
+                  <span className="truncate font-semibold">
+                      {authUser?.fullName}
+                    </span>
+                    {authUser.role === "admin" && (
+                      <BadgeIcon className="size-[14px] text-blue-500" />
+                    )}
+                 </div>
                 <span className="truncate text-xs">{authUser?.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -96,9 +105,14 @@ const NavUser = () => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {authUser?.fullName}
-                  </span>
+                  <div className="flex gap-1.5 items-center">
+                    <span className="truncate font-semibold">
+                      {authUser?.fullName}
+                    </span>
+                    {authUser.role === "admin" && (
+                      <BadgeIcon className="size-[14px] text-blue-500" />
+                    )}
+                  </div>
                   <span className="truncate text-xs">{authUser?.email}</span>
                 </div>
               </DropdownMenuItem>

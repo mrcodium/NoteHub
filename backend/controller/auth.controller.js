@@ -8,7 +8,7 @@ import { ENV } from "../config/env.js";
 
 // common response functions
 const sendAuthResponse = (res, user) => {
-  const token = generateToken({ userId: user._id });
+  const token = generateToken({ userId: user._id, role: user.role });
   setCookie(res, "jwt", token);
 
   const { password, ...userWithoutPassword } = user.toObject();

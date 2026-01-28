@@ -52,7 +52,6 @@ const NotePagePublic = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPrivate, setIsPrivate] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [isOwner, setIsOwner] = useState(false);
   const [note, setNote] = useState(null);
   const [author, setAuthor] = useState(null);
   const { getImages } = useImageStore();
@@ -96,7 +95,6 @@ const NotePagePublic = () => {
         const { note, author } = response.data;
         setNote(note);
         setAuthor(author);
-        setIsOwner(authUser?._id === note.userId);
       } catch (error) {
         if (error.response?.status === 403) {
           setIsPrivate(true);
@@ -299,6 +297,11 @@ const NotePagePublic = () => {
       </div>
     );
   }
+
+  const isAuthor = authUser?._id === note.userId;
+  const isAdmin = authUser?.role === "admin";
+
+  const isOwner = isAuthor || isAdmin;
 
   return (
     <>

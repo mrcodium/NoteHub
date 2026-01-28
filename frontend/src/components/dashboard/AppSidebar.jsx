@@ -71,8 +71,15 @@ const AppSidebar = (props) => {
               <Link
                 onClick={() => isMobile && closeSidebar()}
                 to="/"
-                className="logo truncate font"
+                className="logo truncate font flex gap-2 items-center"
               >
+                <div className="size-6">
+                  <img
+                    className="w-full h-full object-contain"
+                    src="/notehub.png"
+                    alt="Notehub Logo"
+                  />
+                </div>
                 NoteHub
               </Link>
             </div>

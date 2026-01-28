@@ -27,6 +27,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Label } from "./ui/label";
+import BadgeIcon from "./icons/BadgeIcon";
 
 const UpdateEmailCard = () => {
   const {
@@ -124,7 +125,7 @@ const UpdateEmailCard = () => {
     <div className="space-y-2">
       <Label>Update Email Address</Label>
       <div className="space-y-4">
-        <div className="flex gap-2 bg-accent/50 p-2 rounded-xl items-center">
+        <div className="flex gap-2 bg-accent/50 p-2 px-3 rounded-xl items-center">
           <Avatar className="size-10">
             <AvatarImage
               className="w-full h-full object-cover rounded-full"
@@ -137,7 +138,12 @@ const UpdateEmailCard = () => {
             </AvatarFallback>
           </Avatar>
           <div className="text-sm">
-            <strong className="font-semibold">{authUser.fullName}</strong>
+            <div className="flex items-center gap-1.5">
+              <strong className="font-semibold">{authUser.fullName}</strong>
+              {authUser.role === "admin" && (
+                <BadgeIcon className="size-[14px] text-blue-500" />
+              )}
+            </div>
             <p className="text-muted-foreground text-xs">{authUser.email}</p>
           </div>
         </div>

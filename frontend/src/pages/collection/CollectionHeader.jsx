@@ -1,5 +1,6 @@
 // src > pages > collection > CollectionHeader
 import AvatarStack from "@/components/CollaboratorAvatars";
+import BadgeIcon from "@/components/icons/BadgeIcon";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,10 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
         <Dialog>
           <DialogTrigger>
             <Avatar className="h-16 w-16 border-2 border-primary/20">
-              <AvatarImage src={user?.avatar} alt={user?.fullName || "User Profile Photo"} />
+              <AvatarImage
+                src={user?.avatar}
+                alt={user?.fullName || "User Profile Photo"}
+              />
               <AvatarFallback className="bg-primary/10 text-primary font-medium">
                 {user?.fullName?.charAt(0).toUpperCase()}
               </AvatarFallback>
@@ -42,8 +46,11 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
         </Dialog>
         <div>
           <Link to={`/user/${user?.userName}`}>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
+            <h2 className="flex gap-2.5 items-center text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
               {user?.fullName}
+              {user.role === "admin" && (
+                <BadgeIcon className="size-5 text-blue-500" />
+              )}
             </h2>
             <div
               to={`/user/${user?.userName}`}
@@ -73,7 +80,7 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
                       openDialog(
                         collection?.collaborators || [],
                         collection?._id,
-                        "collection"
+                        "collection",
                       )
                     }
                   >

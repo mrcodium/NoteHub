@@ -26,6 +26,7 @@ import CollectionCard from "@/components/CollectionCard";
 import TooltipWrapper from "@/components/TooltipWrapper";
 import SortSelector from "./collection/SortSelector";
 import { Helmet } from "react-helmet-async";
+import BadgeIcon from "@/components/icons/BadgeIcon";
 
 const ProfilePage = () => {
   const { username } = useParams();
@@ -247,7 +248,7 @@ const ProfilePage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-accent flex justify-center items-center">
+                <div className="bg-primary/5 flex justify-center items-center">
                   <img
                     src={
                       (currentImageType === "avatar"
@@ -402,8 +403,11 @@ const ProfilePage = () => {
 
               <div className="flex m-0 justify-between w-full items-start">
                 <div>
-                  <h1 className="text-base sm:text-xl font-semibold">
+                  <h1 className="text-base sm:text-xl font-semibold flex items-center gap-2">
                     {user?.fullName}
+                    {user?.role === "admin" && (
+                      <BadgeIcon className="size-5 text-blue-500" />
+                    )}
                   </h1>
                   <p className="text-sm sm:text-base text-muted-foreground">
                     @{user?.userName}

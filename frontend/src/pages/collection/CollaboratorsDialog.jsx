@@ -1,4 +1,5 @@
 // src > pages > collection > CollaboratorsDialog
+import BadgeIcon from "@/components/icons/BadgeIcon";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter } from "@/components/ui/card";
@@ -198,7 +199,7 @@ const SearchBar = ({ onUserSelect, currentCollaborators }) => {
         const filteredUsers = response.users.filter(
           (user) =>
             user._id !== authUser._id &&
-            !currentCollaborators.some((c) => c._id === user._id)
+            !currentCollaborators.some((c) => c._id === user._id),
         );
 
         setSearchResults(filteredUsers);
@@ -206,7 +207,7 @@ const SearchBar = ({ onUserSelect, currentCollaborators }) => {
         setIsSearching(false);
       }
     },
-    [currentCollaborators, authUser._id, getAllUsers]
+    [currentCollaborators, authUser._id, getAllUsers],
   );
 
   useEffect(() => {
@@ -329,11 +330,19 @@ const UserItem = ({ user, isRemoved, onRemove, onAdd }) => {
 const UserInfo = ({ user, className = "" }) => (
   <div className={cn("flex gap-2 items-center", className)}>
     <Avatar>
-      <AvatarImage src={user?.avatar} alt={user?.fullName || "User Profile Photo"} />
+      <AvatarImage
+        src={user?.avatar}
+        alt={user?.fullName || "User Profile Photo"}
+      />
       <AvatarFallback>{user?.fullName[0].toUpperCase()}</AvatarFallback>
     </Avatar>
     <div>
-      <div className="font-medium">{user.fullName}</div>
+      <div className="font-medium flex items-center justify-between">
+        {user.fullName}
+        {user.role === "admin" && (
+          <BadgeIcon className="size-[14px] text-blue-500" />
+        )}
+      </div>
       <div className="text-muted-foreground text-xs">@{user.userName}</div>
     </div>
   </div>

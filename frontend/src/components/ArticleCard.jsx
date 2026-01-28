@@ -32,6 +32,7 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { useAuthStore } from "@/stores/useAuthStore";
 import TableOfContent from "./table-of-content";
+import BadgeIcon from "./icons/BadgeIcon";
 
 export function ArticleCard({
   note,
@@ -121,6 +122,9 @@ export function ArticleCard({
             <div className="flex flex-col">
               <div className="font-semibold flex gap-2 items-center text-sm">
                 <span>{author?.fullName}</span>
+                {author.role === "admin" && (
+                  <BadgeIcon className="size-4 text-blue-500" />
+                )}
                 {isOwner && (
                   <Badge
                     variant="ghost"

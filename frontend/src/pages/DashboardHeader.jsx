@@ -194,7 +194,7 @@ const DashboardHeader = () => {
                           <img
                             className="w-full h-full object-contain"
                             src="/notehub.png"
-                            alt=""
+                            alt="Notehub Logo"
                           />
                         </div>
                       )}

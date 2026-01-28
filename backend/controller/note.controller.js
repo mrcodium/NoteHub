@@ -36,11 +36,21 @@ export const getNoteById = async (req, res) => {
       });
     }
 
-    const note = await Note.findOne({ _id, userId: user._id });
+    const note = await Note.findById(_id);
 
     if (!note) {
       return res.status(404).json({
         message: "Note not found or you don't have permission to access it",
+      });
+    }
+
+    // 3️⃣ Permission check: author or admin
+    const isAuthor = note.userId._id.equals(user._id);
+    const isAdmin = user.role === "admin";
+
+    if (!isAuthor && !isAdmin) {
+      return res.status(403).json({
+        message: "You don't have permission to access this note",
       });
     }
 
@@ -187,9 +197,18 @@ export const updateContent = async (req, res) => {
   }
 
   try {
-    const note = await Note.findOne({ _id: noteId, userId: user._id })
+    const note = await Note.findById(noteId)
       .populate("collectionId", "slug")
       .populate("userId", "userName");
+
+    const isAuthor = note.userId._id.equals(user._id);
+    const isAdmin = user.role === "admin";
+
+    if (!isAuthor && !isAdmin) {
+      return res.status(403).json({
+        message: "You are not allowed to update this note",
+      });
+    }
 
     // after updating content
     note.content = content;
@@ -369,14 +388,14 @@ export const getPublicNotes = async (req, res) => {
 
   try {
     // ✅ Check cache
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      return res.status(200).json({
-        success: true,
-        data: JSON.parse(cached),
-        cache: true,
-      });
-    }
+    // const cached = await getCache(cacheKey);
+    // if (cached) {
+    //   return res.status(200).json({
+    //     success: true,
+    //     data: JSON.parse(cached),
+    //     cache: true,
+    //   });
+    // }
 
     // ✅ Build collection query
     const collectionQuery = {
@@ -417,7 +436,7 @@ export const getPublicNotes = async (req, res) => {
     const fetchLimit = limit * bufferMultiplier;
 
     const notes = await Note.find({ collectionId: { $in: collectionIds } })
-      .populate("userId", "_id userName fullName avatar")
+      .populate("userId", "_id userName fullName avatar role")
       .populate("collectionId", "_id name slug visibility userId")
       .sort({ contentUpdatedAt: -1 })
       .skip(0) // fetch from start, slice later
@@ -465,7 +484,7 @@ export const getPublicNotes = async (req, res) => {
       },
     };
 
-    await setCache(cacheKey, responseData, 300);
+    await setCache(cacheKey, responseData, 120);
 
     return res.status(200).json({ success: true, data: responseData });
   } catch (error) {
