@@ -30,7 +30,7 @@ const Profile = () => {
 
         <CardContent className="space-y-8">
           <div className="space-y-2">
-            <Label>Personal Detail</Label>
+            <Label>Edit Name & Username</Label>
             <div className="space-y-4">
               <Field
                 label="Full Name"
