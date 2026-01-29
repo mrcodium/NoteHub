@@ -311,7 +311,7 @@ export const renameNote = async (req, res) => {
 // Public collection  + Public note  → Everyone
 // Public collection  + Private note → Owner + Note collaborators
 // Private collection + Public note  → Owner + Collection collaborators
-// Private collection + Private note → Owner + (Note AND Collection
+// Private collection + Private note → Owner + (Note AND Collection)
 
 export const getNoteBySlug = async (req, res) => {
   const { username, collectionSlug, noteSlug } = req.params;
@@ -381,8 +381,9 @@ export const getNoteBySlug = async (req, res) => {
 
 export const getPublicNotes = async (req, res) => {
   const page = Math.max(parseInt(req.query.page) || 1, 1);
-  const limit = Math.max(parseInt(req.query.limit) || 10, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100); // Cap at 100
   const skip = (page - 1) * limit;
+
   const requester = req.user || null;
   const requesterId = requester?._id;
   const cacheKey = `public:notes:page:${page}:limit:${limit}:user:${requesterId || "guest"}`;
@@ -398,84 +399,133 @@ export const getPublicNotes = async (req, res) => {
       });
     }
 
-    // ✅ Build collection query
-    const collectionQuery = {
-      $or: [
-        { visibility: "public" },
-        ...(requesterId
-          ? [{ visibility: "private", userId: requesterId }]
-          : []),
-      ],
-    };
+    /* ===============================
+       1️⃣ BUILD OPTIMIZED NOTE QUERY
+       - Single DB query instead of multiple passes
+       - Leverage MongoDB indexes
+    =============================== */
+    const noteQueryConditions = [];
 
-    const accessibleCollections = await Collection.find(collectionQuery)
-      .select("_id visibility userId")
-      .lean();
-
-    if (!accessibleCollections.length) {
-      const emptyResponse = {
-        notes: [],
-        pagination: {
-          currentPage: page,
-          totalPages: 0,
-          totalNotes: 0,
-          notesPerPage: limit,
-          hasMore: false,
-        },
-      };
-      await setCache(cacheKey, emptyResponse, 60);
-      return res.status(200).json({ success: true, data: emptyResponse });
-    }
-
-    const collectionIds = accessibleCollections.map((c) => c._id.toString());
-    const collectionMap = new Map(
-      accessibleCollections.map((c) => [c._id.toString(), c]),
-    );
-
-    // ✅ Fetch notes with buffer
-    const bufferMultiplier = 3;
-    const fetchLimit = limit * bufferMultiplier;
-
-    const notes = await Note.find({ collectionId: { $in: collectionIds } })
-      .populate("userId", "_id userName fullName avatar role")
-      .populate("collectionId", "_id name slug visibility userId")
-      .sort({ contentUpdatedAt: -1 })
-      .skip(0) // fetch from start, slice later
-      .limit(skip + fetchLimit)
-      .lean();
-
-    // ✅ Filter accessible notes
-    const accessibleNotes = notes.filter((note) => {
-      const collection = collectionMap.get(note.collectionId._id.toString());
-      return (
-        collection &&
-        canAccessNote({
-          requester,
-          ownerId: note.userId._id,
-          note,
-          collection,
-        })
-      );
+    // RULE 1: Public collection + Public note → Everyone
+    noteQueryConditions.push({
+      "collectionId.visibility": "public",
+      visibility: "public",
     });
 
-    // ✅ Paginate
-    const paginatedNotes = accessibleNotes.slice(skip, skip + limit);
+    // Authenticated user conditions
+    if (requesterId) {
+      // RULE 2: Owner sees everything in their collections
+      noteQueryConditions.push({
+        "collectionId.userId": requesterId,
+      });
 
-    // ✅ Count total notes efficiently
-    let totalNotes = accessibleNotes.length;
-    if (
-      notes.length >= skip + fetchLimit &&
-      accessibleNotes.length >= skip + limit
-    ) {
-      totalNotes = await Note.countDocuments({
-        collectionId: { $in: collectionIds },
+      // RULE 3: Public collection + Private note → Note collaborators
+      noteQueryConditions.push({
+        "collectionId.visibility": "public",
+        visibility: "private",
+        collaborators: requesterId,
+      });
+
+      // RULE 4: Private collection + Public note → Collection collaborators
+      noteQueryConditions.push({
+        "collectionId.visibility": "private",
+        visibility: "public",
+        "collectionId.collaborators": requesterId,
+      });
+
+      // RULE 5: Private collection + Private note → Note AND Collection collaborators
+      noteQueryConditions.push({
+        "collectionId.visibility": "private",
+        visibility: "private",
+        collaborators: requesterId,
+        "collectionId.collaborators": requesterId,
       });
     }
 
+    /* ===============================
+       2️⃣ AGGREGATION PIPELINE (SINGLE QUERY)
+       - Join collections with notes
+       - Apply all filters at DB level
+       - More efficient than separate queries + filtering
+    =============================== */
+    const pipeline = [
+      // Join with collections
+      {
+        $lookup: {
+          from: "collections",
+          localField: "collectionId",
+          foreignField: "_id",
+          as: "collectionId",
+        },
+      },
+      {
+        $unwind: "$collectionId",
+      },
+
+      // Apply access rules at DB level
+      {
+        $match: {
+          $or: noteQueryConditions,
+        },
+      },
+
+      // Add facet for count + data in single query
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [
+            { $sort: { contentUpdatedAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            // Join with user
+            {
+              $lookup: {
+                from: "users",
+                localField: "userId",
+                foreignField: "_id",
+                as: "userId",
+              },
+            },
+            { $unwind: "$userId" },
+            // Project only needed fields
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                slug: 1,
+                content: 1,
+                visibility: 1,
+                contentUpdatedAt: 1,
+                createdAt: 1,
+                collaborators: 1,
+                "userId._id": 1,
+                "userId.userName": 1,
+                "userId.fullName": 1,
+                "userId.avatar": 1,
+                "collectionId._id": 1,
+                "collectionId.name": 1,
+                "collectionId.slug": 1,
+                "collectionId.visibility": 1,
+                "collectionId.userId": 1,
+                "collectionId.collaborators": 1,
+              },
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = await Note.aggregate(pipeline);
+
+    const totalNotes = result[0]?.metadata[0]?.total || 0;
+    const notes = result[0]?.data || [];
     const totalPages = Math.ceil(totalNotes / limit);
 
+    /* ===============================
+       3️⃣ RESPONSE
+    =============================== */
     const responseData = {
-      notes: paginatedNotes,
+      notes,
       pagination: {
         currentPage: page,
         totalPages,
@@ -486,14 +536,19 @@ export const getPublicNotes = async (req, res) => {
     };
 
     await setCache(cacheKey, responseData, 120);
-
-    return res.status(200).json({ success: true, data: responseData });
+    return res.status(200).json({
+      success: true,
+      data: responseData,
+    });
   } catch (error) {
-    console.error("Error in getPublicNotes controller:", error);
+    console.error("Error in getPublicNotes:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to retrieve notes",
-      error: error.message,
+      error:
+        process.env.NODE_ENV === "production"
+          ? "Internal server error"
+          : error.message,
     });
   }
 };

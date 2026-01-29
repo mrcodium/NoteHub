@@ -254,6 +254,11 @@ const NotePagePublic = () => {
     return <NoteSkeleton />;
   }
 
+  const isAuthor = authUser?._id === note.userId;
+  const isAdmin = authUser?.role === "admin";
+
+  const isOwner = isAuthor || isAdmin;
+
   if (isPrivate) {
     return (
       <div className="w-full h-[80vh] flex flex-col items-center justify-center gap-4">
@@ -298,11 +303,6 @@ const NotePagePublic = () => {
       </div>
     );
   }
-
-  const isAuthor = authUser?._id === note.userId;
-  const isAdmin = authUser?.role === "admin";
-
-  const isOwner = isAuthor || isAdmin;
 
   return (
     <>

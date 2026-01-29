@@ -6,73 +6,88 @@ const collectionSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 100
+      maxlength: 100,
     },
+
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      ref: "User",
+      required: true,
     },
+
     visibility: {
       type: String,
-      enum: ['public', 'private'],
-      default: 'private',
-      required: true
+      enum: ["public", "private"],
+      default: "private",
+      required: true,
     },
+
     slug: {
       type: String,
-      sparse: true // no unique here
+      required: true,
     },
+
     collaborators: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-      }
-    ]
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
   }
 );
 
-// 🧠 Compound index: slug unique per user
+/* ===================== INDEXES ===================== */
+
+// Slug unique per user
 collectionSchema.index({ userId: 1, slug: 1 }, { unique: true });
-collectionSchema.index({ name: 1, userId: 1 }, { unique: true });
-collectionSchema.index({ visibility: 1 });
+
+// Access & filtering
+collectionSchema.index({ visibility: 1, userId: 1 });
 collectionSchema.index({ collaborators: 1 });
 
-// 🛠️ Slug generator scoped per user
-collectionSchema.pre('save', async function (next) {
-  if (this.isModified('name')) {
+/* ===================== MIDDLEWARE ===================== */
+
+// Slug generator + owner validation
+collectionSchema.pre("save", async function (next) {
+  // Generate slug if name changed
+  if (this.isModified("name")) {
     const baseSlug = this.name
       .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
 
     let slug = baseSlug;
     let counter = 1;
-    let isUnique = false;
 
-    while (!isUnique) {
-      const existing = await this.constructor.findOne({
+    while (true) {
+      const exists = await this.constructor.findOne({
+        userId: this.userId,
         slug,
-        userId: this.userId
+        _id: { $ne: this._id },
       });
 
-      if (!existing || existing._id.equals(this._id)) {
-        isUnique = true;
-      } else {
-        slug = `${baseSlug}-${counter++}`;
-      }
+      if (!exists) break;
+      slug = `${baseSlug}-${counter++}`;
     }
 
     this.slug = slug;
   }
+
+  // Owner must never be collaborator
+  if (this.collaborators?.length) {
+    this.collaborators = this.collaborators.filter(
+      (id) => !id.equals(this.userId)
+    );
+  }
+
   next();
 });
 
-const Collection = mongoose.model('Collection', collectionSchema);
+const Collection = mongoose.model("Collection", collectionSchema);
 export default Collection;
