@@ -498,6 +498,7 @@ export const getPublicNotes = async (req, res) => {
                 contentUpdatedAt: 1,
                 createdAt: 1,
                 collaborators: 1,
+                "userId.role": 1,
                 "userId._id": 1,
                 "userId.userName": 1,
                 "userId.fullName": 1,
