@@ -64,7 +64,7 @@ export const getUser = async (req, res) => {
 
     if (isEmail) {
       // normalize email
-      const normalizedEmail = validator.normalizeEmail(email);
+      const normalizedEmail = validator.normalizeEmail(identifier);
 
       query = { email: normalizedEmail };
     } else {
