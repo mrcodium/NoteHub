@@ -54,7 +54,7 @@ const noteSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  }
+  },
 );
 
 /* ===================== INDEXES ===================== */
@@ -72,26 +72,25 @@ noteSchema.index({ collectionId: 1, contentUpdatedAt: -1 });
 
 /* ===================== MIDDLEWARE ===================== */
 
-// Slug generator
-noteSchema.pre("save", async function (next) {
-  if (this.isModified("name")) {
+// Slug generator (MUST run before validation)
+noteSchema.pre("validate", async function (next) {
+  // Only generate slug if new note OR slug is missing
+  if (!this.slug && this.name) {
     const baseSlug = this.name
       .toLowerCase()
-      .replace(/[^a-z0-9-]/g, "-")
-      .replace(/-+/g, "-")
+      .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
     let slug = baseSlug;
     let counter = 1;
 
-    while (true) {
-      const exists = await this.constructor.findOne({
+    while (
+      await this.constructor.exists({
         collectionId: this.collectionId,
         slug,
         _id: { $ne: this._id },
-      });
-
-      if (!exists) break;
+      })
+    ) {
       slug = `${baseSlug}-${counter++}`;
     }
 
