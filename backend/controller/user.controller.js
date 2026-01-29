@@ -55,21 +55,34 @@ export const checkAuth = async (req, res) => {
 
 
 export const getUser = async (req, res) => {
-  const { identifier } = req.params;
+  let { identifier } = req.params;
+
   try {
-    const user = await User.findOne({
-      $or: [
-        { email: identifier },
-        { userName: { $regex: new RegExp(`^${identifier}$`, 'i') } }
-      ]
-    });
-    
+    const isEmail = validator.isEmail(identifier);
+
+    let query;
+
+    if (isEmail) {
+      // normalize email
+      const normalizedEmail = validator.normalizeEmail(email);
+
+      query = { email: normalizedEmail };
+    } else {
+      // username (case-insensitive)
+      query = {
+        userName: { $regex: new RegExp(`^${identifier}$`, "i") }
+      };
+    }
+
+    const user = await User.findOne(query);
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
     res.status(200).json(user);
   } catch (error) {
-    console.error("Error in getUser controller: ", error);
+    console.error("Error in getUser controller:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
