@@ -53,25 +53,28 @@ export const checkAuth = async (req, res) => {
   }
 };
 
-
 export const getUser = async (req, res) => {
   let { identifier } = req.params;
 
   try {
-    const isEmail = validator.isEmail(identifier);
+    if (!identifier) {
+      return res.status(400).json({ message: "Require identifier" });
+    }
+
+    identifier = identifier.trim().toLowerCase();
+
+    // try email path first
+    const normalizedEmail = validator.normalizeEmail(identifier);
+    const isEmail =
+      normalizedEmail && validator.isEmail(normalizedEmail);
 
     let query;
 
     if (isEmail) {
-      // normalize email
-      const normalizedEmail = validator.normalizeEmail(identifier);
-
       query = { email: normalizedEmail };
     } else {
-      // username (case-insensitive)
-      query = {
-        userName: { $regex: new RegExp(`^${identifier}$`, "i") }
-      };
+      // username is already stored lowercase → exact match
+      query = { userName: identifier };
     }
 
     const user = await User.findOne(query);
@@ -87,51 +90,48 @@ export const getUser = async (req, res) => {
   }
 };
 
+
 export const getAllUsers = async (req, res) => {
   try {
-    // Parse query parameters
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.search || '';
-    const filter = req.query.filter || 'all';
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const search = req.query.search?.trim().toLowerCase() || "";
+    const filter = req.query.filter || "all";
 
-    // Build the base query
-    let query = {};
-    
-    // Apply search filter
+    const query = {};
+
+    // Search (prefix-based for performance)
     if (search) {
+      const regex = new RegExp(`^${search}`, "i");
+
       query.$or = [
-        { fullName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { userName: { $regex: search, $options: 'i' } }
+        { fullName: regex },
+        { email: regex },
+        { userName: search }, // already lowercase + indexed
       ];
     }
-    
-    // Apply additional filters
-    switch (filter) {
-      case 'online':
-        query.isOnline = true;
-        break;
-      case 'oauth':
-        query.hasGoogleAuth = true;
-        break;
-      // 'all' case doesn't need additional filtering
+
+    // Filters
+    if (filter === "online") {
+      query.isOnline = true;
+    } else if (filter === "oauth") {
+      query.hasGoogleAuth = true;
     }
-    
-    // Get total count of matching users
-    const totalUsers = await User.countDocuments(query);
-    const totalPages = Math.ceil(totalUsers / limit);
-    
-    // Calculate skip value
+
     const skip = (page - 1) * limit;
-    
-    // Fetch users with pagination
-    const users = await User.find(query, { password: 0 })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-    
-    
+
+    const [users, totalUsers] = await Promise.all([
+      User.find(query)
+        .select("-password")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      User.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalUsers / limit);
+
     res.status(200).json({
       users,
       pagination: {
@@ -140,14 +140,15 @@ export const getAllUsers = async (req, res) => {
         totalItems: totalUsers,
         itemsPerPage: limit,
         hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
+        hasPreviousPage: page > 1,
       },
     });
   } catch (error) {
-    console.error("Error in getAllUsers controller: ", error);
+    console.error("Error in getAllUsers controller:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 export const uploadAvatar = async (req, res) => {
   try {
@@ -317,18 +318,24 @@ export const requestEmailUpdateOtp = async (req, res) => {
     const { user } = req;
 
     if (!email?.trim()) {
-      return res.status(400).json({ success: false, message: "Email is required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required." });
     }
 
     if (!validator.isEmail(email)) {
-      return res.status(400).json({ success: false, message: "Invalid email format." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email format." });
     }
 
     const normalizedEmail = validator.normalizeEmail(email);
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser && existingUser._id.toString() !== user._id.toString()) {
-      return res.status(400).json({ success: false, message: "Email already in use." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already in use." });
     }
 
     // Send OTP to new email
@@ -340,14 +347,18 @@ export const requestEmailUpdateOtp = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: `OTP sent to ${normalizedEmail}`,
-      email: normalizedEmail.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + b.replace(/./g, "*") + c),
+      email: normalizedEmail.replace(
+        /(.{2})(.*)(@.*)/,
+        (_, a, b, c) => a + b.replace(/./g, "*") + c,
+      ),
     });
   } catch (error) {
     console.error("Email update OTP error:", error);
-    return res.status(500).json({ success: false, message: "Failed to send OTP." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to send OTP." });
   }
 };
-
 
 export const confirmEmailUpdate = async (req, res) => {
   try {
@@ -355,11 +366,15 @@ export const confirmEmailUpdate = async (req, res) => {
     const { user } = req;
 
     if (!email?.trim() || !otp?.trim()) {
-      return res.status(400).json({ success: false, message: "Email and OTP are required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and OTP are required." });
     }
 
     if (!validator.isEmail(email)) {
-      return res.status(400).json({ success: false, message: "Invalid email format." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email format." });
     }
 
     const normalizedEmail = validator.normalizeEmail(email);
@@ -384,6 +399,11 @@ export const confirmEmailUpdate = async (req, res) => {
   } catch (error) {
     console.error("Email update error:", error);
     const status = error.name === "ValidationError" ? 400 : 500;
-    return res.status(status).json({ success: false, message: error.message || "Failed to update email." });
+    return res
+      .status(status)
+      .json({
+        success: false,
+        message: error.message || "Failed to update email.",
+      });
   }
 };

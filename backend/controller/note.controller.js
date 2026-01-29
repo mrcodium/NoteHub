@@ -316,8 +316,9 @@ export const renameNote = async (req, res) => {
 export const getNoteBySlug = async (req, res) => {
   const { username, collectionSlug, noteSlug } = req.params;
   const requester = req.user || null;
+  const normalizedUsername = username.trim().toLowerCase();
 
-  const cacheKey = `note:slug:${username}:${collectionSlug}:${noteSlug}:user:${requester?._id || "guest"}`;
+  const cacheKey = `note:slug:${normalizedUsername}:${collectionSlug}:${noteSlug}:user:${requester?._id || "guest"}`;
 
   try {
     const cached = await getCache(cacheKey);
@@ -329,7 +330,7 @@ export const getNoteBySlug = async (req, res) => {
     }
 
     const user = await User.findOne({
-      userName: { $regex: new RegExp(`^${username}$`, "i") },
+      userName: normalizedUsername,
     });
 
     if (!user) return res.status(404).json({ message: "User not found" });
