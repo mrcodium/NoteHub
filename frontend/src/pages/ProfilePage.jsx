@@ -380,7 +380,7 @@ const ProfilePage = () => {
                 aria-label="View profile photo"
               >
                 <AvatarImage
-                  size={512}
+                  size={384}
                   src={previewUrl || user?.avatar || "/avatar.svg"}
                   alt={`${user?.fullName || "User"} profile photo`}
                   loading="lazy"

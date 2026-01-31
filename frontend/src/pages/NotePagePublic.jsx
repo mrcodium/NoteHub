@@ -14,7 +14,7 @@ import {
   Minus,
   Plus,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useCallback, useState, memo } from "react"; // ADDED useCallback
 import { useParams, useNavigate, Link } from "react-router-dom";
 import parse from "html-react-parser";
 import NoteSkeleton from "@/components/sekeletons/NoteSkeleton";
@@ -45,6 +45,11 @@ import ShareNotePopover from "@/components/ShareNotePopover";
 import { Helmet } from "react-helmet-async";
 import BadgeIcon from "@/components/icons/BadgeIcon";
 
+const MemoEditorTypographyControls = memo(EditorTypographyControls);
+const MemoShareNotePopover = memo(ShareNotePopover);
+const MemoScrollTopButton = memo(ScrollTopButton);
+const MemoFooter = memo(Footer);
+
 const NotePagePublic = () => {
   const { username, collectionSlug, noteSlug } = useParams();
   const navigate = useNavigate();
@@ -71,21 +76,30 @@ const NotePagePublic = () => {
   const [progress, setProgress] = useState(0);
   const fontSize = FONT_SIZE[editorFontSizeIndex] || FONT_SIZE[1];
 
-  useEffect(() => {
-    const el = scrollRef?.current;
-    if (!el) return;
+  // ✅ MOVED: useMemo/useCallback BEFORE any conditional returns
+  const isAuthor = useMemo(
+    () => authUser?._id === note?.userId,
+    [authUser?._id, note?.userId],
+  );
 
-    const onScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = el;
-      const percent = (scrollTop / (scrollHeight - clientHeight)) * 100;
+  const isAdmin = useMemo(() => authUser?.role === "admin", [authUser?.role]);
+  const isOwner = useMemo(() => isAuthor || isAdmin, [isAuthor, isAdmin]);
 
-      setProgress(Math.min(100, Math.max(0, Math.round(percent))));
-    };
+  const metaDescription = useMemo(
+    () => (note?.content ? stripHTML(note.content).slice(0, 160) : ""),
+    [note?.content],
+  );
 
-    el.addEventListener("scroll", onScroll);
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [scrollRef]);
+  const handleTocItemClick = useCallback((itemId) => {
+    document.getElementById(itemId)?.scrollIntoView({ behavior: "smooth" });
+    setTocOpen(false);
+  }, []);
 
+  const handleNavigateToEditor = useCallback(() => {
+    navigate(`/note/${note._id}/editor`);
+  }, [navigate, note?._id]);
+
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -110,154 +124,185 @@ const NotePagePublic = () => {
 
     getImages();
     fetchData();
-  }, [username, collectionSlug, noteSlug, authUser]);
+  }, [username, collectionSlug, noteSlug, authUser, getImages]);
 
+  // Content processing
   useEffect(() => {
-    if (note?.content) {
-      // Generate Table of Contents
-      const headings = Array.from(
-        document.querySelectorAll(".tiptap h1, .tiptap h2, .tiptap h3"),
-      );
+    if (!note?.content) return;
 
-      const tocData = headings.map((h, index) => {
-        if (!h.id) h.id = `heading-${index}`;
-        return {
-          id: h.id,
-          text: h.innerText,
-          level: Number(h.tagName[1]),
-          element: h,
-        };
-      });
+    const imageClickHandlers = new Map();
 
-      setToc(tocData);
-
-      // Apply syntax highlighting
-      document
-        .querySelectorAll("pre code:not([data-highlighted])")
-        .forEach((block) => {
-          hljs.highlightElement(block);
-        });
-
-      // Render KaTeX
-      document
-        .querySelectorAll('[data-type="inline-math"], [data-type="block-math"]')
-        .forEach((element) => {
-          try {
-            const latex = element.getAttribute("data-latex");
-            const isBlock = element.getAttribute("data-type") === "block-math";
-
-            katex.render(latex, element, {
-              displayMode: isBlock, // true for block, false for inline
-              throwOnError: false,
-            });
-          } catch (error) {
-            console.error("KaTeX render error:", error);
-          }
-        });
-
-      // Add header with copy button to each pre tag
-      document.querySelectorAll(".pre-wrapper").forEach((pre) => {
-        if (!pre.querySelector(".pre-header")) {
-          const codeElement = pre.querySelector("code");
-          const languageClass = Array.from(codeElement?.classList || []).find(
-            (cls) => cls.startsWith("language-"),
-          );
-          const language = languageClass
-            ? languageClass.replace("language-", "")
-            : "unknown";
-
-          const header = document.createElement("header");
-          header.className =
-            "pre-header bg-input/50 rounded-t-lg w-full flex items-center justify-between py-2 px-4";
-          header.innerHTML = `<span>${language}</span>`;
-          pre.insertBefore(header, pre.firstChild);
-
-          const buttonContainer = document.createElement("div");
-          header.appendChild(buttonContainer);
-
-          const CopyButton = () => {
-            const [copied, setCopied] = useState(false);
-
-            const handleCopy = async () => {
-              const codeContent = codeElement?.innerText || "";
-              await navigator.clipboard.writeText(codeContent);
-              toast.success("Content copied to clipboard!");
-              setCopied(true);
-              setTimeout(() => setCopied(false), 3000);
-            };
-
-            return (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCopy}
-                disabled={copied}
-                className="gap-2 size-7"
-              >
-                {copied ? (
-                  <CopyCheck className="h-4 w-4" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            );
-          };
-
-          const root = createRoot(buttonContainer);
-          root.render(<CopyButton />);
-        }
-      });
-
-      // Add image click handlers
-      const images = [...document.querySelectorAll(".tiptap img")];
-      images.forEach((img) => {
-        img.style.cursor = "pointer";
-        img.addEventListener("click", () =>
-          setSelectedImage(img.getAttribute("src") || ""),
-        );
-      });
-
-      return () => {
-        images.forEach((img) => {
-          img.removeEventListener("click", () => setSelectedImage(null));
-        });
+    // Generate TOC
+    const headings = Array.from(
+      document.querySelectorAll(".tiptap h1, .tiptap h2, .tiptap h3"),
+    );
+    const tocData = headings.map((h, index) => {
+      if (!h.id) h.id = `heading-${index}`;
+      return {
+        id: h.id,
+        text: h.innerText,
+        level: Number(h.tagName[1]),
+        element: h,
       };
-    }
-  }, [note]);
+    });
+    setToc(tocData);
 
+    // Syntax highlighting
+    const codeBlocks = document.querySelectorAll(
+      "pre code:not([data-highlighted])",
+    );
+    codeBlocks.forEach((block) => {
+      hljs.highlightElement(block);
+      block.setAttribute("data-highlighted", "true");
+    });
+
+    // KaTeX
+    const mathElements = document.querySelectorAll(
+      '[data-type="inline-math"]:not([data-katex-rendered]), [data-type="block-math"]:not([data-katex-rendered])',
+    );
+    mathElements.forEach((element) => {
+      try {
+        const latex = element.getAttribute("data-latex");
+        const isBlock = element.getAttribute("data-type") === "block-math";
+        katex.render(latex, element, {
+          displayMode: isBlock,
+          throwOnError: false,
+        });
+        element.setAttribute("data-katex-rendered", "true");
+      } catch (error) {
+        console.error("KaTeX render error:", error);
+      }
+    });
+
+    // ✅ EVENT DELEGATION - Single listener for all buttons
+    const copyIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
+    const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+
+    const handleCopyClick = async (e) => {
+      const button = e.target.closest(".copy-code-button");
+      if (!button) return;
+
+      const pre = button.closest(".pre-wrapper");
+      const codeElement = pre?.querySelector("code");
+      if (!codeElement) return;
+
+      const codeContent = codeElement.innerText || "";
+      await navigator.clipboard.writeText(codeContent);
+      toast.success("Content copied to clipboard!");
+
+      button.innerHTML = checkIcon;
+      setTimeout(() => {
+        button.innerHTML = copyIcon;
+      }, 3000);
+    };
+
+    // Add headers with buttons
+    const preWrappers = document.querySelectorAll(".pre-wrapper");
+    preWrappers.forEach((pre) => {
+      if (!pre.querySelector(".pre-header")) {
+        const codeElement = pre.querySelector("code");
+        const languageClass = Array.from(codeElement?.classList || []).find(
+          (cls) => cls.startsWith("language-"),
+        );
+        const language = languageClass
+          ? languageClass.replace("language-", "")
+          : "unknown";
+
+        const header = document.createElement("header");
+        header.className =
+          "pre-header bg-input/50 rounded-t-lg w-full flex items-center justify-between py-2 px-4";
+
+        header.innerHTML = `
+        <span class="text-xs font-medium text-muted-foreground">${language}</span>
+        <button class="copy-code-button gap-2 size-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-background/50 hover:text-accent-foreground">
+          ${copyIcon}
+        </button>
+      `;
+
+        pre.insertBefore(header, pre.firstChild);
+      }
+    });
+
+    // Single delegated listener
+    document.addEventListener("click", handleCopyClick);
+
+    // Image handlers
+    const images = document.querySelectorAll(".tiptap img");
+    images.forEach((img) => {
+      img.style.cursor = "pointer";
+      const handler = () => setSelectedImage(img.getAttribute("src") || "");
+      img.addEventListener("click", handler);
+      imageClickHandlers.set(img, handler);
+    });
+
+    // ✅ ULTRA CLEAN CLEANUP
+    return () => {
+      document.removeEventListener("click", handleCopyClick);
+
+      imageClickHandlers.forEach((handler, img) => {
+        img.removeEventListener("click", handler);
+      });
+    };
+  }, [note?.content]);
+
+  // ✅ FIXED: Only ONE progress tracking listener (REMOVED duplicate from lines 52-62)
+  useEffect(() => {
+    const el = scrollRef?.current;
+    if (!el) return;
+
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const { scrollTop, scrollHeight, clientHeight } = el;
+          const percent = (scrollTop / (scrollHeight - clientHeight)) * 100;
+          setProgress(Math.min(100, Math.max(0, Math.round(percent))));
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [scrollRef]);
+
+  // TOC scroll tracking
   useEffect(() => {
     const el = scrollRef?.current;
     if (!el || toc.length === 0) return;
 
+    let ticking = false;
     const onScroll = () => {
-      let current = null;
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          let current = null;
+          const containerTop = el.getBoundingClientRect().top;
 
-      toc.forEach((item) => {
-        const rect = item.element.getBoundingClientRect();
-        const containerTop = el.getBoundingClientRect().top;
+          for (const item of toc) {
+            const rect = item.element.getBoundingClientRect();
+            if (rect.top - containerTop <= 120) {
+              current = item.id;
+            } else {
+              break;
+            }
+          }
 
-        if (rect.top - containerTop <= 120) {
-          current = item.id;
-        }
-      });
-
-      setActiveId(current);
+          setActiveId(current);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    el.addEventListener("scroll", onScroll);
-    onScroll(); // run once initially
-
+    el.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
     return () => el.removeEventListener("scroll", onScroll);
   }, [toc, scrollRef]);
 
   if (isLoading) {
     return <NoteSkeleton />;
   }
-
-  const isAuthor = authUser?._id === note.userId;
-  const isAdmin = authUser?.role === "admin";
-
-  const isOwner = isAuthor || isAdmin;
 
   if (isPrivate) {
     return (
@@ -286,7 +331,7 @@ const NotePagePublic = () => {
       <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
         {isOwner && (
           <Button
-            onClick={() => navigate(`/note/${note._id}/editor`)}
+            onClick={handleNavigateToEditor}
             variant="secondary"
             size="lg"
             className="shadow-md bottom-2 right-4 font-bold"
@@ -297,7 +342,7 @@ const NotePagePublic = () => {
         <img
           className="size-[200px] mx-auto mt-4 grayscale-[100] opacity-50"
           src="/empty-note-state.svg"
-          alt=""
+          alt="Empty Note"
         />
         <div>No content</div>
       </div>
@@ -308,26 +353,17 @@ const NotePagePublic = () => {
     <>
       <Helmet>
         <title>{note.name} | NoteHub</title>
-        <meta
-          name="description"
-          content={stripHTML(note.content).slice(0, 160)}
-        />
+        <meta name="description" content={metaDescription} />
 
         {/* Open Graph */}
         <meta property="og:title" content={note.name} />
-        <meta
-          property="og:description"
-          content={stripHTML(note.content).slice(0, 160)}
-        />
+        <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={window.location.href} />
 
         {/* Twitter */}
         <meta name="twitter:title" content={note.name} />
-        <meta
-          name="twitter:description"
-          content={stripHTML(note.content).slice(0, 160)}
-        />
+        <meta name="twitter:description" content={metaDescription} />
       </Helmet>
 
       <div
@@ -472,81 +508,112 @@ const NotePagePublic = () => {
           >
             {parse(note?.content || "")}
           </div>
-          <div className="flex gap-2 items-center fixed bottom-4 right-4">
-            {toc.length > 1 && (
-              <Popover open={tocOpen} onOpenChange={setTocOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    className="hover:bg-primary h-11 gap-4 rounded-full py-1.5 px-2 pl-4"
-                    variant="default"
-                  >
-                    <div className="flex items-center gap-2">
-                      <TextQuote />
-                      Index{" "}
-                      <ChevronsUpDown className="text-primary-foreground" />
-                    </div>
-                    <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
-                      {Number(progress || 0)}%
-                    </div>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  align="end"
-                  sideOffset={10}
-                  alignOffset={-50}
-                  className="rounded-2xl min-w-max pr-1"
-                >
-                  <ScrollArea>
-                    <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
-                      <div className="space-y-2">
-                        {toc.map((item) => (
-                          <p
-                            key={item.id}
-                            onClick={() => {
-                              document.getElementById(item.id)?.scrollIntoView({
-                                behavior: "smooth",
-                              });
-                              setTocOpen(false);
-                            }}
-                            className={cn(
-                              "cursor-pointer !pl-0 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
-                              activeId === item.id &&
-                                "text-primary font-semibold",
-                            )}
-                            style={{ paddingLeft: (item.level - 1) * 12 }}
-                          >
-                            {item.text}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  </ScrollArea>
-                </PopoverContent>
-              </Popover>
-            )}
-            <EditorTypographyControls />
 
-            <ShareNotePopover
-              note={note}
-              shareLink={`https://notehub-38kp.onrender.com/user/${username}/${collectionSlug}/${noteSlug}`}
-            />
-            {isOwner && (
-              <Button
-                onClick={() => navigate(`/note/${note._id}/editor`)}
-                size="icon"
-                tooltip="Edit Content"
-                className="size-11 rounded-full"
-              >
-                <Pencil />
-              </Button>
-            )}
-          </div>
+          {/* ✅ MEMOIZED FLOATING BUTTONS */}
+          <FloatingActionButtons
+            toc={toc}
+            tocOpen={tocOpen}
+            setTocOpen={setTocOpen}
+            progress={progress}
+            activeId={activeId}
+            handleTocItemClick={handleTocItemClick}
+            note={note}
+            username={username}
+            collectionSlug={collectionSlug}
+            noteSlug={noteSlug}
+            isOwner={isOwner}
+            handleNavigateToEditor={handleNavigateToEditor}
+          />
         </div>
-        <ScrollTopButton />
-        <Footer className={"pb-28"} />
+        <MemoScrollTopButton />
+        <MemoFooter className={"pb-28"} />
       </div>
     </>
   );
 };
+
+// ✅ EXTRACT FLOATING BUTTONS TO SEPARATE MEMOIZED COMPONENT
+const FloatingActionButtons = memo(
+  ({
+    toc,
+    tocOpen,
+    setTocOpen,
+    progress,
+    activeId,
+    handleTocItemClick,
+    note,
+    username,
+    collectionSlug,
+    noteSlug,
+    isOwner,
+    handleNavigateToEditor,
+  }) => {
+    return (
+      <div className="flex gap-2 items-center fixed bottom-4 right-4">
+        {toc.length > 1 && (
+          <Popover open={tocOpen} onOpenChange={setTocOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                className="hover:bg-primary h-11 gap-4 rounded-full py-1.5 px-2 pl-4"
+                variant="default"
+              >
+                <div className="flex items-center gap-2">
+                  <TextQuote />
+                  Index <ChevronsUpDown className="text-primary-foreground" />
+                </div>
+                <div className="bg-muted/5 p-2 py-1.5 rounded-full min-w-[50px]">
+                  {Number(progress || 0)}%
+                </div>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              sideOffset={10}
+              alignOffset={-50}
+              className="rounded-2xl min-w-max pr-1"
+            >
+              <ScrollArea>
+                <div className="max-w-[300px] sm:max-w-sm max-h-[60vh] pr-4">
+                  <div className="space-y-2">
+                    {toc.map((item) => (
+                      <p
+                        key={item.id}
+                        onClick={() => handleTocItemClick(item.id)}
+                        className={cn(
+                          "cursor-pointer !pl-0 list-decimal !text-base/6 text-muted-foreground hover:text-primary",
+                          activeId === item.id && "text-primary font-semibold",
+                        )}
+                        style={{ paddingLeft: (item.level - 1) * 12 }}
+                      >
+                        {item.text}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+        )}
+        <MemoEditorTypographyControls />
+        <MemoShareNotePopover
+          note={note}
+          shareLink={`https://notehub-38kp.onrender.com/user/${username}/${collectionSlug}/${noteSlug}`}
+        />
+        {isOwner && (
+          <Button
+            onClick={handleNavigateToEditor}
+            size="icon"
+            tooltip="Edit Content"
+            className="size-11 rounded-full"
+          >
+            <Pencil />
+          </Button>
+        )}
+      </div>
+    );
+  },
+);
+
+FloatingActionButtons.displayName = "FloatingActionButtons";
 
 export default NotePagePublic;

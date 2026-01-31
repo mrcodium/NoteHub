@@ -47,7 +47,6 @@ const AvatarStack = ({ collaborators = [], maxVisible = 5, size = "md" }) => {
             )}
           >
             <AvatarImage
-              size={currentSize.avatar}
               src={collaborators[maxVisible]?.avatar}
               alt="Collaborator Profile Photo"
             />
@@ -78,7 +77,6 @@ const AvatarStack = ({ collaborators = [], maxVisible = 5, size = "md" }) => {
               )}
             >
               <AvatarImage
-                size={currentSize.avatar}
                 src={collaborator.avatar}
                 alt={collaborator.fullName || "Collaborator Profile Photo"}
               />
