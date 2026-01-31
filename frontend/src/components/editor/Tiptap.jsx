@@ -116,8 +116,8 @@ const Tiptap = () => {
       el.style.removeProperty("background");
       el.style.removeProperty("background-color");
 
-      // optional: remove text color too
-      // el.style.removeProperty("color");
+      // remove text color
+      el.style.removeProperty("color");
 
       // cleanup empty style attr
       if (!el.getAttribute("style")?.trim()) {
