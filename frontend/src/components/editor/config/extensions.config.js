@@ -27,8 +27,12 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
 import { Dropcursor, Gapcursor } from "@tiptap/extensions";
 import Link from "@tiptap/extension-link";
-import Math, { migrateMathStrings } from "@tiptap/extension-mathematics";
-import TableOfContents, { getHierarchicalIndexes } from "@tiptap/extension-table-of-contents";
+import Math from "@tiptap/extension-mathematics";
+import TableOfContents, {
+  getHierarchicalIndexes,
+} from "@tiptap/extension-table-of-contents";
+import BubbleMenu from "@tiptap/extension-bubble-menu";
+import { ResizableImageExtension } from "../ResizableImageExtension";
 
 const lowlight = createLowlight(all);
 
@@ -145,9 +149,7 @@ export const extensions = [
     anchorTypes: ["heading"],
     getIndex: getHierarchicalIndexes,
     onUpdate: (anchors) => {
-      window.dispatchEvent(
-        new CustomEvent("toc-update", { detail: anchors })
-      );
+      window.dispatchEvent(new CustomEvent("toc-update", { detail: anchors }));
     },
   }),
   CustomCodeBlock,
@@ -171,15 +173,20 @@ export const extensions = [
     placeholder: ({ node }) => {
       if (node.type.name === "heading") {
         return "Heading " + node.attrs.level;
-      }
-      else if(node.type.name === "bulletList") return "List"
-      else if(node.type.name === "orderedList") return "List"
-      else if(node.type.name === "blockquote") return "Empty quote"
+      } else if (node.type.name === "bulletList") return "List";
+      else if (node.type.name === "orderedList") return "List";
+      else if (node.type.name === "blockquote") return "Empty quote";
 
       return "Type / for options";
     },
   }),
-  Image,
+  BubbleMenu.configure({
+    element: document.querySelector("#image-bubble-menu"),
+    shouldShow: ({ editor }) => {
+      return editor.isActive("image");
+    },
+  }),
+  ResizableImageExtension,
   // ...keep your existing imports and code above
   Math.configure({
     blockOptions: {
@@ -188,7 +195,7 @@ export const extensions = [
         window.dispatchEvent(
           new CustomEvent("open-math-dialog", {
             detail: { latex: node.attrs.latex, pos, mode: "block" },
-          })
+          }),
         );
       },
     },
@@ -197,7 +204,7 @@ export const extensions = [
         window.dispatchEvent(
           new CustomEvent("open-math-dialog", {
             detail: { latex: node.attrs.latex, pos, mode: "inline" },
-          })
+          }),
         );
       },
     },

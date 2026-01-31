@@ -33,10 +33,6 @@ div:has(> .tiptap.ProseMirror) {
   @apply p-5;
 }
 
-.tiptap img {
-  @apply max-h-[50vh] my-4 rounded-xl;
-}
-
 .tiptap .code-block {
   @apply relative;
 }
@@ -320,10 +316,58 @@ button:disabled {
 .tiptap img {
   display: block;
   height: auto;
-  margin: 1.5rem 0;
   max-width: 100%;
+  @apply rounded-md;
 }
 
 .tiptap img.ProseMirror-selectednode {
-  outline: 4px solid hsl(var(--primary) / 30%);
+  outline: 4px solid #615fff;
+}
+.ProseMirror-selectednode img {
+  outline: 4px solid #615fff;
+}
+
+.resize-container {
+  position: relative;
+  max-width: 100%;
+  margin: 1rem auto;
+}
+
+.resize-wrapper {
+  max-width: 100%;
+}
+
+.resize-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.react-renderer.node-image {
+  display: flex;
+  justify-content: center;
+}
+/* Handle */
+.node-image {
+  position: relative;
+  display: flex;
+  max-width: 100%;
+  margin: 1rem 0;
+}
+
+.node-image:hover .resize-handle {
+  display: flex;
+}
+.node-image .resize-handle {
+  position: absolute;
+  top: 50%;
+  height: 40px;
+  width: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ew-resize;
+  border-radius: 50px;
+  background-color: #615fff;
+  transform: translateY(-50%);
 }
