@@ -182,6 +182,7 @@ const NotePagePublic = () => {
       const button = e.target.closest(".copy-code-button");
       if (!button) return;
 
+      button.disabled = true;
       const pre = button.closest(".pre-wrapper");
       const codeElement = pre?.querySelector("code");
       if (!codeElement) return;
@@ -193,6 +194,7 @@ const NotePagePublic = () => {
       button.innerHTML = checkIcon;
       setTimeout(() => {
         button.innerHTML = copyIcon;
+        button.disabled = false;
       }, 3000);
     };
 

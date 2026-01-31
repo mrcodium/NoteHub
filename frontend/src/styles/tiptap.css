@@ -311,3 +311,19 @@ div:has(> .tiptap.ProseMirror) {
 .tiptap .tiptap-mathematics-render.block-math-error {
   @apply bg-destructive/10 text-destructive border-destructive/50 p-2 rounded-sm;
 }
+
+button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.tiptap img {
+  display: block;
+  height: auto;
+  margin: 1.5rem 0;
+  max-width: 100%;
+}
+
+.tiptap img.ProseMirror-selectednode {
+  outline: 4px solid hsl(var(--primary) / 30%);
+}

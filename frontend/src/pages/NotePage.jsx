@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useNoteStore } from "@/stores/useNoteStore";
 import {
   Calendar,
+  Check,
   ChevronsUpDown,
   Clock,
   Copy,
@@ -178,7 +179,7 @@ const NotePage = () => {
                 className="gap-2 size-7"
               >
                 {copied ? (
-                  <CopyCheck className="h-4 w-4" />
+                  <Check className="h-4 w-4" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
