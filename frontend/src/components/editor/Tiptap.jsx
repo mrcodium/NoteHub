@@ -104,27 +104,36 @@ const Tiptap = () => {
       onCreate={({ editor }) => migrateMathStrings(editor)}
       onUpdate={({ editor }) => handleUpdate(editor.getHTML())}
       editorProps={{
-        transformPastedHTML(html) {
-          const doc = new DOMParser().parseFromString(html, "text/html");
+  transformPastedHTML(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
 
-          doc.querySelectorAll("[style]").forEach((el) => {
-            el.style.removeProperty("font-family");
-            el.style.removeProperty("font-size");
-            el.style.removeProperty("line-height");
-            if (!el.getAttribute("style")?.trim()) {
-              el.removeAttribute("style");
-            }
-          });
+    doc.querySelectorAll("[style]").forEach((el) => {
+      el.style.removeProperty("font-family");
+      el.style.removeProperty("font-size");
+      el.style.removeProperty("line-height");
 
-          return doc.body.innerHTML;
-        },
-        attributes: {
-          class:
-            "prose dark:prose-invert mx-auto prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none min-h-full",
-          style: `font-family: ${editorFontFamily}, serif;`,
-          spellcheck: "false",
-        },
-      }}
+      // 🔥 remove background-related styles
+      el.style.removeProperty("background");
+      el.style.removeProperty("background-color");
+
+      // optional: remove text color too
+      // el.style.removeProperty("color");
+
+      // cleanup empty style attr
+      if (!el.getAttribute("style")?.trim()) {
+        el.removeAttribute("style");
+      }
+    });
+
+    return doc.body.innerHTML;
+  },
+  attributes: {
+    class:
+      "prose dark:prose-invert mx-auto prose-sm sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none min-h-full",
+    style: `font-family: ${editorFontFamily}, serif;`,
+    spellcheck: "false",
+  },
+}}
     />
   );
 };
