@@ -35,21 +35,24 @@ const AvatarStack = ({ collaborators = [], maxVisible = 5, size = "md" }) => {
     <div className="flex flex-row-reverse">
       {hiddenCount > 0 && (
         <TooltipWrapper
-          message={`${hiddenCount} more collaborator${hiddenCount > 1 ? 's' : ''}`}
+          message={`${hiddenCount} more collaborator${hiddenCount > 1 ? "s" : ""}`}
         >
-          <Avatar className={cn(
-            "relative shadow-md",
-            currentSize.avatar,
-            currentSize.border,
-            currentSize.margin,
-            "border-background"
-          )}>
-            <AvatarImage src={collaborators[maxVisible]?.avatar} alt="Collaborator Profile Photo" />
+          <Avatar
+            className={cn(
+              "relative shadow-md",
+              currentSize.avatar,
+              currentSize.border,
+              currentSize.margin,
+              "border-background",
+            )}
+          >
+            <AvatarImage
+              size={currentSize.avatar}
+              src={collaborators[maxVisible]?.avatar}
+              alt="Collaborator Profile Photo"
+            />
             <div className="absolute bg-black/50 inset-0 flex items-center justify-center rounded-full">
-              <span className={cn(
-                "text-white font-medium",
-                currentSize.text
-              )}>
+              <span className={cn("text-white font-medium", currentSize.text)}>
                 +{hiddenCount}
               </span>
             </div>
@@ -57,28 +60,34 @@ const AvatarStack = ({ collaborators = [], maxVisible = 5, size = "md" }) => {
         </TooltipWrapper>
       )}
 
-      {collaborators.slice(0, visibleAvatars).reverse().map((collaborator, index) => (
-        <TooltipWrapper
-          key={collaborator._id || index}
-          message={`@${collaborator.userName}`}
-        >
-          <Avatar className={cn(
-            "shadow-md",
-            currentSize.avatar,
-            currentSize.border,
-            currentSize.margin,
-            "border-background"
-          )}>
-            <AvatarImage
-              src={collaborator.avatar}
-              alt={collaborator.fullName || "Collaborator Profile Photo"}
-            />
-            <AvatarFallback className={cn("bg-muted", currentSize.text)}>
-              {collaborator.fullName?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </TooltipWrapper>
-      ))}
+      {collaborators
+        .slice(0, visibleAvatars)
+        .reverse()
+        .map((collaborator, index) => (
+          <TooltipWrapper
+            key={collaborator._id || index}
+            message={`@${collaborator.userName}`}
+          >
+            <Avatar
+              className={cn(
+                "shadow-md",
+                currentSize.avatar,
+                currentSize.border,
+                currentSize.margin,
+                "border-background",
+              )}
+            >
+              <AvatarImage
+                size={currentSize.avatar}
+                src={collaborator.avatar}
+                alt={collaborator.fullName || "Collaborator Profile Photo"}
+              />
+              <AvatarFallback className={cn("bg-muted", currentSize.text)}>
+                {collaborator.fullName?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </TooltipWrapper>
+        ))}
     </div>
   );
 };

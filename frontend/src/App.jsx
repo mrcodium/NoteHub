@@ -1,44 +1,55 @@
-import React, { useEffect } from "react";
+// React core
+import React, { useEffect, lazy, Suspense } from "react";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+
+// Styles & theme
 import "./stores/useNetworkStore";
 import { ThemeProvider } from "./components/theme-provider";
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { useAuthStore } from "./stores/useAuthStore";
+import { ThemeShortcut } from "./components/theme-shortcut";
+
+// UI libraries
 import { Toaster } from "sonner";
-
-import Tiptap from "./components/editor/Tiptap";
-
-//Pages
-import HomePage from "./pages/HomePage";
-import SignUpPage from "./pages/SignUpPage";
-import ProfilePage from "./pages/ProfilePage";
-import LogInPage from "./pages/LogInPage";
-import SettingsPage from "./pages/SettingsPage";
-
-import { Loader } from "lucide-react";
-import Dashboard from "./pages/Dashboard";
-import ForgetPasswordPage from "./pages/ForgetPasswordPage";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import NotePage from "./pages/NotePage";
+import { Loader } from "lucide-react";
+
+// Stores
+import { useAuthStore } from "./stores/useAuthStore";
 import { useRouteStore } from "./stores/useRouteStore";
 import { useNoteStore } from "./stores/useNoteStore";
-import NotFoundPage from "./pages/NotFoundPage";
-import Profile from "./pages/Settings/Profile";
-import Appearance from "./pages/Settings/Appearance";
-import Security from "./pages/Settings/Security";
-import Photos from "./pages/Settings/Photos";
-import OAuthCallback from "./pages/OAuthCallback";
-import { AdminLayout } from "./components/admin/AdminLayout";
-import UsersPage from "./pages/admin/user";
-import CommunicationPage from "./pages/admin/communication";
-import ReportsPage from "./pages/admin/reports";
-import TrashPage from "./pages/admin/trash";
-import NotePagePublic from "./pages/NotePagePublic";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import CollectionPage from "./pages/collection/CollectionPage";
-import { CollaboratorManagerProvider } from "./contex/CollaboratorManagerContext";
-import { CollaboratorsDialog } from "./pages/collection/CollaboratorsDialog";
-import { ThemeShortcut } from "./components/theme-shortcut";
 import { useGithubStore } from "./stores/useGithubStore";
+
+// Context
+import { CollaboratorManagerProvider } from "./contex/CollaboratorManagerContext";
+
+// Components (keep small components non-lazy)
+import { CollaboratorsDialog } from "./pages/collection/CollaboratorsDialog";
+
+// Lazy-loaded pages
+const Tiptap = lazy(() => import("./components/editor/Tiptap"));
+const LogInPage = lazy(() => import("./pages/LogInPage"));
+const SignUpPage = lazy(() => import("./pages/SignUpPage"));
+const ForgetPasswordPage = lazy(() => import("./pages/ForgetPasswordPage"));
+const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
+const HomePage = lazy(() => import("./pages/HomePage"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const NotePage = lazy(() => import("./pages/NotePage"));
+const NotePagePublic = lazy(() => import("./pages/NotePagePublic"));
+const CollectionPage = lazy(() => import("./pages/collection/CollectionPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const Profile = lazy(() => import("./pages/Settings/Profile"));
+const Appearance = lazy(() => import("./pages/Settings/Appearance"));
+const Security = lazy(() => import("./pages/Settings/Security"));
+const Photos = lazy(() => import("./pages/Settings/Photos"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-screen">
+    <Loader className="animate-spin" />
+  </div>
+);
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
@@ -55,7 +66,7 @@ function App() {
   }, [checkAuth]);
 
   const { setRoutes } = useRouteStore();
-  const { getNoteName, collections, status, setselectedNote } = useNoteStore();
+  const { getNoteName, collections, setselectedNote } = useNoteStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -102,7 +113,7 @@ function App() {
       <CollaboratorManagerProvider>
         <TooltipProvider>
           <CollaboratorsDialog />
-          <div>
+          <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public routes */}
               <Route path="/signup" element={<SignUpPage />} />
@@ -130,7 +141,7 @@ function App() {
                     <Route path="note/:id" element={<NotePage />} />
                     <Route path="note/:id/editor" element={<Tiptap />} />
                     <Route path="settings" element={<SettingsPage />}>
-                    <Route index element={<Navigate to="appearance" replace />} />
+                      <Route index element={<Navigate to="appearance" replace />} />
                       <Route path="appearance" element={<Appearance />} />
                       <Route path="profile" element={<Profile />} />
                       <Route path="photos" element={<Photos />} />
@@ -140,18 +151,9 @@ function App() {
                 )}
               </Route>
 
-              {/* Admin routes (keep as is for now) */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<UsersPage />} />
-                <Route path="users" element={<UsersPage />} />
-                <Route path="communication" element={<CommunicationPage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="trash" element={<TrashPage />} />
-              </Route>
-
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
-          </div>
+          </Suspense>
           <Toaster />
         </TooltipProvider>
       </CollaboratorManagerProvider>

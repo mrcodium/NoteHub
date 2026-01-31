@@ -1,3 +1,4 @@
+import BaseHeader from '@/components/BaseHeader';
 import { Button } from '@/components/ui/button'
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -6,9 +7,7 @@ const NotFoundPage = () => {
     const navigate = useNavigate();
     return (
         <div className='h-svh flex flex-col'>
-            <header className='p-4 flex items-center justify-between border-b'>
-                <Link to="/" className='font-bold'>NotHub</Link>
-            </header>
+            <BaseHeader/>
             <div className='w-full flex-1 flex flex-col gap-4 items-center justify-center'>
                 <div>
                     <img src="/404-not-found.svg" alt="404 not found" />

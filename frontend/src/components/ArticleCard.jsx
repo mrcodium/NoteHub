@@ -112,6 +112,7 @@ export function ArticleCard({
           >
             <Avatar className="w-10 h-10">
               <AvatarImage
+                size={40}
                 src={author?.avatar}
                 alt={author?.fullName || "User Profile Photo"}
               />
