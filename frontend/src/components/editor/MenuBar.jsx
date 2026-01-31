@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useNavigate } from "react-router-dom";
 import { useNoteStore } from "@/stores/useNoteStore";
@@ -30,7 +30,7 @@ import {
   COLORS,
 } from "./config/menu.config";
 import { LinkDialog } from "./LinkDialog";
-import MathDialog from "./MathDialog";
+const MathDialog = React.lazy(() => import("./MathDialog"));
 import AddImageDialog from "./AddImageDialog";
 import { useDraftStore } from "@/stores/useDraftStore";
 
@@ -255,7 +255,9 @@ export const MenuBar = ({ noteId }) => {
         </div>
 
         <AddImageDialog editor={editor} />
-        <MathDialog editor={editor} />
+        <Suspense fallback={null}>
+          <MathDialog editor={editor} />
+        </Suspense>
         <LinkDialog editor={editor} />
 
         <Button

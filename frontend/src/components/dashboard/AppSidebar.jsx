@@ -73,10 +73,10 @@ const AppSidebar = (props) => {
                 to="/"
                 className="logo truncate font flex gap-2 items-center"
               >
-                <div className="size-6">
+                <div className="size-6 bg-[#171717] rounded-full">
                   <img
                     className="w-full h-full object-contain"
-                    src="/notehub.png"
+                    src="/n.svg"
                     alt="Notehub Logo"
                   />
                 </div>

@@ -190,10 +190,10 @@ const DashboardHeader = () => {
                       `}
                     >
                       {route.path === "/" && (
-                        <div className="size-6">
+                        <div className="size-6 bg-[#171717] rounded-full">
                           <img
                             className="w-full h-full object-contain"
-                            src="/notehub.png"
+                            src="/n.svg"
                             alt="Notehub Logo"
                           />
                         </div>

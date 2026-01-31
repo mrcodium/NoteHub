@@ -20,11 +20,11 @@ const BaseHeader = () => {
     <header className="sticky top-0 bg-background border-b left-0 w-full h-16 flex p-4 justify-between items-center">
       <div>
         <Link to={"/"} className="logo flex gap-2">
-          <div className="size-6">
+          <div className="size-6 bg-[#171717] rounded-full">
             <img
               className="w-full h-full object-contain"
-              src="/notehub.png"
-              alt=""
+              src="/n.svg"
+              alt="Notehub Logo"
             />
           </div>
           Notehub
@@ -45,7 +45,10 @@ const BaseHeader = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={authUser?.avatar} alt={authUser?.fullName || "User Profile Photo"} />
+                  <AvatarImage
+                    src={authUser?.avatar}
+                    alt={authUser?.fullName || "User Profile Photo"}
+                  />
                   <AvatarFallback>
                     {(authUser?.fullName || "U").charAt(0).toUpperCase()}
                   </AvatarFallback>
