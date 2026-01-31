@@ -7,9 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, Eye, EyeOff, Loader2, Lock, Mail, User2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
@@ -20,10 +19,10 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import validator from "validator";
 import BaseHeader from "@/components/BaseHeader";
 import { LabledInput } from "@/components/ui/labeled-input";
 import { Helmet } from "react-helmet-async";
+import { isEmail, isEmpty, isLength, isNumeric } from "@/lib/validator";
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -79,7 +78,7 @@ const SignupPage = () => {
   useEffect(() => {
     const checkEmailAvailability = async () => {
       const trimmedEmail = formData.email.trim();
-      if (!trimmedEmail || !validator.isEmail(trimmedEmail)) {
+      if (!trimmedEmail || !isEmail(trimmedEmail)) {
         setEmailStatus(null);
         return;
       }
@@ -123,7 +122,7 @@ const SignupPage = () => {
       return;
     }
 
-    if (!validator.isEmail(trimmedEmail)) {
+    if (!isEmail(trimmedEmail)) {
       setErrors((prev) => ({ ...prev, email: "Invalid email format" }));
       return;
     }
@@ -163,7 +162,7 @@ const SignupPage = () => {
     if (!trimmedData.fullName) {
       newErrors.name = "Name is required";
       valid = false;
-    } else if (!validator.isLength(trimmedData.fullName, { min: 3 })) {
+    } else if (!isLength(trimmedData.fullName, { min: 3 })) {
       newErrors.name = "Name must be at least 3 characters";
       valid = false;
     }
@@ -172,7 +171,7 @@ const SignupPage = () => {
     if (!trimmedData.email) {
       newErrors.email = "Email is required";
       valid = false;
-    } else if (!validator.isEmail(trimmedData.email)) {
+    } else if (!isEmail(trimmedData.email)) {
       newErrors.email = "Invalid email format";
       valid = false;
     } else if (emailStatus === "taken") {
@@ -184,10 +183,10 @@ const SignupPage = () => {
     if (!trimmedData.password) {
       newErrors.password = "Password is required";
       valid = false;
-    } else if (validator.isEmpty(trimmedData.password)) {
+    } else if (isEmpty(trimmedData.password)) {
       newErrors.password = "Password cannot be empty";
       valid = false;
-    } else if (!validator.isLength(trimmedData.password, { min: 6 })) {
+    } else if (!isLength(trimmedData.password, { min: 6 })) {
       newErrors.password = "Password must be at least 6 characters";
       valid = false;
     }
@@ -197,8 +196,8 @@ const SignupPage = () => {
       newErrors.otp = "OTP is required";
       valid = false;
     } else if (
-      !validator.isNumeric(trimmedData.otp) ||
-      !validator.isLength(trimmedData.otp, { min: 6, max: 6 })
+      !isNumeric(trimmedData.otp) ||
+      !isLength(trimmedData.otp, { min: 6, max: 6 })
     ) {
       newErrors.otp = "OTP must be 6 digits";
       valid = false;

@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
-import validator from "validator";
 import User from "../model/user.model.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
+import { isEmail, isLength, normalizeEmail } from "../utils/validator.js";
 
 export const requestResetPasswordOtp = async (req, res) => {
   const { identifier } = req.body;
@@ -15,9 +15,9 @@ export const requestResetPasswordOtp = async (req, res) => {
 
   try {
     // Check if identifier is email or username
-    const isEmail = validator.isEmail(identifier);
+    const isEmail = isEmail(identifier);
     const query = isEmail
-      ? { email: validator.normalizeEmail(identifier) }
+      ? { email: normalizeEmail(identifier) }
       : { userName: identifier };
 
     const user = await User.findOne(query);
@@ -61,7 +61,7 @@ export const resetPassword = async (req, res) => {
     });
   }
 
-  if (!validator.isLength(newPassword, { min: 6 })) {
+  if (!isLength(newPassword, { min: 6 })) {
     return res.status(400).json({
       success: false,
       message:
@@ -70,10 +70,10 @@ export const resetPassword = async (req, res) => {
   }
 
   try {
-    const isEmail = validator.isEmail(identifier);
+    const isEmail = isEmail(identifier);
     const user = await User.findOne(
       isEmail
-        ? { email: validator.normalizeEmail(identifier) }
+        ? { email: normalizeEmail(identifier) }
         : { userName: identifier }
     );
 
@@ -129,7 +129,7 @@ export const updatePassword = async (req, res) => {
     });
   }
 
-  if (!validator.isLength(newPassword, { min: 6 })) {
+  if (!isLength(newPassword, { min: 6 })) {
     return res.status(400).json({
       success: false,
       message:

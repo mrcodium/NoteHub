@@ -1,7 +1,7 @@
 import User from "../model/user.model.js";
 import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
-import validator from "validator";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
+import { isEmail, normalizeEmail } from "../utils/validator.js";
 
 export const isEmailAvailable = async (req, res) => {
   try {
@@ -13,14 +13,14 @@ export const isEmailAvailable = async (req, res) => {
       });
     }
 
-    if (!validator.isEmail(email)) {
+    if (!isEmail(email)) {
       return res.status(400).json({
         success: false,
         message: "Please provide a valid email address",
       });
     }
 
-    const normalizedEmail = validator.normalizeEmail(email);
+    const normalizedEmail = normalizeEmail(email);
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     res.status(200).json({
@@ -64,9 +64,9 @@ export const getUser = async (req, res) => {
     identifier = identifier.trim().toLowerCase();
 
     // try email path first
-    const normalizedEmail = validator.normalizeEmail(identifier);
+    const normalizedEmail = normalizeEmail(identifier);
     const isEmail =
-      normalizedEmail && validator.isEmail(normalizedEmail);
+      normalizedEmail && isEmail(normalizedEmail);
 
     let query;
 
@@ -323,13 +323,13 @@ export const requestEmailUpdateOtp = async (req, res) => {
         .json({ success: false, message: "Email is required." });
     }
 
-    if (!validator.isEmail(email)) {
+    if (!isEmail(email)) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid email format." });
     }
 
-    const normalizedEmail = validator.normalizeEmail(email);
+    const normalizedEmail = normalizeEmail(email);
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser && existingUser._id.toString() !== user._id.toString()) {
@@ -371,13 +371,13 @@ export const confirmEmailUpdate = async (req, res) => {
         .json({ success: false, message: "Email and OTP are required." });
     }
 
-    if (!validator.isEmail(email)) {
+    if (!isEmail(email)) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid email format." });
     }
 
-    const normalizedEmail = validator.normalizeEmail(email);
+    const normalizedEmail = normalizeEmail(email);
 
     // Validate OTP
     await validateOtp({

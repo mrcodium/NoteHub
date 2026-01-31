@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { EditorProvider } from "@tiptap/react";
 import { useParams } from "react-router-dom";
-import debounce from "lodash/debounce";
 
 import { extensions } from "./config/extensions.config";
 import { useNoteStore } from "@/stores/useNoteStore";
@@ -12,6 +11,7 @@ import { useEditorStore } from "@/stores/useEditorStore";
 import NoteSkeleton from "../sekeletons/NoteSkeleton";
 import { MenuBar } from "./MenuBar";
 import { migrateMathStrings } from "@tiptap/extension-mathematics";
+import { useDebounceCallback } from "@/hooks/useDebounceCallback";
 
 const Tiptap = () => {
   const { id: noteId } = useParams();
@@ -21,58 +21,64 @@ const Tiptap = () => {
   const { getImages } = useImageStore();
   const { editorFontFamily } = useEditorStore();
 
-  // Keep note as an object with `content` and `name`
   const [note, setNote] = useState({ content: "", name: "" });
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  // Debounced draft save
-  const saveDraft = useMemo(
-    () =>
-      debounce((noteObj) => {
-        // Save the entire note object, not just content/name
-        setDraft(noteId, noteObj);
-      }, 400),
-    [noteId],
+  // ✅ Stable reference
+  const saveDraftCallback = useCallback(
+    (noteObj) => {
+      if (!noteId) return;
+      setDraft(noteId, noteObj);
+    },
+    [noteId, setDraft],
   );
+
+  const saveDraft = useDebounceCallback(saveDraftCallback, 400);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!noteId) return;
 
-      // 1️⃣ Try draft first
+      setLoading(true);
+      setNotFound(false);
+
       const draft = getDraft(noteId);
       if (draft) {
-        setNote(draft); // draft is full object now
+        setNote(draft);
         setLoading(false);
         return;
       }
 
-      // 2️⃣ Fallback to server
       const serverNote = await getNoteContent(noteId);
-      console.log(serverNote);
       if (!serverNote) {
         setNotFound(true);
       } else {
-        setNote(serverNote); // keep full object
+        setNote(serverNote);
       }
       setLoading(false);
     };
 
     getImages();
     fetchData();
-  }, [noteId, getNoteContent, getDraft]);
 
-  const handleUpdate = (html) => {
-    const updatedNote = {
-      ...note,
-      content: html,
-      updatedAt: Date.now(), // or new Date().toISOString()
+    return () => {
+      saveDraft.cancel();
     };
+  }, [noteId, getNoteContent, getDraft, getImages]);
 
-    setNote(updatedNote);
-    saveDraft(updatedNote);
-  };
+  // ✅ BEST SOLUTION: Use functional state update
+  const handleUpdate = useCallback((html) => {
+    setNote((prevNote) => {
+      const updatedNote = {
+        ...prevNote,
+        content: html,
+        updatedAt: Date.now(),
+      };
+      saveDraft(updatedNote);
+      return updatedNote;
+    });
+  }, []);
 
   if (notFound) {
     return (

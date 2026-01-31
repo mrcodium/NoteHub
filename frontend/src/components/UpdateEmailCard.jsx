@@ -1,15 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import validator from "validator";
-import debounce from "lodash/debounce";
-
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LabledInput } from "@/components/ui/labeled-input";
 
@@ -28,6 +17,8 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Label } from "./ui/label";
 import BadgeIcon from "./icons/BadgeIcon";
+import { useDebounceCallback } from "@/hooks/useDebounceCallback";
+import { isEmail } from "@/lib/validator";
 
 const UpdateEmailCard = () => {
   const {
@@ -47,22 +38,23 @@ const UpdateEmailCard = () => {
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
-  /* ------------------ Debounced email check ------------------ */
-  const debouncedCheckAvailability = useMemo(
-    () =>
-      debounce(async (email) => {
-        setCheckingEmail(true);
-        try {
-          const available = await isEmailAvailable(email);
-          setEmailStatus(available ? "available" : "taken");
-          setEmailError(available ? "" : "Email already in use");
-        } catch {
-          setEmailStatus(null);
-        } finally {
-          setCheckingEmail(false);
-        }
-      }, 500),
-    [isEmailAvailable],
+  // ✅ Stable callback reference
+  const checkAvailability = useCallback(async (email) => {
+    setCheckingEmail(true);
+    try {
+      const available = await isEmailAvailable(email);
+      setEmailStatus(available ? "available" : "taken");
+      setEmailError(available ? "" : "Email already in use");
+    } catch {
+      setEmailStatus(null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  }, []); // Empty deps - no external dependencies
+
+  const debouncedCheckAvailability = useDebounceCallback(
+    checkAvailability,
+    500,
   );
 
   useEffect(() => {
@@ -76,7 +68,7 @@ const UpdateEmailCard = () => {
     const trimmedEmail = newEmail.trim();
 
     // ✅ instant format validation (NO debounce)
-    if (!validator.isEmail(trimmedEmail)) {
+    if (!isEmail(trimmedEmail)) {
       debouncedCheckAvailability.cancel();
       setEmailStatus(null);
       setEmailError("Invalid email format");
@@ -90,7 +82,7 @@ const UpdateEmailCard = () => {
     debouncedCheckAvailability(trimmedEmail);
 
     return () => debouncedCheckAvailability.cancel();
-  }, [newEmail, debouncedCheckAvailability]);
+  }, [newEmail]); // ✅ Now safe - only newEmail triggers effect
 
   /* ------------------ OTP cooldown ------------------ */
   useEffect(() => {

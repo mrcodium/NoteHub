@@ -3,8 +3,8 @@ import bcrypt from "bcryptjs";
 import { clearCookie, generateToken, setCookie } from "../utils/jwt.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
 import { OAuth2Client } from "google-auth-library";
-import validator from "validator";
 import { ENV } from "../config/env.js";
+import { escape, isEmail, isLength, normalizeEmail } from "../utils/validator.js";
 
 // common response functions
 const sendAuthResponse = (res, user) => {
@@ -30,19 +30,19 @@ export const signup = async (req, res) => {
   }
 
   // Validate email format
-  if (!validator.isEmail(email)) {
+  if (!isEmail(email)) {
     return res.status(400).json({ message: "Invalid email format" });
   }
 
   // Validate password strength
-  if (!validator.isLength(inputPassword, { min: 6 })) {
+  if (!isLength(inputPassword, { min: 6 })) {
     return res.status(400).json({
       message: "Password must contain at least 6 characters.",
     });
   }
 
   try {
-    const normalizedEmail = validator.normalizeEmail(email);
+    const normalizedEmail = normalizeEmail(email);
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
@@ -65,7 +65,7 @@ export const signup = async (req, res) => {
 
     // creating the user with temporary username
     const newUser = await User.create({
-      fullName: validator.escape(fullName),
+      fullName: escape(fullName),
       email: normalizedEmail,
       password: hashedPassword,
     });
@@ -84,7 +84,7 @@ export const sendSignupOtp = async (req, res) => {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    if (!validator.isEmail(email)) {
+    if (!isEmail(email)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
@@ -94,7 +94,7 @@ export const sendSignupOtp = async (req, res) => {
     }
 
     const result = await sendOtp({
-      email: validator.normalizeEmail(email),
+      email: normalizeEmail(email),
       purpose: "signup",
     });
     res.status(result.status).json({ message: result.message });
@@ -192,7 +192,7 @@ export const googleLogin = async (req, res) => {
 
     const { email, sub: googleId, name: fullName, picture } = payload;
     const avatar = picture.replace(/=s96-c$/, "=s400-c");
-    const normalizedEmail = validator.normalizeEmail(email);
+    const normalizedEmail = normalizeEmail(email);
 
     // Find or create user (aligned with your signup flow)
     let user = await User.findOne({ email: normalizedEmail });
@@ -200,7 +200,7 @@ export const googleLogin = async (req, res) => {
     if (!user) {
       // Create new user (like in signup)
       user = await User.create({
-        fullName: validator.escape(fullName || ""),
+        fullName: escape(fullName || ""),
         email: normalizedEmail,
         googleId,
         avatar,

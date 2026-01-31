@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   Search,
-  Telescope,
   User,
   Clock,
   X,
@@ -11,11 +10,8 @@ import {
   Ghost,
   ArrowLeft,
   Folder,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
-import { debounce } from "lodash";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLocalStorage } from "@/stores/useLocalStorage";
 import {
@@ -44,6 +40,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import BadgeIcon from "./icons/BadgeIcon";
+import { useDebounceCallback } from "../hooks/useDebounceCallback";
 
 export function getFirstMatchSnippets(html, query, radius = 60, limit = 3) {
   if (!html || !query) return [];
@@ -126,10 +123,14 @@ export function SearchButton() {
   const inputRef = React.useRef(null);
 
   // Debounced search for both notes and users
-  const fetchSearchResults = React.useCallback(
-    debounce(async (query, notesPage = 1, usersPage = 1) => {
+  const fetchSearchResults = useDebounceCallback(
+    async (query, notesPage = 1, usersPage = 1) => {
       setIsTyping(false);
-      if (!query.trim()) {
+
+      const trimmedQuery = query.trim();
+
+      // Reset state for empty query
+      if (!trimmedQuery) {
         setSearchResults({ notes: [], users: [] });
         setPagination({
           notes: {
@@ -147,60 +148,53 @@ export function SearchButton() {
             hasPreviousPage: false,
           },
         });
+        setIsSearching(false);
         return;
       }
 
       try {
         setIsSearching(true);
 
-        // Fetch both notes and users in parallel
         const [notesResponse, usersResponse] = await Promise.all([
           axiosInstance.get(
-            `/note/search?q=${encodeURIComponent(query)}&page=${notesPage}&limit=10`,
+            `/note/search?q=${encodeURIComponent(trimmedQuery)}&page=${notesPage}&limit=10`,
           ),
           getAllUsers({
             page: usersPage,
             limit: 10,
             filter: "all",
-            search: query,
+            search: trimmedQuery,
           }),
         ]);
+
         setSearchResults({
           notes: notesResponse.data.notes || [],
           users: usersResponse.users || [],
         });
 
         setPagination({
-          notes: notesResponse.data.pagination || {
-            currentPage: 1,
-            totalPages: 0,
-            totalItems: 0,
-            hasNextPage: false,
-            hasPreviousPage: false,
-          },
-          users: usersResponse.pagination || {
-            currentPage: 1,
-            totalPages: 0,
-            totalItems: 0,
-            hasNextPage: false,
-            hasPreviousPage: false,
-          },
+          notes: notesResponse.data.pagination,
+          users: usersResponse.pagination,
         });
-      } catch (error) {
-        console.error("Failed to search:", error);
+      } catch (err) {
+        console.error("Failed to search:", err);
         setSearchResults({ notes: [], users: [] });
+        // Optionally show error toast here
       } finally {
         setIsSearching(false);
       }
-    }, 300),
-    [getAllUsers, authUser],
+    },
+    300,
   );
 
   // Handle search input changes (reset to page 1)
   React.useEffect(() => {
     fetchSearchResults(searchQuery, 1, 1);
-    return () => fetchSearchResults.cancel();
-  }, [searchQuery]);
+
+    return () => {
+      fetchSearchResults.cancel();
+    };
+  }, [searchQuery, fetchSearchResults]);
 
   // Handle pagination changes
   const handleNotesPageChange = (page) => {

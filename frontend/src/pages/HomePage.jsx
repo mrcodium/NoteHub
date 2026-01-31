@@ -56,9 +56,9 @@ const HomePage = () => {
     <div className="p-2">
       <div className="space-y-3 sm:space-y-4 max-w-screen-lg mx-auto">
         {/* Render transformed notes */}
-        {articles.map((note) => (
+        {articles.map((note, index) => (
           <ArticleCard
-            key={note._id}
+            key={note._id || index}
             note={note}
             description={note.article.description}
             images={note.article.images}

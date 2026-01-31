@@ -5,8 +5,6 @@ import Highlight from "@tiptap/extension-highlight";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import {
-  BulletList,
-  OrderedList,
   ListItem,
   TaskList,
   TaskItem,

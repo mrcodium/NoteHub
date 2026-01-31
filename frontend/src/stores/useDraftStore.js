@@ -31,9 +31,15 @@ export const useDraftStore = create(
           delete drafts[noteId];
           return { drafts };
         }),
+
+      // ✅ Clear all drafts
+      clearAllDrafts: () =>
+        set(() => ({
+          drafts: {},
+        })),
     }),
     {
       name: "notehub-drafts", // localStorage key
-    }
-  )
+    },
+  ),
 );
