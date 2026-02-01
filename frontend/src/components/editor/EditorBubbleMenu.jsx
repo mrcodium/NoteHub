@@ -30,20 +30,24 @@ export default function EditorBubbleMenu() {
   return (
     <BubbleMenu
       editor={editor}
-      shouldShow={() => editor.isActive("image")}
-      tippyOptions={{
-        getReferenceClientRect: () => {
-          // get the currently selected image DOM node
-          const node = editor.view.dom.querySelector(
-            ".ProseMirror-selectednode img",
-          );
-          if (!node) return editor.view.dom.getBoundingClientRect();
-          return node.getBoundingClientRect();
-        },
+      tippyProps={{
+        strategy: "fixed", // ← THIS is the main fix
         placement: "top",
-        offset: [0, 8],
-        flip: true,
-        appendTo: document.body, // make sure it’s not clipped by container overflow
+        popperOptions: {
+          strategy: "fixed",
+          modifiers: [
+            {
+              name: "flip",
+              options: {
+                fallbackPlacements: ["bottom", "top-start", "bottom-start"],
+              },
+            },
+            {
+              name: "preventOverflow",
+              options: { boundary: "viewport", altAxis: true, tether: false },
+            },
+          ],
+        },
       }}
     >
       <div className="bubble-menu bg-muted p-1 flex items-center gap-1 border rounded-xl">

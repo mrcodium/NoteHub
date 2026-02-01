@@ -37,16 +37,52 @@ div:has(> .tiptap.ProseMirror) {
   @apply relative;
 }
 
+.tiptap .pre-header,
 .tiptap .code-block header {
-  @apply bg-[#222];
+  @apply bg-[#222] text-white;
 }
 
+.tiptap .code-block button[role="combobox"]:hover{
+  color: white;
+}
 .tiptap .code-block button[role="combobox"] {
   @apply bg-[#363636] border-[#595959];
 }
+
+.tiptap .pre-header button,
 .tiptap .code-block button {
-  @apply text-white hover:bg-[#404040];
+  @apply hover:bg-[#404040];
 }
+
+.tiptap .code-block *::-webkit-scrollbar-track {
+  @apply !bg-transparent;
+}
+
+/* cmdk list scrollbar */
+[cmdk-list] {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #52525b transparent; /* thumb / track */
+}
+
+[cmdk-list]::-webkit-scrollbar {
+  width: 6px;
+  height: 6px; /* horizontal scrollbar, optional */
+}
+
+[cmdk-list]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[cmdk-list]::-webkit-scrollbar-thumb {
+  background-color: #52525b; /* zinc-700 */
+  border-radius: 9999px; /* fully rounded */
+}
+
+[cmdk-list]::-webkit-scrollbar-thumb:hover {
+  background-color: #818cf8; /* hover accent */
+}
+
+
 
 .tiptap .code-block select {
   @apply absolute bg-white right-[0.5rem] left-[0.5rem];

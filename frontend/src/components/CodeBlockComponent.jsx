@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from "react";
 import { Check, ChevronsUpDown, Copy, CopyCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
+import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 
-export default ({ node: { attrs: { language: defaultLanguage } }, updateAttributes, extension }) => {
+export default ({
+  node: {
+    attrs: { language: defaultLanguage },
+  },
+  updateAttributes,
+  extension,
+}) => {
   const languages = extension.options.lowlight.listLanguages();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(defaultLanguage);
@@ -33,7 +39,7 @@ export default ({ node: { attrs: { language: defaultLanguage } }, updateAttribut
 
   return (
     <NodeViewWrapper className="code-block relative rounded-2xl overflow-hidden">
-      <header className='rounded-t-lg w-full flex items-center justify-between py-2 px-4'>
+      <header className="rounded-t-lg w-full flex items-center justify-between py-2 px-4">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -49,9 +55,9 @@ export default ({ node: { attrs: { language: defaultLanguage } }, updateAttribut
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0">
-            <Command>
-              <CommandInput placeholder="Search language..." className="h-9" />
+          <PopoverContent className="w-[200px] bg-zinc-800 border-zinc-800 p-0 " size="top" align="start">
+            <Command className="bg-transparent text-zinc-50 border-zinc-800">
+              <CommandInput placeholder="Search language..." className="h-9 placeholder:text-zinc-400" />
               <CommandList>
                 <CommandEmpty>No language found.</CommandEmpty>
                 <CommandGroup>
@@ -64,12 +70,13 @@ export default ({ node: { attrs: { language: defaultLanguage } }, updateAttribut
                         updateAttributes({ language: currentValue });
                         setOpen(false);
                       }}
+                      style={{color: "white"}}
                     >
                       {lang}
                       <Check
                         className={cn(
                           "ml-auto h-4 w-4",
-                          value === lang ? "opacity-100" : "opacity-0"
+                          value === lang ? "opacity-100" : "opacity-0",
                         )}
                       />
                     </CommandItem>
@@ -80,25 +87,29 @@ export default ({ node: { attrs: { language: defaultLanguage } }, updateAttribut
           </PopoverContent>
         </Popover>
 
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleCopy}
           disabled={copied}
           className="gap-2 size-7"
           aria-label={copied ? "Code copied" : "Copy code to clipboard"}
         >
-          {copied ? <CopyCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copied ? (
+            <CopyCheck className="h-4 w-4" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
         </Button>
       </header>
 
-      <pre 
-        ref={codeRef} 
+      <pre
+        ref={codeRef}
         className="p-4 overflow-x-auto bg-[#09090b]"
-        style={{ 
+        style={{
           tabSize: 4,
-          whiteSpace: 'pre',
-          fontFamily: 'monospace'
+          whiteSpace: "pre",
+          fontFamily: "monospace",
         }}
       >
         <NodeViewContent as="code" className={`language-${value}`} />

@@ -80,7 +80,7 @@ const DashboardHeader = () => {
     if (visibleBreadcrumbs === 1 && totalRoutes > 1) {
       return {
         visible: [routes[routes.length - 1]],
-        hidden: routes.slice(0, -1),
+        hidden: routes.slice(0, -1).reverse(),
       };
     }
 
@@ -91,7 +91,7 @@ const DashboardHeader = () => {
 
     // Show first route, ellipsis, and last N-1 routes
     const visible = [routes[0], ...routes.slice(-(visibleBreadcrumbs - 1))];
-    const hidden = routes.slice(1, -(visibleBreadcrumbs - 1));
+    const hidden = routes.slice(1, -(visibleBreadcrumbs - 1)).reverse();
 
     return { visible, hidden };
   };

@@ -30,7 +30,7 @@ const DraftsSection = () => {
         Unsaved Drafts
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
-            <Button size="icon" className="size-6" variant="destructive">
+            <Button size="icon" className="size-6 bg-primary/10 text-muted-foreground hover:text-primary hover:bg-primary/20" variant="secondary">
               <Trash2 />
             </Button>
           </AlertDialogTrigger>
