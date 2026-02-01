@@ -31,7 +31,6 @@ import Math from "@tiptap/extension-mathematics";
 import TableOfContents, {
   getHierarchicalIndexes,
 } from "@tiptap/extension-table-of-contents";
-import BubbleMenu from "@tiptap/extension-bubble-menu";
 import { ResizableImageExtension } from "../ResizableImageExtension";
 
 const lowlight = createLowlight(all);
@@ -178,12 +177,6 @@ export const extensions = [
       else if (node.type.name === "blockquote") return "Empty quote";
 
       return "Type / for options";
-    },
-  }),
-  BubbleMenu.configure({
-    element: document.querySelector("#image-bubble-menu"),
-    shouldShow: ({ editor }) => {
-      return editor.isActive("image");
     },
   }),
   ResizableImageExtension,
