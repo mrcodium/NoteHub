@@ -12,6 +12,7 @@ import NoteSkeleton from "../sekeletons/NoteSkeleton";
 import { MenuBar } from "./MenuBar";
 import { migrateMathStrings } from "@tiptap/extension-mathematics";
 import { useDebounceCallback } from "@/hooks/useDebounceCallback";
+import EditorBubbleMenu from "./EditorBubbleMenu";
 
 const Tiptap = () => {
   const { id: noteId } = useParams();
@@ -134,7 +135,9 @@ const Tiptap = () => {
           spellcheck: "false",
         },
       }}
-    />
+    >
+      <EditorBubbleMenu/>
+    </EditorProvider>
   );
 };
 
