@@ -152,7 +152,7 @@ const NotePage = () => {
 
           const header = document.createElement("header");
           header.className =
-            "pre-header bg-input/50 rounded-t-lg w-full flex items-center justify-between py-2 px-4";
+            "pre-header rounded-t-lg w-full flex items-center justify-between py-2 px-4";
           header.innerHTML = `<span>${language}</span>`;
           pre.insertBefore(header, pre.firstChild);
 

@@ -37,6 +37,17 @@ div:has(> .tiptap.ProseMirror) {
   @apply relative;
 }
 
+.tiptap .code-block header {
+  @apply bg-[#222];
+}
+
+.tiptap .code-block button[role="combobox"]{
+  @apply bg-[#363636] border-[#595959];
+}
+.tiptap .code-block button {
+  @apply text-white hover:bg-[#404040];
+}
+
 .tiptap .code-block select {
   @apply absolute bg-white right-[0.5rem] left-[0.5rem];
   position: absolute;
@@ -189,9 +200,7 @@ div:has(> .tiptap.ProseMirror) {
 .tiptap .pre-header button {
   color: white;
 }
-.tiptap .pre-header {
-  @apply bg-[#222];
-}
+
 
 .tiptap pre code {
   @apply whitespace-pre p-0 m-0 text-sm leading-relaxed;
@@ -357,10 +366,17 @@ button:disabled {
 /* Handle */
 .node-image {
   position: relative;
-  display: flex;
+  display: inline-block; 
   max-width: 100%;
-  margin: 1rem 0;
 }
+
+.resize-handle {
+  touch-action: none;      
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 
 .node-image:hover .resize-handle {
   display: flex;
@@ -377,4 +393,14 @@ button:disabled {
   border-radius: 50px;
   background-color: #615fff;
   transform: translateY(-50%);
+}
+
+.node-image.resizing img {
+  outline: 3px solid #615fff;
+  outline-offset: 4px;
+}
+
+.node-image.resizing .resize-handle {
+  background-color: #4338ca;
+  transform: translateY(-50%) scale(1.2);
 }

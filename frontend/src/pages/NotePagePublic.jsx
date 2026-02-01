@@ -212,7 +212,7 @@ const NotePagePublic = () => {
 
         const header = document.createElement("header");
         header.className =
-          "pre-header bg-input/50 rounded-t-lg w-full flex items-center justify-between py-2 px-4";
+          "pre-header rounded-t-lg w-full flex items-center justify-between py-2 px-4";
 
         header.innerHTML = `
         <span class="text-xs font-medium text-muted-foreground">${language}</span>

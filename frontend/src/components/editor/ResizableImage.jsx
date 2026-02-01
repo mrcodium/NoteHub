@@ -3,9 +3,11 @@ import React, { useRef } from "react";
 
 export default function ResizableImage({ node, updateAttributes }) {
   const imgRef = useRef(null);
+  const [isResizing, setIsResizing] = React.useState(false);
 
   const startResize = (e, direction) => {
     e.preventDefault();
+    setIsResizing(true);
     e.currentTarget.setPointerCapture(e.pointerId);
 
     const startX = e.clientX;
@@ -15,16 +17,13 @@ export default function ResizableImage({ node, updateAttributes }) {
       let deltaX = event.clientX - startX;
       if (direction === "left") deltaX = -deltaX;
 
-      let newWidth = startWidth + deltaX;
-      if (newWidth < 120) newWidth = 120;
+      let newWidth = Math.max(120, startWidth + deltaX);
 
-      updateAttributes({
-        width: `${newWidth}px`,
-        height: "auto",
-      });
+      updateAttributes({ width: `${newWidth}px` });
     };
 
     const onPointerUp = () => {
+      setIsResizing(false);
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
     };
@@ -35,7 +34,7 @@ export default function ResizableImage({ node, updateAttributes }) {
 
   return (
     <NodeViewWrapper
-      className="node-image relative"
+      className={`node-image ${isResizing ? "resizing" : ""}`}
       contentEditable={false}
     >
       <img

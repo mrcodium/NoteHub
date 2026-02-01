@@ -33,14 +33,14 @@ export default ({ node: { attrs: { language: defaultLanguage } }, updateAttribut
 
   return (
     <NodeViewWrapper className="code-block relative rounded-2xl overflow-hidden">
-      <header className='bg-input/50 rounded-t-lg w-full flex items-center justify-between py-2 px-4'>
+      <header className='rounded-t-lg w-full flex items-center justify-between py-2 px-4'>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="min-w-32 justify-between h-7 bg-input/50"
+              className="min-w-32 justify-between h-7"
               contentEditable={false}
             >
               {value
