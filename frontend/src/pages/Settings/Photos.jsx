@@ -77,8 +77,9 @@ const Photos = () => {
         <div className="space-y-4">
           <Label>Your Photo</Label>
           <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center">
-            <Avatar className="relative aspect-square shadow-md size-28 sm:size-44  shrink-0 border-background rounded-full">
+            <Avatar className="relative aspect-square shadow-md size-28 sm:size-44 shrink-0 border-background rounded-full">
               <AvatarImage
+                size={176} 
                 className="w-full h-full object-cover rounded-full bg-background"
                 src={previewavatar || authUser?.avatar}
                 alt={authUser?.fullName || "User Profile Photo"}
@@ -91,6 +92,7 @@ const Photos = () => {
                 />
               </AvatarFallback>
             </Avatar>
+
             <div className="space-y-6">
               <div className="space-y-1">
                 <p className="font-semibold text-sm">

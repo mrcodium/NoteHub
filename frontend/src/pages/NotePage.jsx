@@ -25,7 +25,6 @@ import hljs from "highlight.js";
 import { createRoot } from "react-dom/client";
 import { toast } from "sonner";
 import katex from "katex";
-import "katex/dist/katex.min.css";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Footer from "@/components/Footer";
 import { useAuthStore } from "@/stores/useAuthStore";

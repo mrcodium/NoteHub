@@ -1,28 +1,20 @@
 import { Button } from "@/components/ui/button";
 import {
-  Copy,
-  CopyCheck,
   Pencil,
   Lock,
   Globe,
-  ChevronUp,
   Clock,
   Calendar,
   TextQuote,
   ChevronsUpDown,
-  Type,
-  Minus,
-  Plus,
 } from "lucide-react";
 import React, { useEffect, useMemo, useCallback, useState, memo } from "react"; // ADDED useCallback
 import { useParams, useNavigate, Link } from "react-router-dom";
 import parse from "html-react-parser";
 import NoteSkeleton from "@/components/sekeletons/NoteSkeleton";
 import hljs from "highlight.js";
-import { createRoot } from "react-dom/client";
 import { toast } from "sonner";
 import katex from "katex";
-import "katex/dist/katex.min.css";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { axiosInstance } from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";

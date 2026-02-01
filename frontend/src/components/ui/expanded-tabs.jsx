@@ -1,38 +1,19 @@
 import * as React from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const buttonVariants = {
-  initial: {
-    paddingLeft: ".7rem",
-    paddingRight: ".7rem",
-  },
-  animate: (isSelected) => ({
-    paddingLeft: isSelected ? "1rem" : ".7rem",
-    paddingRight: isSelected ? "1rem" : ".7rem",
-  }),
-};
-
-const spanVariants = {
-  initial: { width: 0, opacity: 0 },
-  animate: { width: "auto", opacity: 1 },
-  exit: { width: 0, opacity: 0 },
-};
-
-const transition = { delay: 0.1, type: "spring", bounce: 0, duration: 0.6 };
-
 export function ExpandedTabs({ tabs, className, activeColor = "", onChange }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [selected, setSelected] = React.useState(null);
 
-  // keep selected in sync with active route
+  // sync with route
   React.useEffect(() => {
-    const activeIndex = tabs.findIndex((tab) => {
-      return location.pathname.startsWith(tab.path);
-    });
+    const activeIndex = tabs.findIndex((tab) =>
+      location.pathname.startsWith(tab.path)
+    );
 
     if (activeIndex !== -1) {
       setSelected(activeIndex);
@@ -43,21 +24,21 @@ export function ExpandedTabs({ tabs, className, activeColor = "", onChange }) {
   const handleSelect = (index) => {
     const tab = tabs[index];
     if (!tab?.path) return;
+
     setSelected(index);
     onChange?.(index);
-    navigate(tab.path); // ✅ navigate
+    navigate(tab.path);
   };
 
   const Separator = () => (
     <div className="h-[24px] w-[1.2px] bg-border" aria-hidden="true" />
   );
-  const isMobile = useIsMobile();
 
   return (
     <div
       className={cn(
         "flex gap-2 rounded-xl w-max border bg-muted/30 p-1 shadow-sm",
-        className,
+        className
       )}
     >
       {tabs.map((tab, index) => {
@@ -66,40 +47,37 @@ export function ExpandedTabs({ tabs, className, activeColor = "", onChange }) {
         }
 
         const Icon = tab.icon;
+        const isActive = selected === index;
+        const showLabel = isActive || !isMobile;
+
         return (
-          <motion.button
+          <button
             key={tab.label}
             onClick={() => handleSelect(index)}
-            transition={transition}
-            animate={{
-              gap: selected === index || !isMobile ? "0.5rem" : "0rem",
-            }}
-            initial={false}
-            style={{ gap: "0rem" }}
             className={cn(
-              "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-300",
-              selected === index
+              "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium",
+              "transition-all duration-300 ease-out",
+              showLabel ? "gap-2" : "gap-0",
+              isActive
                 ? cn("bg-primary/20", activeColor)
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />
 
-            <AnimatePresence>
-              {(selected === index || !isMobile) && (
-                <motion.span
-                  variants={spanVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={transition}
-                  className="overflow-hidden whitespace-nowrap"
-                >
-                  {tab.label}
-                </motion.span>
+            {/* Label animation */}
+            <span
+              className={cn(
+                "overflow-hidden whitespace-nowrap",
+                "transition-all duration-300 ease-out",
+                showLabel
+                  ? "max-w-[200px] opacity-100 ml-1"
+                  : "max-w-0 opacity-0 ml-0"
               )}
-            </AnimatePresence>
-          </motion.button>
+            >
+              {tab.label}
+            </span>
+          </button>
         );
       })}
     </div>
