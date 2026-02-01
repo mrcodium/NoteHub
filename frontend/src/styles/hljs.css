@@ -1,0 +1,94 @@
+/* Base */
+code.hljs,
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #fff;
+  word-wrap: normal;
+  background: none;
+  -webkit-hyphens: none;
+  hyphens: none;
+  line-height: 1.5;
+  tab-size: 4;
+  white-space: pre;
+  word-break: normal;
+  word-spacing: normal;
+}
+
+[dir="ltr"] code.hljs,
+[dir="ltr"] code[class*="language-"],
+[dir="ltr"] pre[class*="language-"] {
+  text-align: left;
+}
+
+[dir="rtl"] code.hljs,
+[dir="rtl"] code[class*="language-"],
+[dir="rtl"] pre[class*="language-"] {
+  text-align: right;
+}
+
+pre[class*="language-"] {
+  border-radius: 0.3em;
+  overflow: auto;
+}
+
+:not(pre) > code.hljs,
+:not(pre) > code[class*="language-"] {
+  border-radius: 0.3em;
+  padding: 0.1em;
+  white-space: normal;
+}
+
+/* Comments */
+.hljs-comment {
+  color: #616161;
+}
+
+/* Meta */
+.hljs-meta {
+  color: #fff9;
+}
+
+/* Built-ins & Class Titles */
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: #e9950c;
+}
+
+/* Keywords & Literals */
+.hljs-doctag,
+.hljs-formula,
+.hljs-keyword,
+.hljs-literal {
+  color: #70cff8;
+}
+
+/* Strings & Attributes */
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta-string,
+.hljs-regexp,
+.hljs-string {
+  color: #b9f18d;
+}
+
+/* Numbers & Variables */
+.hljs-attr,
+.hljs-number,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-pseudo,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable {
+  color: #fbbc88;
+}
+
+/* Links & Sections */
+.hljs-bullet,
+.hljs-link,
+.hljs-selector-id,
+.hljs-symbol,
+.hljs-section,
+.hljs-title {
+  color: #faf594;
+}

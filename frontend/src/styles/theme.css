@@ -41,137 +41,6 @@
     white-space: normal;
   }
 
-  /* Dark Theme */
-  :is(.light .dark, .dark) code.hljs,
-  :is(.light .dark, .dark) code[class*="language-"],
-  :is(.light .dark, .dark) pre[class*="language-"] {
-    color: #fff;
-  }
-
-  :is(.light .dark, .dark) .hljs-comment {
-    color: #616161;
-  }
-
-  :is(.light .dark, .dark) .hljs-meta {
-    color: #fff9;
-  }
-
-  :is(.light .dark, .dark) .hljs-built_in,
-  :is(.light .dark, .dark) .hljs-class .hljs-title {
-    color: #e9950c;
-  }
-
-  :is(.light .dark, .dark) .hljs-doctag,
-  :is(.light .dark, .dark) .hljs-formula,
-  :is(.light .dark, .dark) .hljs-keyword,
-  :is(.light .dark, .dark) .hljs-literal {
-    color: #70cff8;
-  }
-
-  :is(.light .dark, .dark) .hljs-addition,
-  :is(.light .dark, .dark) .hljs-attribute,
-  :is(.light .dark, .dark) .hljs-meta-string,
-  :is(.light .dark, .dark) .hljs-regexp,
-  :is(.light .dark, .dark) .hljs-string {
-    color: #b9f18d;
-  }
-
-  :is(.light .dark, .dark) .hljs-attr,
-  :is(.light .dark, .dark) .hljs-number,
-  :is(.light .dark, .dark) .hljs-selector-attr,
-  :is(.light .dark, .dark) .hljs-selector-class,
-  :is(.light .dark, .dark) .hljs-selector-pseudo,
-  :is(.light .dark, .dark) .hljs-template-variable,
-  :is(.light .dark, .dark) .hljs-type,
-  :is(.light .dark, .dark) .hljs-variable {
-    color: #fbbc88;
-  }
-
-  :is(.light .dark, .dark) .hljs-bullet,
-  :is(.light .dark, .dark) .hljs-link,
-  :is(.light .dark, .dark) .hljs-selector-id,
-  :is(.light .dark, .dark) .hljs-symbol,
-  :is(.light .dark, .dark) .hljs-section,
-  :is(.light .dark, .dark) .hljs-title {
-    color: #faf594;
-  }
-
-  /* Light Theme */
-  .light code.hljs,
-  .light code[class*="language-"],
-  .light pre[class*="language-"] {
-    color: #383a42;
-  }
-
-  .light .hljs-comment,
-  .light .hljs-quote {
-    color: #a0a1a7;
-    font-style: italic;
-  }
-
-  .light .hljs-doctag,
-  .light .hljs-formula,
-  .light .hljs-keyword {
-    color: #a626a4;
-  }
-
-  .light .hljs-deletion,
-  .light .hljs-name,
-  .light .hljs-section,
-  .light .hljs-selector-tag,
-  .light .hljs-subst {
-    color: #e45649;
-  }
-
-  .light .hljs-literal {
-    color: #0184bb;
-  }
-
-  .light .hljs-addition,
-  .light .hljs-attribute,
-  .light .hljs-meta-string,
-  .light .hljs-regexp,
-  .light .hljs-string {
-    color: #50a14f;
-  }
-
-  .light .hljs-built_in,
-  .light .hljs-class .hljs-title {
-    color: #c18401;
-  }
-
-  .light .hljs-attr,
-  .light .hljs-number,
-  .light .hljs-selector-attr,
-  .light .hljs-selector-class,
-  .light .hljs-selector-pseudo,
-  .light .hljs-template-variable,
-  .light .hljs-type,
-  .light .hljs-variable {
-    color: #986801;
-  }
-
-  .light .hljs-bullet,
-  .light .hljs-link,
-  .light .hljs-meta,
-  .light .hljs-selector-id,
-  .light .hljs-symbol,
-  .light .hljs-title {
-    color: #4078f2;
-  }
-
-  .light .hljs-emphasis {
-    font-style: italic;
-  }
-
-  .light .hljs-strong {
-    font-weight: 700;
-  }
-
-  .light .hljs-link {
-    text-decoration: underline;
-  }
-
   /* PrismJS Tokens */
   .token.cdata,
   .token.comment,
@@ -248,24 +117,23 @@
     --selection: 0 0.02% 3.94%;
     --selection-foreground: 0 0% 100%;
 
-    
-    --highlight-destructive: 351 95% 29%; 
-    --highlight-warn: 31 97% 28%; 
-    --highlight-success: 81 88% 20%; 
-    --highlight-teal: 152 76% 20%; 
-    --highlight-sky: 186 94% 18%; 
-    --highlight-blue: 230 94% 18%; 
-    --highlight-muted: #808080;  
+    --highlight-destructive: 351 95% 29%;
+    --highlight-warn: 31 97% 28%;
+    --highlight-success: 81 88% 20%;
+    --highlight-teal: 152 76% 20%;
+    --highlight-sky: 186 94% 18%;
+    --highlight-blue: 230 94% 18%;
+    --highlight-muted: #808080;
   }
 
   .dark {
-    --highlight-destructive: 351 95% 71%; 
-    --highlight-warn: 31 97% 72%; 
-    --highlight-success: 81 88% 80%; 
-    --highlight-teal: 152 76% 80%; 
-    --highlight-sky: 186 94% 82%; 
-    --highlight-blue: 230 94% 82%; 
-    --highlight-muted: #808080;  
+    --highlight-destructive: 351 95% 71%;
+    --highlight-warn: 31 97% 72%;
+    --highlight-success: 81 88% 80%;
+    --highlight-teal: 152 76% 80%;
+    --highlight-sky: 186 94% 82%;
+    --highlight-blue: 230 94% 82%;
+    --highlight-muted: #808080;
 
     --background: 0 0.02% 3.94%;
     --foreground: 0 0.5% 98.03%;

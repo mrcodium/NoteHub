@@ -4,6 +4,8 @@ import { createRoot } from "react-dom/client";
 import "./styles/index.css";
 import "./styles/theme.css";
 import "./styles/tiptap.css"
+import "./styles/hljs.css"
+
 import App from "./App.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { HelmetProvider } from "react-helmet-async";

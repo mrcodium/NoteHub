@@ -175,7 +175,7 @@ div:has(> .tiptap.ProseMirror) {
 }
 
 .tiptap :is(h1, h2, h3, h4, h5, h6, p) code {
-  @apply font-mono bg-black/10 dark:bg-accent/50 py-[2.4px] px-[4.8px] rounded whitespace-pre-wrap;
+  @apply font-mono bg-black/10 dark:bg-accent/40 py-[2.4px] px-[4.8px] rounded whitespace-pre-wrap;
 }
 
 .tiptap pre {
@@ -183,7 +183,14 @@ div:has(> .tiptap.ProseMirror) {
   overflow-x: auto;
   tab-size: 4;
   display: flex;
-  @apply bg-input/30 text-primary dark:text-primary p-4;
+  @apply bg-input/30 p-4 bg-[#181818];
+}
+
+.tiptap .pre-header button {
+  color: white;
+}
+.tiptap .pre-header {
+  @apply bg-[#222];
 }
 
 .tiptap pre code {
@@ -363,7 +370,7 @@ button:disabled {
   top: 50%;
   height: 40px;
   width: 8px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   cursor: ew-resize;
