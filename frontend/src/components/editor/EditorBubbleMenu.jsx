@@ -1,14 +1,17 @@
 import { useCurrentEditor, useEditorState } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
+import { TextSelection } from "@tiptap/pm/state";
 import { Button } from "../ui/button";
 import AlignLeftIcon from "../icons/AlignLeftIcon";
-import AlignRightIcon from "../icons/AlignRightIcon";
 import AlignCenterIcon from "../icons/AlignCenterIcon";
+import AlignRightIcon from "../icons/AlignRightIcon";
+import { Bold, Italic, Strikethrough, Underline } from "lucide-react";
 
 export default function EditorBubbleMenu() {
   const { editor } = useCurrentEditor();
   if (!editor) return null;
 
+  // -------- Image alignment --------
   const setAlign = (align) => {
     editor.chain().focus().updateAttributes("image", { align }).run();
   };
@@ -16,70 +19,61 @@ export default function EditorBubbleMenu() {
   const { align } = useEditorState({
     editor,
     selector: ({ editor }) => {
-      const { selection } = editor.state;
-      const node = selection.node;
-
-      if (node?.type.name === "image") {
-        return { align: node.attrs.align ?? "center" };
-      }
-
-      return { align: null };
+      const node = editor.state.selection.node;
+      return node?.type.name === "image"
+        ? { align: node.attrs.align ?? "center" }
+        : { align: null };
     },
   });
+
+  const isImage = editor.isActive("image");
+
+  const imageActions = [
+    { tooltip: "Left", onClick: () => setAlign("left"), isActive: align === "left", Icon: AlignLeftIcon },
+    { tooltip: "Center", onClick: () => setAlign("center"), isActive: align === "center", Icon: AlignCenterIcon },
+    { tooltip: "Right", onClick: () => setAlign("right"), isActive: align === "right", Icon: AlignRightIcon },
+  ];
+
+  const formatActions = [
+    { tooltip: "Bold", onClick: () => editor.chain().focus().toggleBold().run(), isActive: editor.isActive("bold"), Icon: Bold },
+    { tooltip: "Italic", onClick: () => editor.chain().focus().toggleItalic().run(), isActive: editor.isActive("italic"), Icon: Italic },
+    { tooltip: "Underline", onClick: () => editor.chain().focus().toggleUnderline().run(), isActive: editor.isActive("underline"), Icon: Underline },
+    { tooltip: "Strike", onClick: () => editor.chain().focus().toggleStrike().run(), isActive: editor.isActive("strike"), Icon: Strikethrough },
+  ];
 
   return (
     <BubbleMenu
       editor={editor}
-      tippyProps={{
-        strategy: "fixed", // ← THIS is the main fix
-        placement: "top",
-        popperOptions: {
-          strategy: "fixed",
-          modifiers: [
-            {
-              name: "flip",
-              options: {
-                fallbackPlacements: ["bottom", "top-start", "bottom-start"],
-              },
-            },
-            {
-              name: "preventOverflow",
-              options: { boundary: "viewport", altAxis: true, tether: false },
-            },
-          ],
-        },
+      options={{ placement: "bottom", offset: 8, flip: true }}
+      shouldShow={({ editor, state }) => {
+        const { selection } = state;
+
+        const hasTextSelection =
+          selection instanceof TextSelection &&
+          !selection.empty &&
+          !editor.isActive("image");
+
+        const isImageSelected = editor.isActive("image");
+
+        return hasTextSelection || isImageSelected;
       }}
     >
       <div className="bubble-menu bg-muted p-1 flex items-center gap-1 border rounded-xl">
-        <Button
-          size="icon"
-          variant="secondary"
-          className={align === "left" ? "is-active" : "hover:bg-primary/10"}
-          tooltip="left"
-          onClick={() => setAlign("left")}
-        >
-          <AlignLeftIcon />
-        </Button>
-
-        <Button
-          size="icon"
-          variant="secondary"
-          className={align === "center" ? "is-active" : "hover:bg-primary/10"}
-          tooltip="center"
-          onClick={() => setAlign("center")}
-        >
-          <AlignCenterIcon />
-        </Button>
-
-        <Button
-          size="icon"
-          variant="secondary"
-          className={align === "right" ? "is-active" : "hover:bg-primary/10"}
-          tooltip="right"
-          onClick={() => setAlign("right")}
-        >
-          <AlignRightIcon />
-        </Button>
+        {(isImage ? imageActions : formatActions).map((item, index) => (
+          <Button
+            key={index}
+            size="icon"
+            variant="secondary"
+            className={
+              item.isActive
+                ? "is-active"
+                : "hover:bg-primary/10 text-muted-foreground"
+            }
+            onClick={item.onClick}
+          >
+            <item.Icon className="h-4 w-4" />
+          </Button>
+        ))}
       </div>
     </BubbleMenu>
   );
