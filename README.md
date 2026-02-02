@@ -1,6 +1,6 @@
 # NoteHub 📝✨
 
-![NoteHub Banner](https://res.cloudinary.com/dhtxrpqna/image/upload/v1752776796/Screenshot_2025-07-17_232545_f0ucxh.png)
+![NoteHub Banner](https://notehub-38kp.onrender.com/og-notehub.png)
 
 A modern note-taking app with rich editing, collaboration, and cloud sync.
 
