@@ -316,9 +316,11 @@ export const renameNote = async (req, res) => {
 export const getNoteBySlug = async (req, res) => {
   const { username, collectionSlug, noteSlug } = req.params;
   const requester = req.user || null;
-  const normalizedUsername = username.trim().toLowerCase();
 
-  const cacheKey = `note:slug:${normalizedUsername}:${collectionSlug}:${noteSlug}:user:${requester?._id || "guest"}`;
+  const normalizedUsername = username.trim().toLowerCase();
+  const requesterId = requester?._id || null;
+
+  const cacheKey = `note:slug:${normalizedUsername}:${collectionSlug}:${noteSlug}:user:${requesterId || "guest"}`;
 
   try {
     const cached = await getCache(cacheKey);
@@ -329,30 +331,96 @@ export const getNoteBySlug = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({
-      userName: normalizedUsername,
-    });
+    const result = await User.aggregate([
+      // 1️⃣ Match user
+      {
+        $match: { userName: normalizedUsername },
+      },
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+      // 2️⃣ Join collections
+      {
+        $lookup: {
+          from: "collections",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$userId", "$$userId"] },
+                    { $eq: ["$slug", collectionSlug.toLowerCase()] },
+                  ],
+                },
+              },
+            },
 
-    const collection = await Collection.findOne({
-      userId: user._id,
-      slug: collectionSlug.toLowerCase(),
-    });
+            // 3️⃣ Join notes
+            {
+              $lookup: {
+                from: "notes",
+                let: { collectionId: "$_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$collectionId", "$$collectionId"] },
+                          { $eq: ["$slug", noteSlug.toLowerCase()] },
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "note",
+              },
+            },
 
-    if (!collection)
-      return res.status(404).json({ message: "Collection not found" });
+            { $unwind: "$note" },
+          ],
+          as: "collection",
+        },
+      },
 
-    const note = await Note.findOne({
-      collectionId: collection._id,
-      slug: noteSlug.toLowerCase(),
-    });
+      { $unwind: "$collection" },
 
-    if (!note) return res.status(404).json({ message: "Note not found" });
+      // 4️⃣ Project only what we need
+      {
+        $project: {
+          author: {
+            _id: "$_id",
+            userName: "$userName",
+            avatar: "$avatar",
+          },
+          collection: {
+            _id: "$collection._id",
+            visibility: "$collection.visibility",
+            collaborators: "$collection.collaborators",
+          },
+          note: {
+            _id: "$collection.note._id",
+            name: "$collection.note.name",
+            content: "$collection.note.content",
+            visibility: "$collection.note.visibility",
+            slug: "$collection.note.slug",
+
+            // ✅ DATES
+            createdAt: "$collection.note.createdAt",
+            updatedAt: "$collection.note.updatedAt",
+            contentUpdatedAt: "$collection.note.contentUpdatedAt",
+          },
+        },
+      },
+    ]);
+
+    if (!result.length) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    const { author, collection, note } = result[0];
 
     const accessAllowed = canAccessNote({
       requester,
-      ownerId: user._id,
+      ownerId: author._id,
       note,
       collection,
     });
@@ -366,12 +434,13 @@ export const getNoteBySlug = async (req, res) => {
     const responseData = {
       message: "Note fetched successfully",
       note,
-      author: user,
+      author,
     };
-    await setCache(cacheKey, responseData, 600); // TTL 600s = 10 min
+
+    await setCache(cacheKey, responseData, 600);
     return res.status(200).json(responseData);
   } catch (error) {
-    console.error("Error fetching note by slug:", error);
+    console.error("Aggregation error:", error);
     return res.status(500).json({
       message: "Server error",
       error: error.message,
