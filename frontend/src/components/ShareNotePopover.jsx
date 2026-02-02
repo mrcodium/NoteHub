@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Share, Copy, Check } from "lucide-react";
 import { useState } from "react";
+import ShareIcon from "./icons/ShareIcon";
 
 const socialMedia = [
   {
@@ -64,7 +65,7 @@ export function ShareNotePopover({ shareLink }) {
     <Dialog>
       <DialogTrigger asChild>
         <Button tooltip="Share" className="size-11 rounded-full">
-          <Share />
+          <ShareIcon />
         </Button>
       </DialogTrigger>
 

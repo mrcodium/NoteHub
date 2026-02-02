@@ -390,6 +390,7 @@ export const getNoteBySlug = async (req, res) => {
             _id: "$_id",
             userName: "$userName",
             avatar: "$avatar",
+            fullName: "$fullName",
           },
           collection: {
             _id: "$collection._id",
