@@ -22,7 +22,7 @@ const Radius = () => {
             variant="outline"
             key={r}
             onClick={() => setSelectedRadius(r)}
-            className={`${selectedRadius == r ? "border-2 border-primary" : ""}`}
+            className={`${selectedRadius == r ? "ring-2 ring-ring ring-offset-2 ring-offset-card bg-muted" : ""}`}
           >
             <span
               className="size-4 sm:size-6 border-t-2 border-l-2 bg-primary/20 border-primary/70 grayscale"

@@ -1,9 +1,10 @@
 import React, { useEffect, useCallback, useRef } from "react";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { ArticleCard } from "@/components/ArticleCard";
-import { noteToArticle } from "@/lib/utils";
+import { getCanonicalUrl, noteToArticle } from "@/lib/utils";
 import { ArticleCardSkeleton } from "@/components/ArticleCardSkeleton";
 import { CheckCircle2 } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 const HomePage = () => {
   const loaderRef = useRef(null);
@@ -53,44 +54,50 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="p-2">
-      <div className="space-y-3 sm:space-y-4 max-w-screen-lg mx-auto">
-        {/* Render transformed notes */}
-        {articles.map((note, index) => (
-          <ArticleCard
-            key={note._id || index}
-            note={note}
-            description={note.article.description}
-            images={note.article.images}
-            author={note.userId}
-            collection={note.collectionId}
-            headings={note.article.headings}
-          />
-        ))}
+    <>
+      <Helmet>
+        <link rel="canonical" href={getCanonicalUrl()} />
+      </Helmet>
 
-        {status.note.state === "loading" &&
-          [...Array(5)].map((_, i) => <ArticleCardSkeleton key={i} />)}
+      <div className="p-2">
+        <div className="space-y-3 sm:space-y-4 max-w-screen-lg mx-auto">
+          {/* Render transformed notes */}
+          {articles.map((note, index) => (
+            <ArticleCard
+              key={note._id || index}
+              note={note}
+              description={note.article.description}
+              images={note.article.images}
+              author={note.userId}
+              collection={note.collectionId}
+              headings={note.article.headings}
+            />
+          ))}
 
-        {/* Infinite scroll trigger */}
-        <div ref={loaderRef} className="h-1"></div>
+          {status.note.state === "loading" &&
+            [...Array(5)].map((_, i) => <ArticleCardSkeleton key={i} />)}
 
-        {/* End of notes message */}
-        {!pagination.hasMore && notes.length > 0 && (
-          <div className="flex flex-col items-center justify-center py-16 px-4">
-            <div className="relative bg-muted rounded-full p-4 shadow-lg">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
+          {/* Infinite scroll trigger */}
+          <div ref={loaderRef} className="h-1"></div>
+
+          {/* End of notes message */}
+          {!pagination.hasMore && notes.length > 0 && (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="relative bg-muted rounded-full p-4 shadow-lg">
+                <CheckCircle2 className="h-12 w-12 text-green-500" />
+              </div>
+
+              <h3 className="mt-6 text-xl font-semibold">
+                You've reached the end
+              </h3>
+              <p className="mt-2 text-center text-muted-foreground max-w-md">
+                That's all for now. Check back later for more content.
+              </p>
             </div>
-
-            <h3 className="mt-6 text-xl font-semibold">
-              You've reached the end
-            </h3>
-            <p className="mt-2 text-center text-muted-foreground max-w-md">
-              That's all for now. Check back later for more content.
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

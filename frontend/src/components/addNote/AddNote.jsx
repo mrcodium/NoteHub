@@ -7,6 +7,7 @@ import { Label } from "../ui/label";
 import { useNoteStore } from "@/stores/useNoteStore";
 import FileIcon from "../ui/FileIcon";
 import { useNavigate } from "react-router-dom";
+import { badgeVariants } from "../ui/badge";
 
 const AddNote = ({
   setSelectedCollection,
@@ -16,7 +17,7 @@ const AddNote = ({
 }) => {
   const navigate = useNavigate();
   const [noteName, setNoteName] = useState("");
-  const [visibility, setVisibility] = useState("private");
+  const [visibility, setVisibility] = useState("public");
   const { createNote, status } = useNoteStore();
 
   const isCreatingNote = status.note.state === "creating";
@@ -120,9 +121,31 @@ const AddNote = ({
                     id={`note-visibility-description`}
                     className="text-muted-foreground text-xs"
                   >
-                    {visibility === "public"
-                      ? "This note will be visible to everyone."
-                      : "This note will be private and only visible to your collaborators."}
+                    {visibility === "public" ? (
+                      selectedCollection?.visibility === "public" ? (
+                        <>
+                          This note will be visible to everyone.
+                        </>
+                      ) : (
+                        <>
+                          This note will be visible to you and{" "}
+                          <span className="text-primary underline">
+                            {selectedCollection?.name}{" "}
+                          </span>
+                          collaborators only.
+                        </>
+                      )
+                    ) : (
+                      <>
+                        This note will be private and only visible to{" "}
+                        <span className="text-primary underline"> you</span> and
+                        your{" "}
+                        <span className="text-primary underline">
+                          collaborators
+                        </span>
+                        .
+                      </>
+                    )}
                   </p>
                 </div>
               </div>

@@ -29,7 +29,13 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Footer from "@/components/Footer";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn, formatDate, formatTimeAgo, stripHTML } from "@/lib/utils";
+import {
+  cn,
+  formatDate,
+  formatTimeAgo,
+  getCanonicalUrl,
+  stripHTML,
+} from "@/lib/utils";
 import ScrollTopButton from "@/components/ScrollTopButton";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -276,17 +282,27 @@ const NotePage = () => {
     <>
       <Helmet>
         <title>{note.name} | NoteHub</title>
-        <meta name="description" content={stripHTML(note.content).slice(0, 160)} />
+        <meta
+          name="description"
+          content={stripHTML(note.content).slice(0, 160)}
+        />
 
         {/* Open Graph */}
         <meta property="og:title" content={note.name} />
-        <meta property="og:description" content={stripHTML(note.content).slice(0, 160)} />
+        <meta
+          property="og:description"
+          content={stripHTML(note.content).slice(0, 160)}
+        />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={window.location.href} />
 
         {/* Twitter */}
         <meta name="twitter:title" content={note.name} />
-        <meta name="twitter:description" content={stripHTML(note.content).slice(0, 160)} />
+        <meta
+          name="twitter:description"
+          content={stripHTML(note.content).slice(0, 160)}
+        />
+        <link rel="canonical" href={getCanonicalUrl()} />
       </Helmet>
       <div
         className={cn(

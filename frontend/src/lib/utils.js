@@ -269,3 +269,18 @@ export function stripHTML(html) {
   tmp.innerHTML = html;
   return tmp.textContent || tmp.innerText || "";
 }
+
+export const getCanonicalUrl = () => {
+  if(typeof window === "undefined") return "";
+
+  const url = new URL(window.location.href);
+  url.hash = "";
+  url.search = "";
+
+  let pathname = url.pathname;
+  if(pathname.length > 1 && pathname.endsWith("/")){
+    pathname = pathname.slice(0, -1);
+  }
+
+  return `${url.origin}${pathname}`;
+}

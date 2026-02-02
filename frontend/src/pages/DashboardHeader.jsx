@@ -180,7 +180,7 @@ const DashboardHeader = () => {
                       </>
                     )}
 
-                  <BreadcrumbItem className="min-w-0">
+                  <BreadcrumbItem className={index === visible.length - 1 && "min-w-0"}>
                     <Link
                       to={route.path}
                       className={`truncate flex items-center gap-2 min-w-0 ${

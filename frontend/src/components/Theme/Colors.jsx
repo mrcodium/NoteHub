@@ -38,7 +38,7 @@ const Colors = () => {
             key={name}
             variant="outline"
             className={`justify-center sm:justify-start
-               ${theme === name ? "border-2 border-primary" : ""}
+               ${theme === name ? "ring-2 ring-ring ring-offset-2 ring-offset-card bg-muted" : ""}
                `}
             onClick={() => setTheme(name)}
           >

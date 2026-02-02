@@ -18,7 +18,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Separator } from "../ui/separator";
 import BadgeIcon from "../icons/BadgeIcon";
 
@@ -26,6 +26,7 @@ const NavUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { isMobile, closeSidebar } = useSidebar();
   const { authUser, logout, isLoggingOut } = useAuthStore();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout(); // perform actual logout
@@ -35,6 +36,7 @@ const NavUser = () => {
     if (layers.length === 0) {
       document.body.style.pointerEvents = "";
     }
+    navigate("/", { replace: true });
   };
 
   return (
@@ -64,14 +66,14 @@ const NavUser = () => {
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm leading-tight">
-                 <div className="flex gap-1.5 items-center">
+                <div className="flex gap-1.5 items-center">
                   <span className="truncate font-semibold">
-                      {authUser?.fullName}
-                    </span>
-                    {authUser.role === "admin" && (
-                      <BadgeIcon className="size-[14px] text-blue-500" />
-                    )}
-                 </div>
+                    {authUser?.fullName}
+                  </span>
+                  {authUser.role === "admin" && (
+                    <BadgeIcon className="size-[14px] text-blue-500" />
+                  )}
+                </div>
                 <span className="truncate text-xs">{authUser?.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />

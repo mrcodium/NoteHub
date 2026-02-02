@@ -58,21 +58,19 @@ export default function EditorBubbleMenu() {
         return hasTextSelection || isImageSelected;
       }}
     >
-      <div className="bubble-menu bg-muted p-1 flex items-center gap-1 border rounded-xl">
+      <div className="bubble-menu bg-zinc-900 p-1 flex items-center gap-1 border border-zinc-800 rounded-xl">
         {(isImage ? imageActions : formatActions).map((item, index) => (
-          <Button
+          <button
             key={index}
-            size="icon"
-            variant="secondary"
             className={
               item.isActive
                 ? "is-active"
-                : "hover:bg-primary/10 text-muted-foreground"
+                : ""
             }
             onClick={item.onClick}
           >
             <item.Icon className="h-4 w-4" />
-          </Button>
+          </button>
         ))}
       </div>
     </BubbleMenu>

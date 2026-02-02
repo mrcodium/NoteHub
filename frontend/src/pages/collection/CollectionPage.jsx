@@ -10,6 +10,7 @@ import { Forbidden, NotFound } from "./ErrorStates";
 import SortSelector from "./SortSelector";
 import { Helmet } from "react-helmet-async";
 import NoteCard from "./NoteCard";
+import { getCanonicalUrl } from "@/lib/utils";
 
 const CollectionPage = () => {
   const { username, collectionSlug: rawSlug } = useParams();
@@ -151,6 +152,7 @@ const CollectionPage = () => {
             "Explore notes in this collection on NoteHub."
           }
         />
+        <link rel="canonical" href={getCanonicalUrl()} />
       </Helmet>
 
       <div className="px-4 py-8 min-h-svh">

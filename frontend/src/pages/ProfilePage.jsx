@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, getCanonicalUrl } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, ImageOff, Pencil } from "lucide-react";
@@ -223,6 +223,7 @@ const ProfilePage = () => {
         />
         <meta name="twitter:image" content={user.avatar} />
         <link rel="preload" as="image" href="/placeholder.svg" />
+        <link rel="canonical" href={getCanonicalUrl()} />
       </Helmet>
 
       <div className="p-4">
@@ -355,7 +356,7 @@ const ProfilePage = () => {
               alt="User cover Photo"
               unoptimized={true}
               loading="eager"
-              fetchPriority="high"
+              fetchpriority="high"
               className="w-full h-full max-h-48 object-cover"
               style={{ aspectRatio: "3/1" }}
             />
@@ -385,7 +386,7 @@ const ProfilePage = () => {
                   alt={`${user?.fullName || "User"} profile photo`}
                   loading="lazy"
                   decoding="async"
-                  fetchPriority="low"
+                  fetchpriority="low"
                   className="w-full h-full object-cover rounded-full bg-background"
                 />
 

@@ -4,23 +4,35 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useDraftStore } from "@/stores/useDraftStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Trash2 } from "lucide-react";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from "./ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "./ui/alert-dialog";
 import { useState } from "react";
 
 const DraftsSection = () => {
-  const { drafts, clearAllDrafts } = useDraftStore();
+  const { authUser } = useAuthStore();
+  const { drafts, clearUserDrafts } = useDraftStore();
   const { closeSidebar, isMobile } = useSidebar();
   const [open, setOpen] = useState(false);
 
-  const entries = Object.entries(drafts);
+  // ✅ Get drafts for current user only
+  const userDrafts = drafts[authUser._id] || {};
+  const entries = Object.entries(userDrafts); // [[noteId, draft]]
 
   if (entries.length === 0) return null;
 
   const handleClearDrafts = () => {
-    clearAllDrafts();
+    clearUserDrafts(authUser._id); // only clear this user's drafts
     setOpen(false);
   };
 
@@ -30,7 +42,11 @@ const DraftsSection = () => {
         Unsaved Drafts
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
-            <Button size="icon" className="size-6 bg-primary/10 text-muted-foreground hover:text-primary hover:bg-primary/20" variant="secondary">
+            <Button
+              size="icon"
+              className="size-6 bg-primary/10 text-muted-foreground hover:text-primary hover:bg-primary/20"
+              variant="secondary"
+            >
               <Trash2 />
             </Button>
           </AlertDialogTrigger>
@@ -38,7 +54,8 @@ const DraftsSection = () => {
             <AlertDialogHeader>
               <AlertDialogTitle>Clear All Drafts?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action will delete all your unsaved drafts. This cannot be undone.
+                This action will delete all your unsaved drafts. This cannot
+                be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -57,9 +74,9 @@ const DraftsSection = () => {
         {entries.map(([noteId, draft]) => (
           <Link
             key={noteId}
-            to={`/note/${noteId}/editor`}
+            to={`/note/${noteId}/editor`} 
             onClick={() => isMobile && closeSidebar()}
-            className="flex bg-muted/50 flex-col gap-0.5 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+            className="flex flex-col gap-0.5 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
           >
             {draft.name || "Untitled draft"}
           </Link>

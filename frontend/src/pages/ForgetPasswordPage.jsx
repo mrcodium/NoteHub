@@ -23,6 +23,7 @@ import BaseHeader from "@/components/BaseHeader";
 import { LabledInput } from "@/components/ui/labeled-input";
 import { Helmet } from "react-helmet-async";
 import BadgeIcon from "@/components/icons/BadgeIcon";
+import { getCanonicalUrl } from "@/lib/utils";
 
 const ForgotPasswordPage = () => {
   const {
@@ -166,6 +167,7 @@ const ForgotPasswordPage = () => {
           name="twitter:description"
           content="Reset your NoteHub password securely to regain access to your notes and collections."
         />
+        <link rel="canonical" href={getCanonicalUrl()} />
       </Helmet>
 
       <BaseHeader />

@@ -20,7 +20,13 @@ import { axiosInstance } from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useImageStore } from "@/stores/useImageStore";
 import Footer from "@/components/Footer";
-import { cn, formatDate, formatTimeAgo, stripHTML } from "@/lib/utils";
+import {
+  cn,
+  formatDate,
+  formatTimeAgo,
+  getCanonicalUrl,
+  stripHTML,
+} from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import ScrollTopButton from "@/components/ScrollTopButton";
@@ -358,6 +364,7 @@ const NotePagePublic = () => {
         {/* Twitter */}
         <meta name="twitter:title" content={note.name} />
         <meta name="twitter:description" content={metaDescription} />
+        <link rel="canonical" href={getCanonicalUrl()} />
       </Helmet>
 
       <div

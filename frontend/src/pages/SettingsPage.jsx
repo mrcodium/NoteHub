@@ -3,6 +3,8 @@ import { Outlet } from "react-router-dom"
 import { Palette, UserRound, Image, Lock } from "lucide-react"
 
 import { ExpandedTabs } from "@/components/ui/expanded-tabs"
+import { Helmet } from "react-helmet-async"
+import { getCanonicalUrl } from "@/lib/utils"
 
 const SettingsPage = () => {
   const tabs = [
@@ -30,6 +32,9 @@ const SettingsPage = () => {
 
   return (
     <div className="w-full">
+      <Helmet>
+        <link rel="canonical" href={getCanonicalUrl()} />
+      </Helmet>
       <div className="p-4 max-w-screen-md mx-auto space-y-6">
         {/* Expandable Tabs */}
         <ExpandedTabs tabs={tabs} />

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, getCanonicalUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -244,6 +244,7 @@ const SignupPage = () => {
           name="twitter:description"
           content="Create your NoteHub account to organize, write, and share notes with ease."
         />
+        <link rel="canonical" href={getCanonicalUrl()} />
       </Helmet>
 
       <BaseHeader />

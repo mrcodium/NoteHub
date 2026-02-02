@@ -33,9 +33,11 @@ import { LinkDialog } from "./LinkDialog";
 const MathDialog = React.lazy(() => import("./MathDialog"));
 import AddImageDialog from "./AddImageDialog";
 import { useDraftStore } from "@/stores/useDraftStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export const MenuBar = ({ noteId }) => {
   const { editor } = useCurrentEditor();
+  const {authUser} = useAuthStore();
   const navigate = useNavigate();
   const { updateContent, status, getNoteContent } = useNoteStore();
   const { clearDraft } = useDraftStore();
@@ -100,21 +102,19 @@ export const MenuBar = ({ noteId }) => {
   }
 
   const handleRevert = async () => {
-    if (!noteId) return;
+    if (!noteId || !authUser?._id) return;
 
-    // 1. Fetch fresh content from store (server or store cache)
-    const note = await getNoteContent(noteId); // use your store function
+    // 1️⃣ Fetch fresh content from store (server or cache)
+    const note = await getNoteContent(noteId);
+
     if (note !== null) {
       editor.commands.setContent(note.content, false); // replace editor content
     } else {
       editor.commands.clearContent(); // fallback if note not found
     }
 
-    // 2. Clear the local storage for this note
-    // clearing content or reverting to new content also create a new draft with fresh data,  so we are clearing the draft after reverting.
-    setTimeout(() => {
-      clearDraft(noteId);
-    }, 500);
+    // 2️⃣ Clear draft for this user + note
+    clearDraft(authUser._id, noteId);
   };
 
   return (
