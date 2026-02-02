@@ -224,6 +224,12 @@ const ProfilePage = () => {
         <meta name="twitter:image" content={user.avatar} />
         <link rel="preload" as="image" href="/placeholder.svg" />
         <link rel="canonical" href={getCanonicalUrl()} />
+
+        <link
+          rel="preload"
+          as="image"
+          href={user?.cover || "/placeholder.svg"}
+        />
       </Helmet>
 
       <div className="p-4">
@@ -354,11 +360,12 @@ const ProfilePage = () => {
             <AvatarImage
               src={user?.cover}
               alt="User cover Photo"
-              unoptimized={true}
-              loading="eager"
-              fetchpriority="high"
+              unoptimized={true} // keep original URL without Next/Image optimization
+              loading="eager" // ⚠️ important for LCP
+              fetchpriority="high" // ⚠️ important for LCP
+              decoding="async"
               className="w-full h-full max-h-48 object-cover"
-              style={{ aspectRatio: "3/1" }}
+              style={{ aspectRatio: "3 / 1" }}
             />
             <AvatarFallback className="rounded-none brightness-[0.2]">
               <img
@@ -381,13 +388,10 @@ const ProfilePage = () => {
                 aria-label="View profile photo"
               >
                 <AvatarImage
+                  src={user?.avatar}
                   size={384}
-                  src={previewUrl || user?.avatar || "/avatar.svg"}
-                  alt={`${user?.fullName || "User"} profile photo`}
                   loading="lazy"
-                  decoding="async"
                   fetchpriority="low"
-                  className="w-full h-full object-cover rounded-full bg-background"
                 />
 
                 <AvatarFallback
