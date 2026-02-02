@@ -1,8 +1,6 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import { toast } from "sonner";
-import { io } from "socket.io-client";
-const BASE_URL = "http://localhost:3001";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -19,7 +17,6 @@ export const useAuthStore = create((set, get) => ({
   isSendingOtp: false,
   isResettingPassword: false,
   isUpdatingEmail: false,
-  socket: null,
   onlineUsers: [],
 
   requestEmailUpdateOtp: async (email) => {
@@ -196,7 +193,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.get("/user/me");
       set({ authUser: res.data });
-      get().connectSocket();
     } catch (error) {
       set({ authUser: null });
       console.error(error);
@@ -212,7 +208,6 @@ export const useAuthStore = create((set, get) => ({
       const { message, user } = res.data;
       set({ authUser: user });
       toast.success(message);
-      get().connectSocket();
       return { success: true };
     } catch (error) {
       toast.error(error.response.data.message);
@@ -249,7 +244,6 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.post("/auth/login", data);
       const { user } = res.data;
       set({ authUser: user });
-      get().connectSocket();
       toast.success("Log in successful");
       return true;
     } catch (error) {
@@ -272,7 +266,6 @@ export const useAuthStore = create((set, get) => ({
         redirectUri,
       });
       set({ authUser: res.data.user });
-      get().connectSocket();
       toast.success("Log in successful");
       return true;
     } catch (error) {
@@ -289,7 +282,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/logout");
       set({ authUser: null });
-      get().disconnectSocket();
       toast.success(res.data.message);
     } catch (error) {
       set({ authUser: null });
@@ -429,26 +421,5 @@ export const useAuthStore = create((set, get) => ({
       console.error(error.response.data.message);
       set({ emailStatus: "" });
     }
-  },
-
-  connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser || get().socket?.connected) return;
-
-    const socket = io(BASE_URL, {
-      withCredentials: true,
-    });
-
-    socket.connect();
-    set({ socket });
-
-    socket.on("online-users", (onlineUsers) => {
-      set({ onlineUsers });
-    });
-  },
-
-  disconnectSocket: () => {
-    const { socket } = get();
-    if (socket?.connected) socket.disconnect();
   },
 }));

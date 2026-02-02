@@ -1,12 +1,13 @@
-import fs from "fs";
-import path from "path";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
+
+import fs from "fs";
+import mongoose from "mongoose";
 
 import Collection from "../model/collection.model.js";
 import Note from "../model/note.model.js";
 import User from "../model/user.model.js";
-import { ENV } from "../config/env.js";
 
 // load env from backend/.env
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
@@ -15,7 +16,7 @@ const SITE_URL = "https://notehub-38kp.onrender.com";
 
 // Mongo connection
 await mongoose
-  .connect(ENV.MONGODB_URI)
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
@@ -26,19 +27,19 @@ async function generateSitemap() {
   try {
     /* ───────────────────── USERS ───────────────────── */
 
-    const users = await User.find({})
-      .select("_id userName updatedAt")
-      .lean();
+    const users = await User.find({}).select("_id userName updatedAt").lean();
 
-    const userMap = new Map(users.map(u => [u._id.toString(), u.userName]));
+    const userMap = new Map(users.map((u) => [u._id.toString(), u.userName]));
 
-    const userUrls = users.map(user => `
+    const userUrls = users.map(
+      (user) => `
   <url>
     <loc>${SITE_URL}/user/${user.userName}</loc>
     <lastmod>${user.updatedAt.toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
-  </url>`);
+  </url>`,
+    );
 
     /* ─────────────────── COLLECTIONS ─────────────────── */
 
@@ -47,45 +48,49 @@ async function generateSitemap() {
       .lean();
 
     const collectionMap = new Map(
-      collections.map(c => [c._id.toString(), c.slug])
+      collections.map((c) => [c._id.toString(), c.slug]),
     );
 
-    const collectionUrls = collections.map(col => {
-      const userName = userMap.get(col.userId.toString());
-      if (!userName || !col.slug) return null;
+    const collectionUrls = collections
+      .map((col) => {
+        const userName = userMap.get(col.userId.toString());
+        if (!userName || !col.slug) return null;
 
-      return `
+        return `
   <url>
     <loc>${SITE_URL}/user/${userName}/${col.slug}</loc>
     <lastmod>${col.updatedAt.toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`;
-    }).filter(Boolean);
+      })
+      .filter(Boolean);
 
     /* ───────────────────── NOTES ───────────────────── */
 
     const notes = await Note.find({
       visibility: "public",
-      collectionId: { $in: collections.map(c => c._id) }
+      collectionId: { $in: collections.map((c) => c._id) },
     })
-      .select("_id slug collectionId userId updatedAt")
+      .select("_id slug collectionId userId updatedAt contentUpdatedAt") 
       .lean();
 
-    const noteUrls = notes.map(note => {
-      const userName = userMap.get(note.userId.toString());
-      const collectionSlug = collectionMap.get(note.collectionId.toString());
+    const noteUrls = notes
+      .map((note) => {
+        const userName = userMap.get(note.userId.toString());
+        const collectionSlug = collectionMap.get(note.collectionId.toString());
 
-      if (!userName || !collectionSlug || !note.slug) return null;
+        if (!userName || !collectionSlug || !note.slug) return null;
 
-      return `
+        return `
   <url>
     <loc>${SITE_URL}/user/${userName}/${collectionSlug}/${note.slug}</loc>
     <lastmod>${note.contentUpdatedAt.toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`;
-    }).filter(Boolean);
+      })
+      .filter(Boolean);
 
     /* ───────────────────── FINAL XML ───────────────────── */
 
@@ -109,7 +114,7 @@ ${noteUrls.join("\n")}
     console.log("✅ Sitemap generated successfully");
     console.log(`📄 ${filePath}`);
     console.log(
-      `📊 Users: ${userUrls.length}, Collections: ${collectionUrls.length}, Notes: ${noteUrls.length}`
+      `📊 Users: ${userUrls.length}, Collections: ${collectionUrls.length}, Notes: ${noteUrls.length}`,
     );
   } catch (err) {
     console.error("❌ Sitemap generation failed:", err);

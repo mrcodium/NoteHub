@@ -11,7 +11,6 @@ import collectionRoutes from "./routers/collection.router.js";
 import noteRoutes from "./routers/note.router.js";
 import ImageRoutes from "./routers/Image.router.js";
 import searchRoutes from "./routers/search.router.js";
-import { app, server } from "./libs/socketio.js";
 
 import "./model/Image.model.js";
 import path from "path";
@@ -21,6 +20,8 @@ import { connectRedis } from "./config/redis.js";
 config();
 const PORT = ENV.PORT;
 const __dirname = path.resolve();
+
+const app = express();
 
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
@@ -32,12 +33,8 @@ app.use(
       "http://localhost:5175",
     ],
     credentials: true,
-  })
+  }),
 );
-
-// app.get("/", (req, res) => {
-//   res.status(200).json({ message: "hello from the server." });
-// });
 
 //ROUTES
 app.use("/api/auth",         authRoutes);
@@ -48,17 +45,17 @@ app.use("/api/collection",   collectionRoutes);
 app.use("/api/note",         noteRoutes);
 app.use("/api/images",       ImageRoutes);
 
-if(ENV.NODE_ENV === "production"){
+// Serve frontend in production
+if (ENV.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  app.get("*", (req, res)=>{
+  app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
-  })
+  });
 }
 
-server.listen(PORT, async () => {
-  console.log(`running on http://localhost:${PORT}`);
-  
+app.listen(PORT, async () => {
+  console.log(`Server running on http://localhost:${PORT}`);
   await connectToDb();
   await connectRedis();
 });

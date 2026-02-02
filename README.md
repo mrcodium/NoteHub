@@ -43,9 +43,9 @@ A modern note-taking app with rich editing, collaboration, and cloud sync.
 - Node.js + Express
 - MongoDB Atlas (Database)
 - JWT Authentication
-- Socket.IO (Real-time updates)
 - Cloudinary (Media storage)
 - Mongoose (ODM)
+- Redis (Caching)
 
 **DevOps:**
 - Render (Hosting)
