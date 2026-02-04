@@ -7,6 +7,11 @@
   -moz-tab-size: 4;
 }
 
+.tiptap {
+  tab-size: 4;
+  @apply p-5;
+}
+
 .tiptap .pre-wrapper {
   @apply rounded-2xl overflow-hidden my-4;
 }
@@ -26,11 +31,6 @@ div:has(> .tiptap.ProseMirror) {
 
 .ProseMirror input[type="checkbox"] {
   cursor: pointer;
-}
-
-.tiptap {
-  tab-size: 4;
-  @apply p-5;
 }
 
 .tiptap .code-block {
@@ -189,7 +189,7 @@ div:has(> .tiptap.ProseMirror) {
 }
 
 .tiptap p {
-  @apply mb-2 leading-[1.75] dark:text-muted-foreground;
+  @apply mb-2 leading-[1.75] dark:text-primary/80;
 }
 
 .tiptap p:not(:first-child) {
