@@ -141,7 +141,7 @@ const BaseCollaboratorsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Manage Collaborators</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Manage Collaborators</DialogTitle>
           <DialogDescription>
             Add or remove people who can access
           </DialogDescription>
@@ -225,7 +225,7 @@ const SearchBar = ({ onUserSelect, currentCollaborators }) => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative space-y-1">
       <Label className="mb-2">Search by username, full name, or email</Label>
       <div className="relative">
         <Search className="text-muted-foreground absolute size-4 left-2 top-1/2 -translate-y-1/2" />
@@ -329,8 +329,9 @@ const UserItem = ({ user, isRemoved, onRemove, onAdd }) => {
 
 const UserInfo = ({ user, className = "" }) => (
   <div className={cn("flex gap-2 items-center", className)}>
-    <Avatar>
+    <Avatar className="size-10">
       <AvatarImage
+        size={100}
         src={user?.avatar}
         alt={user?.fullName || "User Profile Photo"}
       />

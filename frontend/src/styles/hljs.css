@@ -58,6 +58,7 @@ pre[class*="language-"] {
 .hljs-doctag,
 .hljs-formula,
 .hljs-keyword,
+.hljs-tag,
 .hljs-literal {
   color: #70cff8;
 }
