@@ -374,7 +374,7 @@ const NotePagePublic = () => {
         )}
       >
         <div className="max-w-screen-md w-full mx-auto relative">
-          <div className="py-8 px-4 space-y-6 border-b border-dashed mb-12">
+          <div className="py-8 px-4 space-y-6 border-b border-dashed mb-6 sm:mb-12">
             <div className="flex items-center justify-between">
               <Link
                 to={`/user/${author?.userName}`}
