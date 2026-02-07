@@ -65,19 +65,19 @@ export const getUser = async (req, res) => {
 
     // try email path first
     const normalizedEmail = normalizeEmail(identifier);
-    const isEmail =
+    const isEmailIdentifier =
       normalizedEmail && isEmail(normalizedEmail);
 
     let query;
 
-    if (isEmail) {
+    if (isEmailIdentifier) {
       query = { email: normalizedEmail };
     } else {
       // username is already stored lowercase → exact match
       query = { userName: identifier };
     }
 
-    const user = await User.findOne(query);
+    const user = await User.findOne(query).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

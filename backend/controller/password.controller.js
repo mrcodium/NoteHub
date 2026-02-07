@@ -14,11 +14,13 @@ export const requestResetPasswordOtp = async (req, res) => {
   }
 
   try {
-    // Check if identifier is email or username
-    const isEmail = isEmail(identifier);
-    const query = isEmail
-      ? { email: normalizeEmail(identifier) }
-      : { userName: identifier };
+    // Normalize identifier and decide path
+    const id = identifier.trim().toLowerCase();
+    const normalized = normalizeEmail(id);
+    const isEmailIdentifier = normalized && isEmail(normalized);
+    const query = isEmailIdentifier
+      ? { email: normalized }
+      : { userName: id };
 
     const user = await User.findOne(query);
 
@@ -64,17 +66,16 @@ export const resetPassword = async (req, res) => {
   if (!isLength(newPassword, { min: 6 })) {
     return res.status(400).json({
       success: false,
-      message:
-        "Password must be at least 6 characters with uppercase, lowercase, number and symbol",
+      message: "Password must be at least 6 characters",
     });
   }
 
   try {
-    const isEmail = isEmail(identifier);
+    const id = identifier.trim().toLowerCase();
+    const normalized = normalizeEmail(id);
+    const isEmailIdentifier = normalized && isEmail(normalized);
     const user = await User.findOne(
-      isEmail
-        ? { email: normalizeEmail(identifier) }
-        : { userName: identifier }
+      isEmailIdentifier ? { email: normalized } : { userName: id }
     );
 
     if (!user) {
@@ -132,8 +133,7 @@ export const updatePassword = async (req, res) => {
   if (!isLength(newPassword, { min: 6 })) {
     return res.status(400).json({
       success: false,
-      message:
-        "New password must contain at least 6 characters with uppercase, lowercase, number and symbol",
+      message: "New password must be at least 6 characters",
     });
   }
 
