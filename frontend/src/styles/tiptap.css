@@ -42,7 +42,7 @@ div:has(> .tiptap.ProseMirror) {
   @apply bg-[#222] text-white;
 }
 
-.tiptap .code-block button[role="combobox"]:hover{
+.tiptap .code-block button[role="combobox"]:hover {
   color: white;
 }
 .tiptap .code-block button[role="combobox"] {
@@ -81,8 +81,6 @@ div:has(> .tiptap.ProseMirror) {
 [cmdk-list]::-webkit-scrollbar-thumb:hover {
   background-color: #818cf8; /* hover accent */
 }
-
-
 
 .tiptap .code-block select {
   @apply absolute bg-white right-[0.5rem] left-[0.5rem];
@@ -500,7 +498,6 @@ button:disabled {
 ----------------------------- */
 .bubble-menu button {
   @apply text-zinc-50 inline-flex h-9 w-9 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0;
-
 }
 .bubble-menu button.is-active {
   @apply bg-zinc-800;

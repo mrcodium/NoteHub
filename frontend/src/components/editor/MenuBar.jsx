@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useNavigate } from "react-router-dom";
 import { useNoteStore } from "@/stores/useNoteStore";
@@ -41,6 +41,22 @@ export const MenuBar = ({ noteId }) => {
   const navigate = useNavigate();
   const { updateContent, status, getNoteContent } = useNoteStore();
   const { clearDraft } = useDraftStore();
+
+  // Force re-render on editor changes so isActive(...) reflects immediately
+  const [__menuVersion, set__menuVersion] = useState(0);
+
+  useEffect(() => {
+    if (!editor) return;
+    const rerender = () => set__menuVersion((v) => v + 1);
+    editor.on("transaction", rerender);
+    editor.on("selectionUpdate", rerender);
+    editor.on("update", rerender);
+    return () => {
+      editor.off("transaction", rerender);
+      editor.off("selectionUpdate", rerender);
+      editor.off("update", rerender);
+    };
+  }, [editor]);
 
   if (!editor) {
     return null;

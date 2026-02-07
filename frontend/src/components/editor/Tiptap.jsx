@@ -69,7 +69,7 @@ const Tiptap = () => {
   }, [noteId, getNoteContent, getDraft, getImages]);
 
   // ✅ BEST SOLUTION: Use functional state update
-  const handleUpdate = useCallback((html) => {
+  const handleUpdate = (html) => {
     setNote((prevNote) => {
       const updatedNote = {
         ...prevNote,
@@ -79,7 +79,7 @@ const Tiptap = () => {
       saveDraft(updatedNote);
       return updatedNote;
     });
-  }, []);
+  };
 
   if (notFound) {
     return (

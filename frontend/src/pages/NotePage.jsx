@@ -158,7 +158,7 @@ const NotePage = () => {
           const header = document.createElement("header");
           header.className =
             "pre-header rounded-t-lg w-full flex items-center justify-between py-2 px-4";
-          header.innerHTML = `<span>${language}</span>`;
+          header.innerHTML = `<span class="text-xs font-medium text-[#b9b9b9]">${language}</span>`;
           pre.insertBefore(header, pre.firstChild);
 
           const buttonContainer = document.createElement("div");
