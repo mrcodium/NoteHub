@@ -33,7 +33,7 @@ app.use(
       "http://localhost:5175", // react port fallback 2
 
       "http://localhost:3000", // for next.js dev
-      "https://notehub-next-js.vercel.app", // for next.js prod
+      "https://notehub-official.vercel.app", // for next.js prod
     ],
     credentials: true,
   }),
