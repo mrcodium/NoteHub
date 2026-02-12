@@ -12,7 +12,7 @@ export const setCookie = (res, name, value, options = {}) => {
   const defaultOptions = {
     httpOnly: true,
     secure: ENV.NODE_ENV === "production",
-    sameSite: "Strict",
+    sameSite: "none",
     path: "/",
     domain: ENV.COOKIE_DOMAIN || undefined,
     maxAge: durationToMs(ENV.JWT_EXPIRY || "30d"),
