@@ -31,6 +31,7 @@ app.use(
       "http://localhost:5173",
       "http://localhost:5174",
       "http://localhost:5175",
+      "http://localhost:3000", // for next.js app
     ],
     credentials: true,
   }),
@@ -53,6 +54,53 @@ if (ENV.NODE_ENV === "production") {
     res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
   });
 }
+
+app.get("/api/health", async (req, res) => {
+  try {
+    // Check DB connection
+    let dbStatus = "❌disconnected";
+    if (global.mongoose && global.mongoose.connection.readyState === 1) {
+      dbStatus = "✅connected";
+    }
+
+    // Check Redis connection
+    let redisStatus = "❌disconnected";
+    if (global.redisClient && global.redisClient.isOpen) {
+      redisStatus = "✅connected";
+    }
+
+    res.status(200).json({
+      status: "OK",
+      message: "Server is running 🚀",
+      environment: ENV.NODE_ENV,
+      port: PORT,
+      health: {
+        database: dbStatus,
+        redis: redisStatus,
+      },
+      routes: {
+        auth: "/api/auth",
+        user: "/api/user",
+        search: "/api/search",
+        password: "/api/password",
+        collection: "/api/collection",
+        note: "/api/note",
+        images: "/api/images",
+      },
+      info: {
+        version: "1.0.0",
+        description: "Backend API for notes, collections, authentication, and search.",
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "ERROR",
+      message: "Health check failed",
+      error: error.message,
+    });
+  }
+});
+
 
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);

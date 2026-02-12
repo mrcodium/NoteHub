@@ -23,6 +23,7 @@ redisClient.on('connect', () => {
 export const connectRedis = async () => {
   if (!redisClient.isOpen) {
     await redisClient.connect();
+    global.redisClient = redisClient;
   }
 };
 

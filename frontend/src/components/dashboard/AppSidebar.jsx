@@ -35,7 +35,7 @@ const AppSidebar = (props) => {
     getAllCollections({
       userId: authUser._id,
     });
-  }, [getAllCollections]);
+  }, [authUser, getAllCollections]);
 
   const handleCloseSearch = () => {
     setShowSearch(false);

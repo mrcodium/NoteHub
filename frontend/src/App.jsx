@@ -115,14 +115,14 @@ function App() {
           <CollaboratorsDialog />
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Public routes */}
+              {/* Public routes having base header. */}
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/login" element={<LogInPage />} />
               <Route path="/forgot-password" element={<ForgetPasswordPage />} />
               <Route path="/oauth/callback" element={<OAuthCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-              {/* Dashboard with public routes */}
+              {/* Dashboard with public routes this route have a layout wrapped inside sidebarinset */}
               <Route path="/" element={<Dashboard />}>
                 <Route index element={<HomePage />} />
                 <Route path="user/:username" element={<ProfilePage />} />

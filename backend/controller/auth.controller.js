@@ -4,7 +4,12 @@ import { clearCookie, generateToken, setCookie } from "../utils/jwt.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
 import { OAuth2Client } from "google-auth-library";
 import { ENV } from "../config/env.js";
-import { escape, isEmail, isLength, normalizeEmail } from "../utils/validator.js";
+import {
+  escape,
+  isEmail,
+  isLength,
+  normalizeEmail,
+} from "../utils/validator.js";
 
 // common response functions
 const sendAuthResponse = (res, user) => {
@@ -131,10 +136,7 @@ export const login = async (req, res) => {
 };
 
 // Initialize without redirect URI
-const client = new OAuth2Client(
-  ENV.GOOGLE_CLIENT_ID,
-  ENV.GOOGLE_CLIENT_SECRET,
-);
+const client = new OAuth2Client(ENV.GOOGLE_CLIENT_ID, ENV.GOOGLE_CLIENT_SECRET);
 
 export const googleLogin = async (req, res) => {
   const { code, codeVerifier, redirectUri } = req.body;
@@ -143,9 +145,14 @@ export const googleLogin = async (req, res) => {
     return res.status(400).json({ message: "All fields required." });
   }
 
-  if (redirectUri !== ENV.GOOGLE_REDIRECT_URI) {
+  // Split by comma, optionally surrounded by spaces, and remove empty strings
+  const allowedRedirectUris = ENV.GOOGLE_REDIRECT_URIs.split(/\s*,\s*/) // split on ',' with optional spaces around
+    .map((uri) => uri.trim()) // remove leading/trailing spaces
+    .filter(Boolean); // remove empty strings
+
+  if (!allowedRedirectUris.includes(redirectUri)) {
     return res.status(400).json({
-      message: "Redirect URI mismatch",
+      message: "Redirect URI not allowed",
     });
   }
 
