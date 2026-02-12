@@ -28,23 +28,25 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:5175",
-      "http://localhost:3000", // for next.js app
+      "http://localhost:5173", // react port
+      "http://localhost:5174", // react port fallback 1
+      "http://localhost:5175", // react port fallback 2
+
+      "http://localhost:3000", // for next.js dev
+      "https://notehub-next-js.vercel.app", // for next.js prod
     ],
     credentials: true,
   }),
 );
 
 //ROUTES
-app.use("/api/auth",         authRoutes);
-app.use("/api/user",         userRoutes);
-app.use("/api/search",       searchRoutes);
-app.use("/api/password",     passwordRoutes);
-app.use("/api/collection",   collectionRoutes);
-app.use("/api/note",         noteRoutes);
-app.use("/api/images",       ImageRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/password", passwordRoutes);
+app.use("/api/collection", collectionRoutes);
+app.use("/api/note", noteRoutes);
+app.use("/api/images", ImageRoutes);
 
 // Serve frontend in production
 if (ENV.NODE_ENV === "production") {
@@ -89,7 +91,8 @@ app.get("/api/health", async (req, res) => {
       },
       info: {
         version: "1.0.0",
-        description: "Backend API for notes, collections, authentication, and search.",
+        description:
+          "Backend API for notes, collections, authentication, and search.",
       },
     });
   } catch (error) {
@@ -100,7 +103,6 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
-
 
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
