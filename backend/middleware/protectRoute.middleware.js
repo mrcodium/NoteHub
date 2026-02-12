@@ -10,7 +10,7 @@ export const protectRoute = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        message: "Authentication required",
+        message: "Authentication required, jwt token is missing",
         code: "AUTH_REQUIRED",
       });
     }
