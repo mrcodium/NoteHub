@@ -1,4 +1,4 @@
-// src > pages > collection > CollectionPage.jsx
+// src/pages/collection/CollectionPage.jsx
 import CollectionPageSkeleton from "@/components/sekeletons/CollectionPageSkeleton";
 import { useParams } from "react-router-dom";
 import { CollectionHeader } from "./CollectionHeader";
@@ -16,25 +16,34 @@ const CollectionPage = () => {
   const { username, collectionSlug: rawSlug } = useParams();
   const collectionSlug = rawSlug?.toLowerCase();
 
-  const [user, setUser] = useState(null);
-  const [guestCollection, setGuestCollection] = useState(null);
+  const [collectionData, setCollectionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorStatus, setErrorStatus] = useState(null); // Track error status
+  const [error, setError] = useState({ status: null, code: null });
   const [sortBy, setSortBy] = useState("name");
   const [sortDirection, setSortDirection] = useState("asc");
+  
   const { status, collections: ownerCollections } = useNoteStore();
   const { authUser } = useAuthStore();
-  const isOwner = authUser?.userName.toLowerCase() === username.toLowerCase();
-  const collection = useMemo(() => {
+  
+  const isOwner = authUser?.userName?.toLowerCase() === username?.toLowerCase();
+
+  // For owner, use store data (instant)
+  const ownerCollection = useMemo(() => {
     if (isOwner) {
       return ownerCollections.find((c) => c.slug === collectionSlug);
     }
-    return guestCollection;
-  }, [isOwner, ownerCollections, collectionSlug, guestCollection]);
+    return null;
+  }, [isOwner, ownerCollections, collectionSlug]);
 
+  // Use either owner data from store or fetched data for guests
+  const collection = isOwner ? ownerCollection : collectionData?.collection;
+  const author = isOwner ? authUser : collectionData?.author;
+  
   const notes = useMemo(() => collection?.notes || [], [collection]);
+
+  // Sort notes
   const sortedNotes = useMemo(() => {
-    if (!notes) return [];
+    if (!notes.length) return [];
 
     const notesCopy = [...notes];
     const modifier = sortDirection === "asc" ? 1 : -1;
@@ -56,63 +65,57 @@ const CollectionPage = () => {
     setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
-  const getCollection = async ({ userId, slug }) => {
-    try {
-      const res = await axiosInstance.get("/collection", {
-        params: {
-          userId,
-          slug,
-        },
-      });
-      const { collection } = res.data;
-      return collection;
-    } catch (error) {
-      if (error.response) {
-        setErrorStatus(error.response.status);
-      }
-      console.error(error);
-      return null;
-    }
-  };
-
+  // Single API call for non-owners
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCollectionData = async () => {
+      // Don't fetch for owner - use store data
+      if (isOwner) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
-        setErrorStatus(null);
+        setError({ status: null, code: null });
 
-        if (!isOwner) {
-          const response = await axiosInstance.get(`/user/${username}`);
-          const collectionsData = await getCollection({
-            userId: response.data?._id,
-            slug: collectionSlug,
-          });
+        // ✅ SINGLE API CALL - gets collection + author + notes + collaborators
+        const response = await axiosInstance.get(
+          `/${username}/${collectionSlug}`
+        );
 
-          setGuestCollection(collectionsData);
-          setUser(response.data);
-        } else {
-          setUser(authUser);
-        }
+        setCollectionData(response.data);
+        
       } catch (error) {
-        console.error("Error fetching profile data:", error);
-        setUser(null);
-        setGuestCollection(null);
+        console.error("Error fetching collection:", error);
         if (error.response) {
-          setErrorStatus(error.response.status);
+          setError({ 
+            status: error.response.status, 
+            code: error.response.data?.code 
+          });
         }
+        setCollectionData(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, [username, collectionSlug, isOwner, authUser]);
+    fetchCollectionData();
+  }, [username, collectionSlug, isOwner]);
 
-  if (status.collection.state === "loading" || isLoading)
+  // Show skeleton while loading
+  if (status.collection.state === "loading" || isLoading) {
     return <CollectionPageSkeleton />;
+  }
 
-  if (errorStatus === 403) return <Forbidden />;
-  if (errorStatus === 404 || !collection) return <NotFound />;
+  // Handle errors
+  if (error.status === 403) {
+    return <Forbidden message={error.code === "ACCESS_DENIED" ? "This collection is private" : "Access denied"} />;
+  }
+  
+  if (error.status === 404 || !collection) {
+    const message = error.code === "USER_NOT_FOUND" ? "User not found" : "Collection not found";
+    return <NotFound message={message} />;
+  }
 
   return (
     <>
@@ -122,7 +125,7 @@ const CollectionPage = () => {
           name="description"
           content={
             collection?.description ||
-            "Explore notes in this collection on NoteHub."
+            `Explore ${collection?.name || "notes"} in this collection on NoteHub.`
           }
         />
         <meta
@@ -133,14 +136,13 @@ const CollectionPage = () => {
           property="og:description"
           content={
             collection?.description ||
-            "Explore notes in this collection on NoteHub."
+            `Explore ${collection?.name || "notes"} in this collection on NoteHub.`
           }
         />
         <meta
           property="og:url"
-          content={`https://notehub-38kp.onrender.com/${username}/${collectionSlug}`}
+          content={`${window.location.origin}/${username}/${collectionSlug}`}
         />
-
         <meta
           name="twitter:title"
           content={`${collection?.name || "Collection"} | NoteHub`}
@@ -149,7 +151,7 @@ const CollectionPage = () => {
           name="twitter:description"
           content={
             collection?.description ||
-            "Explore notes in this collection on NoteHub."
+            `Explore ${collection?.name || "notes"} in this collection on NoteHub.`
           }
         />
         <link rel="canonical" href={getCanonicalUrl()} />
@@ -159,17 +161,20 @@ const CollectionPage = () => {
         <div className="max-w-screen-xl mx-auto flex flex-col gap-8">
           <div className="flex justify-between items-end">
             <CollectionHeader
-              user={user}
+              user={author}
               collection={collection}
               isOwner={isOwner}
             />
           </div>
-          <SortSelector
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            setSortBy={setSortBy}
-            toggleSortDirection={toggleSortDirection}
-          />
+          
+          {notes.length > 0 && (
+            <SortSelector
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              setSortBy={setSortBy}
+              toggleSortDirection={toggleSortDirection}
+            />
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedNotes.map((note) => (
@@ -182,6 +187,24 @@ const CollectionPage = () => {
               />
             ))}
           </div>
+
+          {notes.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">
+                {isOwner 
+                  ? "You haven't created any notes in this collection yet." 
+                  : "No notes in this collection yet."}
+              </p>
+              {isOwner && (
+                <button 
+                  onClick={() => {/* Navigate to create note */}}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Create your first note
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>

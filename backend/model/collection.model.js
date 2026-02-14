@@ -23,10 +23,24 @@ const collectionSchema = new mongoose.Schema(
   },
 );
 
-/* ===================== INDEXES ===================== */
-collectionSchema.index({ userId: 1, slug: 1 }, { unique: true });
-collectionSchema.index({ visibility: 1, userId: 1 });
-collectionSchema.index({ collaborators: 1 });
+/* ===================== COLLECTION MODEL INDEXES ===================== */
+// Primary unique constraint (your existing)
+collectionSchema.index({ userId: 1, slug: 1 }, { unique: true }); // ✅ Keep this
+
+// OPTIMIZED: For getAllCollections and getCollection pipelines
+// This covers: userId + visibility filtering + slug (when provided)
+collectionSchema.index({ 
+  userId: 1, 
+  visibility: 1, 
+  slug: 1 
+}); // 🔥 CRITICAL: Supports $match in getCollectionsAggregatePipeline
+
+// For collaborator-based access
+collectionSchema.index({ 
+  collaborators: 1, 
+  visibility: 1,
+  userId: 1 
+}); // 🔥 Supports $match with collaborator + visibility + userId
 
 /* ===================== SLUG GENERATOR ===================== */
 collectionSchema.pre("validate", async function (next) {

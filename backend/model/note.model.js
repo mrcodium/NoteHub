@@ -57,18 +57,44 @@ const noteSchema = new mongoose.Schema(
   },
 );
 
-/* ===================== INDEXES ===================== */
+/* ===================== NOTE MODEL INDEXES ===================== */
+// Primary unique constraint (your existing)
+noteSchema.index({ collectionId: 1, slug: 1 }, { unique: true }); // ✅ Keep
 
-// Slug unique per collection
-noteSchema.index({ collectionId: 1, slug: 1 }, { unique: true });
+// OPTIMIZED: For note filtering within collection (used in getCollectionsAggregatePipeline)
+noteSchema.index({
+  collectionId: 1,
+  visibility: 1,
+  collaborators: 1,
+  createdAt: -1,
+}); // 🔥 CRITICAL: Covers $match and $sort in notes lookup
 
-// Access rules
-noteSchema.index({ userId: 1 });
-noteSchema.index({ collaborators: 1 });
+// For getNoteBySlug pipeline
+noteSchema.index({
+  collectionId: 1,
+  slug: 1,
+  visibility: 1,
+}); // 🔥 Supports note lookup with visibility
 
-// Public feed + sorting
-noteSchema.index({ visibility: 1, contentUpdatedAt: -1 });
-noteSchema.index({ collectionId: 1, contentUpdatedAt: -1 });
+// For getPublicNotes (complex permission rules)
+noteSchema.index({
+  visibility: 1,
+  contentUpdatedAt: -1,
+}); // ✅ Keep for public feed
+
+// For owner-based queries
+noteSchema.index({
+  userId: 1,
+  visibility: 1,
+  collectionId: 1,
+}); // 🔥 For owner access checks
+
+// For collaborator-based access
+noteSchema.index({
+  collaborators: 1,
+  collectionId: 1,
+  visibility: 1,
+}); // 🔥 For collaborator access checks
 
 /* ===================== MIDDLEWARE ===================== */
 

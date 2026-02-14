@@ -111,7 +111,11 @@ userSchema.pre("validate", async function (next) {
   next();
 });
 
-userSchema.index({ userName: 1 }, { unique: true });
+/* ===================== USER MODEL INDEXES ===================== */
+// Your existing indexes are perfect
+userSchema.index({ userName: 1 }, { unique: true }); // ✅ Perfect for username lookups
+userSchema.index({ email: 1 }); // ✅ For email lookups in getUser
+
 
 const User = mongoose.model("User", userSchema);
 export default User;

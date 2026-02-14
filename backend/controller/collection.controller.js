@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import Collection from "../model/collection.model.js";
 import Note from "../model/note.model.js";
+import { getCache, setCache } from "../services/cache.service.js";
+import User from "../model/user.model.js";
 
 export const createCollection = async (req, res) => {
   const { name, visibility, collaborators } = req.body;
@@ -104,7 +106,7 @@ const getCollectionsAggregatePipeline = (
   userId,
   requestingUserId = null,
   slug = null,
-  includeNoteCollaborators = false
+  includeNoteCollaborators = false,
 ) => {
   const requestingUserIdObj = requestingUserId
     ? new mongoose.Types.ObjectId(requestingUserId)
@@ -252,7 +254,6 @@ const getCollectionsAggregatePipeline = (
   ];
 };
 
-
 export const getAllCollections = async (req, res) => {
   const { userId } = req.query;
 
@@ -265,7 +266,7 @@ export const getAllCollections = async (req, res) => {
       userId,
       requestingUserId,
       null,
-      true
+      true,
     );
     const collections = await Collection.aggregate(pipeline);
 
@@ -296,7 +297,7 @@ export const getCollection = async (req, res) => {
       userId,
       requestingUserId,
       slug.toLowerCase(),
-      true // Include note collaborators for getCollection
+      true, // Include note collaborators for getCollection
     );
     const collections = await Collection.aggregate(pipeline);
 
@@ -308,6 +309,171 @@ export const getCollection = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
     console.error("Error in getCollection controller\n", error);
+  }
+};
+
+// controllers/collectionController.js
+export const getCollectionBySlug = async (req, res) => {
+  const { username, collectionSlug } = req.params;
+  const requester = req.user || null;
+
+  const normalizedUsername = username.trim().toLowerCase();
+  const normalizedSlug = collectionSlug.trim().toLowerCase();
+  const requesterId = requester?._id || null;
+  const requesterIdObj = requesterId ? new mongoose.Types.ObjectId(requesterId) : null;
+
+  const cacheKey = `collection:slug:${normalizedUsername}:${normalizedSlug}:user:${requesterId || "guest"}`;
+
+  try {
+    // Check cache
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json(JSON.parse(cached));
+    }
+
+    // STEP 1: Get user ID (cheap, uses index)
+    const user = await User.findOne(
+      { userName: normalizedUsername },
+      { _id: 1, userName: 1, fullName: 1, avatar: 1 }
+    ).lean();
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found", code: "USER_NOT_FOUND" });
+    }
+
+    // STEP 2: Get collection with basic info (cheap, uses index)
+    const collection = await Collection.findOne(
+      { 
+        userId: user._id, 
+        slug: normalizedSlug,
+        $or: [
+          { visibility: "public" },
+          ...(requesterId ? [
+            { userId: requesterIdObj },
+            { collaborators: requesterIdObj }
+          ] : [])
+        ]
+      },
+      { _id: 1, name: 1, slug: 1, visibility: 1, userId: 1, createdAt: 1, updatedAt: 1, collaborators: 1 }
+    ).lean();
+
+    if (!collection) {
+      // Check if collection exists but no access
+      const exists = await Collection.exists({ userId: user._id, slug: normalizedSlug });
+      if (exists) {
+        return res.status(403).json({ message: "Access denied", code: "ACCESS_DENIED" });
+      }
+      return res.status(404).json({ message: "Collection not found", code: "COLLECTION_NOT_FOUND" });
+    }
+
+    // STEP 3: Get notes (separate query, but fast with indexes)
+    const notes = await Note.find(
+      {
+        collectionId: collection._id,
+        $or: [
+          { visibility: "public" },
+          ...(requesterId ? [
+            { userId: requesterIdObj },
+            { collaborators: requesterIdObj }
+          ] : [])
+        ]
+      },
+      {
+        _id: 1,
+        name: 1,
+        slug: 1,
+        visibility: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        contentUpdatedAt: 1,
+        userId: 1,
+        collaborators: 1,
+        // content: { $substr: ["$content", 0, 200] } // Preview only
+      }
+    )
+    .sort({ createdAt: -1 })
+    .lean();
+
+    // STEP 4: Get collaborator details (only if needed)
+    const collaboratorIds = [];
+    if (collection.collaborators?.length) {
+      collaboratorIds.push(...collection.collaborators);
+    }
+    
+    notes.forEach(note => {
+      if (note.collaborators?.length) {
+        collaboratorIds.push(...note.collaborators);
+      }
+    });
+
+    // Get unique collaborator IDs
+    const uniqueCollabIds = [...new Set(collaboratorIds.map(id => id.toString()))];
+    
+    // Fetch all collaborator details in one query
+    const collaborators = uniqueCollabIds.length > 0 
+      ? await User.find(
+          { _id: { $in: uniqueCollabIds } },
+          { _id: 1, userName: 1, fullName: 1, avatar: 1, email: 1, role: 1 }
+        ).lean()
+      : [];
+
+    // Create maps for quick lookup
+    const collaboratorMap = new Map(collaborators.map(c => [c._id.toString(), c]));
+
+    // STEP 5: Attach collaborators to collection (if user has permission)
+    const canSeeCollectionCollabs = requesterId && (
+      collection.userId.toString() === requesterId.toString() ||
+      collection.collaborators?.some(id => id.toString() === requesterId.toString())
+    );
+
+    const collectionWithCollabs = {
+      ...collection,
+      collaborators: canSeeCollectionCollabs 
+        ? (collection.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
+        : undefined
+    };
+
+    // STEP 6: Attach collaborators to notes (if user has permission)
+    const notesWithCollabs = notes.map(note => {
+      const canSeeNoteCollabs = requesterId && (
+        note.userId?.toString() === requesterId.toString() ||
+        collection.userId.toString() === requesterId.toString() || // Collection owner
+        note.collaborators?.some(id => id.toString() === requesterId.toString()) ||
+        collection.collaborators?.some(id => id.toString() === requesterId.toString()) // Collection collaborator
+      );
+
+      return {
+        ...note,
+        collaborators: canSeeNoteCollabs
+          ? (note.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
+          : undefined
+      };
+    });
+
+    // STEP 7: Prepare response
+    const responseData = {
+      message: "Collection fetched successfully",
+      collection: {
+        ...collectionWithCollabs,
+        notes: notesWithCollabs,
+        noteCount: notes.length
+      },
+      author: {
+        _id: user._id,
+        userName: user.userName,
+        fullName: user.fullName,
+        avatar: user.avatar
+      }
+    };
+
+    // Cache for 5 minutes
+    await setCache(cacheKey, responseData, 300);
+
+    return res.status(200).json(responseData);
+
+  } catch (error) {
+    console.error("Error in getCollectionBySlug:", error);
+    return res.status(500).json({ message: "Internal server error", code: "SERVER_ERROR" });
   }
 };
 
@@ -326,7 +492,7 @@ export const updateVisibility = async (req, res) => {
     const collection = await Collection.findOneAndUpdate(
       { _id: collectionId, userId: user._id },
       { visibility },
-      { new: true }
+      { new: true },
     );
     if (!collection) {
       return res
@@ -363,7 +529,7 @@ export const updateCollaborators = async (req, res) => {
     const updatedCollection = await Collection.findOneAndUpdate(
       { _id: collectionId, userId: user._id },
       { collaborators },
-      { new: true }
+      { new: true },
     ).populate("collaborators", "role fullName userName email avatar _id");
 
     if (!updatedCollection) {
