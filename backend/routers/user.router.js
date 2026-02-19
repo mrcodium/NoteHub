@@ -13,7 +13,7 @@ import {
     requestEmailUpdateOtp,
     confirmEmailUpdate,
 } from "../controller/user.controller.js";
-import { protectRoute } from "../middleware/protectRoute.middleware.js";
+import { protectRoute, adminOnly } from "../middleware/protectRoute.middleware.js";
 import { handlefileUpload } from "../middleware/multer.middleware.js";
 
 const router = express.Router();
@@ -30,7 +30,7 @@ router.post('/update-email', protectRoute, confirmEmailUpdate);
 
 router.get("/me", protectRoute, checkAuth);
 router.get("/:identifier", getUser);
-router.get("/", getAllUsers);
+router.get("/", protectRoute, adminOnly, getAllUsers);
 router.get("/check-email/:email", isEmailAvailable);
 
 export default router;

@@ -7,6 +7,8 @@ export const protectRoute = async (req, res, next) => {
     const token =
       req.cookies?.jwt ||
       req.headers.authorization?.split(" ")[1];
+    
+    console.log(token, req.cookies.jwt, req.headers.authorization?.split(" ")[1]);
 
     if (!token) {
       return res.status(401).json({
@@ -59,4 +61,14 @@ export const protectRoute = async (req, res, next) => {
       code: "AUTH_ERROR",
     });
   }
+};
+
+export const adminOnly = (req, res, next) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({
+      message: "Access denied. Admin privileges required.",
+      code: "ADMIN_REQUIRED",
+    });
+  }
+  next();
 };
