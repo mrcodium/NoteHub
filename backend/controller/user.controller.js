@@ -42,7 +42,7 @@ export const isEmailAvailable = async (req, res) => {
 export const checkAuth = async (req, res) => {
   try {
     if (!req.user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
     const user = req.user;
     const { password, ...userWithoutPassword } = user.toObject();

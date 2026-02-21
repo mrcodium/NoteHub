@@ -36,6 +36,6 @@ router.put("/update-username", updateUserName);
 router.post('/request-update-email-otp', requestEmailUpdateOtp);
 router.post('/update-email', confirmEmailUpdate);
 
-router.get("/me", protectRoute, checkAuth);
+router.get("/me", checkAuth);
 
 export default router;
