@@ -20,8 +20,9 @@ const router = express.Router();
 
 // public routes
 router.get("/", getAllUsers);
-router.get("/:identifier", getUser);
 router.get("/check-email/:email", isEmailAvailable);
+router.get("/me", protectRoute, checkAuth);
+router.get("/:identifier", getUser);
 
 
 router.use(protectRoute);
@@ -35,7 +36,5 @@ router.put("/update-fullname", updateFullName);
 router.put("/update-username", updateUserName);
 router.post('/request-update-email-otp', requestEmailUpdateOtp);
 router.post('/update-email', confirmEmailUpdate);
-
-router.get("/me", checkAuth);
 
 export default router;
