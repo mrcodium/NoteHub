@@ -18,19 +18,24 @@ import { handlefileUpload } from "../middleware/multer.middleware.js";
 
 const router = express.Router();
 
-router.post( "/upload-avatar", protectRoute, handlefileUpload("file"), uploadAvatar);
-router.post( "/upload-cover", protectRoute, handlefileUpload("file"), uploadCover);
-router.delete("/remove-avatar", protectRoute, removeAvatar);
-router.delete("/remove-cover", protectRoute, removeCover);
+// public routes
+router.get("/", getAllUsers);
+router.get("/:identifier", getUser);
+router.get("/check-email/:email", isEmailAvailable);
 
-router.put("/update-fullname", protectRoute, updateFullName);
-router.put("/update-username", protectRoute, updateUserName);
-router.post('/request-update-email-otp', protectRoute, requestEmailUpdateOtp);
-router.post('/update-email', protectRoute, confirmEmailUpdate);
+
+router.use(protectRoute);
+
+router.post( "/upload-avatar", handlefileUpload("file"), uploadAvatar);
+router.post( "/upload-cover", handlefileUpload("file"), uploadCover);
+router.delete("/remove-avatar", removeAvatar);
+router.delete("/remove-cover", removeCover);
+
+router.put("/update-fullname", updateFullName);
+router.put("/update-username", updateUserName);
+router.post('/request-update-email-otp', requestEmailUpdateOtp);
+router.post('/update-email', confirmEmailUpdate);
 
 router.get("/me", protectRoute, checkAuth);
-router.get("/:identifier", getUser);
-router.get("/", protectRoute, adminOnly, getAllUsers);
-router.get("/check-email/:email", isEmailAvailable);
 
 export default router;
