@@ -40,7 +40,6 @@ export function ArticleCard({
   description,
   images,
   collection,
-  headings,
 }) {
   const { authUser } = useAuthStore();
   const [api, setApi] = useState();
@@ -178,8 +177,7 @@ export function ArticleCard({
                 {note.name}
               </Link>
             </CardTitle>
-
-            {headings?.length > 0 && (
+            {note.tableOfContent?.length > 0 && (
               <Accordion type="single" collapsible className="mb-3 w-full">
                 <AccordionItem value="headings" className="border-b-0 w-full">
                   <AccordionTrigger className="group  hover:bg-primary/5 gap-4 py-2 text-sm hover:no-underline">
@@ -189,7 +187,7 @@ export function ArticleCard({
                   </AccordionTrigger>
 
                   <AccordionContent className="pb-0 w-full">
-                    <TableOfContent data={headings} />
+                    <TableOfContent data={note.tableOfContent} />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

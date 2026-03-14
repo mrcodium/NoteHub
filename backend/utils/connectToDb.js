@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
 import ora from 'ora';
 import { ENV } from "../config/env.js";
+import dns from "dns";
+
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const connectToDb = async()=>{
     const spinner = ora('Connecting to MongoDB...').start();

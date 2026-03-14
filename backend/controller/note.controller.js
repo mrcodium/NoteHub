@@ -401,6 +401,7 @@ export const getNoteBySlug = async (req, res) => {
             _id: "$collection.note._id",
             name: "$collection.note.name",
             content: "$collection.note.content",
+            tableOfContent: "$collection.note.tableOfContent",
             visibility: "$collection.note.visibility",
             slug: "$collection.note.slug",
 
@@ -564,6 +565,7 @@ export const getPublicNotes = async (req, res) => {
                 name: 1,
                 slug: 1,
                 content: 1,
+                tableOfContent: 1,
                 visibility: 1,
                 contentUpdatedAt: 1,
                 createdAt: 1,
