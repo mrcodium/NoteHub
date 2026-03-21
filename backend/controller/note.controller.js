@@ -197,11 +197,14 @@ export const updateContent = async (req, res) => {
   }
 
   try {
-    const note = await Note.findById(noteId)
-      .populate("collectionId", "slug")
-      .populate("userId", "userName");
+    // ✅ Fetch WITHOUT populate first — keep refs as ObjectIds for save
+    const note = await Note.findById(noteId);
 
-    const isAuthor = note.userId._id.equals(user._id);
+    if (!note) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    const isAuthor = note.userId.equals(user._id);
     const isAdmin = user.role === "admin";
 
     if (!isAuthor && !isAdmin) {
@@ -210,29 +213,27 @@ export const updateContent = async (req, res) => {
       });
     }
 
-    // after updating content
     note.content = content;
     note.contentUpdatedAt = new Date();
-    await note.save();
+    await note.save(); // ✅ pre("save") hook runs cleanly, no populated refs to confuse Mongoose
 
-    // 1️⃣ Reindex
+    // ✅ NOW populate for cache key building & response
+    await note.populate("collectionId", "slug");
+    await note.populate("userId", "userName");
+
+    // Reindex
     await updateIndex(note._id, `${note.name} ${content}`);
 
-    // 2️⃣ Invalidate ID cache
+    // Invalidate caches
     await delCache(`note:id:${note._id}:user:${user._id}`);
     await delCache(`note:id:${note._id}:user:guest`);
 
-    // 3️⃣ Invalidate SLUG cache
     const username = note.userId.userName;
     const collectionSlug = note.collectionId.slug;
     const noteSlug = note.slug;
 
-    await delCache(
-      `note:slug:${username}:${collectionSlug}:${noteSlug}:user:${user._id}`,
-    );
-    await delCache(
-      `note:slug:${username}:${collectionSlug}:${noteSlug}:user:guest`,
-    );
+    await delCache(`note:slug:${username}:${collectionSlug}:${noteSlug}:user:${user._id}`);
+    await delCache(`note:slug:${username}:${collectionSlug}:${noteSlug}:user:guest`);
 
     return res.status(200).json({
       message: "Note content updated & reindexed successfully",

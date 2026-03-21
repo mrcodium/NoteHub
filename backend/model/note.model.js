@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { extractTOC } from "../services/extractTOC.js";
+import { extractTOCAndAddIds } from "../services/extractTOC.js";
 
 /* ─────────────────────────────────────────────
    SUB-SCHEMA: single TOC entry
@@ -30,7 +30,7 @@ const tocEntrySchema = new mongoose.Schema(
       // Zero-based position in document; explicit so reordering is safe
     },
   },
-  { _id: false } // TOC entries are value objects, not independent documents
+  { _id: false }, // TOC entries are value objects, not independent documents
 );
 
 /* ─────────────────────────────────────────────
@@ -97,7 +97,7 @@ const noteSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  }
+  },
 );
 
 /* ===================== NOTE MODEL INDEXES ===================== */
@@ -165,8 +165,9 @@ noteSchema.pre("validate", async function (next) {
 // TOC regenerator — runs only when `content` actually changed
 noteSchema.pre("save", function (next) {
   if (this.isModified("content")) {
-    this.tableOfContent = extractTOC(this.content);
-    this.contentUpdatedAt = new Date();
+    const { html, toc } = extractTOCAndAddIds(this.content);
+    this.content = html; // persist heading IDs back to content
+    this.tableOfContent = toc;
   }
   next();
 });

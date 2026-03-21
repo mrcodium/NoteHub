@@ -12,13 +12,13 @@
  */
 export function slugify(text) {
   return text
-    .replace(/<[^>]+>/g, "")           // strip any inline HTML tags
+    .replace(/<[^>]+>/g, "") // strip any inline HTML tags
     .replace(/[^\p{L}\p{N}\s-]/gu, "") // remove emoji & special chars (unicode-aware)
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "-")              // spaces → hyphens
-    .replace(/-+/g, "-")               // collapse multiple hyphens
-    .replace(/^-|-$/g, "");            // trim leading/trailing hyphens
+    .replace(/\s+/g, "-") // spaces → hyphens
+    .replace(/-+/g, "-") // collapse multiple hyphens
+    .replace(/^-|-$/g, ""); // trim leading/trailing hyphens
 }
 
 /**
@@ -41,7 +41,7 @@ export function extractTOCAndAddIds(html) {
     const level = parseInt(match[1], 10);
     const existingAttrs = match[2]; // existing attributes like class, style
     const innerContent = match[3];
-    
+
     // Strip inner tags to get plain text
     const rawText = innerContent.replace(/<[^>]+>/g, "").trim();
     if (!rawText) continue;
@@ -58,24 +58,22 @@ export function extractTOCAndAddIds(html) {
       id = `${baseSlug}-${idCount[baseSlug]}`;
     }
 
-    // Check if heading already has an id attribute
-    const hasId = /\bid\s*=/.test(existingAttrs);
-    
-    if (!hasId) {
-      // Insert id into the opening tag
-      const originalTag = match[0];
-      const newTag = `<h${level}${existingAttrs} id="${id}">${innerContent}</h${level}>`;
-      
-      // Replace in the modified HTML (accounting for offset from previous insertions)
-      const matchIndex = match.index + offset;
-      modifiedHtml = 
-        modifiedHtml.slice(0, matchIndex) +
-        newTag +
-        modifiedHtml.slice(matchIndex + originalTag.length);
-      
-      // Update offset for next iteration
-      offset += newTag.length - originalTag.length;
-    }
+    // REPLACE WITH:
+    const originalTag = match[0];
+    // Remove ALL existing id and data-toc-id attributes, then inject fresh slug id
+    const cleanedAttrs = existingAttrs
+      .replace(/\s*\bid\s*=\s*["'][^"']*["']/g, "")
+      .replace(/\s*\bdata-toc-id\s*=\s*["'][^"']*["']/g, "");
+
+    const newTag = `<h${level}${cleanedAttrs} id="${id}" data-toc-id="${id}">${innerContent}</h${level}>`;
+
+    const matchIndex = match.index + offset;
+    modifiedHtml =
+      modifiedHtml.slice(0, matchIndex) +
+      newTag +
+      modifiedHtml.slice(matchIndex + originalTag.length);
+
+    offset += newTag.length - originalTag.length;
 
     toc.push({
       id,

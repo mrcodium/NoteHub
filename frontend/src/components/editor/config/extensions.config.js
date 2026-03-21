@@ -28,9 +28,6 @@ import { Extension } from "@tiptap/core";
 import { Dropcursor, Gapcursor } from "@tiptap/extensions";
 import Link from "@tiptap/extension-link";
 import Math from "@tiptap/extension-mathematics";
-import TableOfContents, {
-  getHierarchicalIndexes,
-} from "@tiptap/extension-table-of-contents";
 import { ResizableImageExtension } from "../ResizableImageExtension";
 
 const lowlight = createLowlight(all);
@@ -143,13 +140,6 @@ export const extensions = [
       keepAttributes: false,
     },
     codeBlock: false,
-  }),
-  TableOfContents.configure({
-    anchorTypes: ["heading"],
-    getIndex: getHierarchicalIndexes,
-    onUpdate: (anchors) => {
-      window.dispatchEvent(new CustomEvent("toc-update", { detail: anchors }));
-    },
   }),
   CustomCodeBlock,
   Highlight.configure({ multicolor: true }),

@@ -80,7 +80,7 @@ const CollectionPage = () => {
 
         // ✅ SINGLE API CALL - gets collection + author + notes + collaborators
         const response = await axiosInstance.get(
-          `/${username}/${collectionSlug}`
+          `/collection/${username}/${collectionSlug}`
         );
 
         setCollectionData(response.data);
