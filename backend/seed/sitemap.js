@@ -8,6 +8,9 @@ import mongoose from "mongoose";
 import Collection from "../model/collection.model.js";
 import Note from "../model/note.model.js";
 import User from "../model/user.model.js";
+import dns from "dns";
+
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 // load env from backend/.env
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
