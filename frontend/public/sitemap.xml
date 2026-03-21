@@ -39,10 +39,17 @@
 
 
   <!-- 👤 USERS -->
-   
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh</loc>
+    <lastmod>2026-01-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <url>
     <loc>https://notehub-38kp.onrender.com/user/vikashkumar</loc>
-    <lastmod>2025-06-21</lastmod>
+    <lastmod>2026-02-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -50,13 +57,6 @@
   <url>
     <loc>https://notehub-38kp.onrender.com/user/divyasachan</loc>
     <lastmod>2026-01-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <url>
-    <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh</loc>
-    <lastmod>2026-01-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -229,6 +229,62 @@
     <priority>0.6</priority>
   </url>
 
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/shanti-0847a4</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/manish-540018</loc>
+    <lastmod>2026-02-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/ayu-5ff850</loc>
+    <lastmod>2026-02-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/basant-c59106</loc>
+    <lastmod>2026-02-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/sarvjeet-989feb</loc>
+    <lastmod>2026-02-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/manish-b6b69e</loc>
+    <lastmod>2026-02-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/gobinda-47c138</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/dolly-fcb638</loc>
+    <lastmod>2026-03-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- 📁 COLLECTIONS -->
 
   <url>
@@ -260,13 +316,6 @@
   </url>
 
   <url>
-    <loc>https://notehub-38kp.onrender.com/user/divyasachan/carrier-skill</loc>
-    <lastmod>2025-06-17</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
     <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh/daa-design-and-analysis</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -288,22 +337,36 @@
   </url>
 
   <url>
+    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/blog-by-vikash</loc>
+    <lastmod>2026-01-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/dsa-notes-by-vikash</loc>
+    <lastmod>2026-02-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/w2c-car-xml-project</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/divyasachan/carrier-skill</loc>
+    <lastmod>2025-06-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
     <loc>https://notehub-38kp.onrender.com/user/divyasachan/sql</loc>
     <lastmod>2025-10-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://notehub-38kp.onrender.com/user/sourabh-singh/daa</loc>
-    <lastmod>2025-11-24</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://notehub-38kp.onrender.com/user/utsavraj/daa-pyq</loc>
-    <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -323,6 +386,27 @@
   </url>
 
   <url>
+    <loc>https://notehub-38kp.onrender.com/user/sourabh-singh/daa</loc>
+    <lastmod>2025-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/gyan-prakash/data-science-using-r</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/utsavraj/daa-pyq</loc>
+    <lastmod>2025-12-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
     <loc>https://notehub-38kp.onrender.com/user/adarshkashyap/dbms</loc>
     <lastmod>2026-01-06</lastmod>
     <changefreq>weekly</changefreq>
@@ -330,15 +414,15 @@
   </url>
 
   <url>
-    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/blog-by-vikash</loc>
-    <lastmod>2026-01-30</lastmod>
+    <loc>https://notehub-38kp.onrender.com/user/shanti-0847a4/dsa</loc>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/dsa-notes-by-vikash</loc>
-    <lastmod>2026-02-01</lastmod>
+    <loc>https://notehub-38kp.onrender.com/user/basant-c59106/power-bi</loc>
+    <lastmod>2026-02-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -354,7 +438,7 @@
 
   <url>
     <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh/ai-ml/how-machine-learns</loc>
-    <lastmod>2025-06-16</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -508,7 +592,7 @@
 
   <url>
     <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh/ai-ml/knn-classification</loc>
-    <lastmod>2025-12-19</lastmod>
+    <lastmod>2026-03-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -522,7 +606,7 @@
 
   <url>
     <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh/ai-ml/bayesian-classifier-naive-boryes</loc>
-    <lastmod>2025-12-19</lastmod>
+    <lastmod>2026-03-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -536,7 +620,7 @@
 
   <url>
     <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh/ai-ml/id3-algorithm</loc>
-    <lastmod>2026-01-13</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -599,7 +683,7 @@
 
   <url>
     <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh/ai-ml/decision-tree-algorithm</loc>
-    <lastmod>2025-12-19</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -711,7 +795,7 @@
 
   <url>
     <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh/daa-design-and-analysis/asymtotic-notation</loc>
-    <lastmod>2025-12-18</lastmod>
+    <lastmod>2026-02-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -767,7 +851,7 @@
 
   <url>
     <loc>https://notehub-38kp.onrender.com/user/abhijeetsingh/machine-learning-2/xg-boost</loc>
-    <lastmod>2025-12-19</lastmod>
+    <lastmod>2026-02-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1054,7 +1138,7 @@
 
   <url>
     <loc>https://notehub-38kp.onrender.com/user/naveen09/react/day-2</loc>
-    <lastmod>2025-12-19</lastmod>
+    <lastmod>2026-02-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1104,6 +1188,111 @@
   <url>
     <loc>https://notehub-38kp.onrender.com/user/vikashkumar/dsa-notes-by-vikash/binary-search</loc>
     <lastmod>2026-02-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/shanti-0847a4/dsa/array</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/naveen09/react/day-3</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/naveen09/react/concept-of-controlled-and-uncontrolled</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/naveen09/react/use-of-rel</loc>
+    <lastmod>2026-02-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/naveen09/react/usestate</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/naveen09/react/deep-dive-in-hooks</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/naveen09/react/practice-questions-of-usestate</loc>
+    <lastmod>2026-02-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/naveen09/react/use-of-props</loc>
+    <lastmod>2026-02-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/dsa-notes-by-vikash/understanding-strings-in-various-programming-language</loc>
+    <lastmod>2026-02-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/gyan-prakash/data-science-using-r/data-science</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/gyan-prakash/data-science-using-r/data-visualization</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/gyan-prakash/data-science-using-r/data-modelling</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/dsa-notes-by-vikash/pointers-and-reference-variable</loc>
+    <lastmod>2026-02-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/w2c-car-xml-project/cecklist</loc>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://notehub-38kp.onrender.com/user/vikashkumar/w2c-car-xml-project/short-checklist</loc>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
