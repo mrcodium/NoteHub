@@ -169,7 +169,7 @@ export const uploadAvatar = async (req, res) => {
 
     // Upload new avatar
     const folder = `user_profiles/${user._id}`;
-    const { secure_url } = await uploadStream(file.buffer, folder);
+    const { secure_url } = await uploadStream(file.buffer, folder, "avatar");
 
     user.avatar = secure_url;
     await user.save();
@@ -224,7 +224,7 @@ export const uploadCover = async (req, res) => {
     }
 
     const folder = `user_covers/${user._id}`;
-    const { secure_url } = await uploadStream(file.buffer, folder);
+    const { secure_url } = await uploadStream(file.buffer, folder, "cover");
 
     user.cover = secure_url;
     await user.save();

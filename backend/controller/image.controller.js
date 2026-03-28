@@ -15,7 +15,7 @@ export const uploadGalleryImage = async (req, res) => {
     }
 
     // Upload to Cloudinary from buffer
-    const { secure_url, public_id } = await uploadStream(file.buffer, "gallery");
+    const { secure_url, public_id } = await uploadStream(file.buffer, "gallery", "gallery");
 
     const newImage = await Image.create({
       userId,
