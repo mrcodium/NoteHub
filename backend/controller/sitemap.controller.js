@@ -11,17 +11,21 @@ const CACHE_TTL_SEC = 60 * 60; // 1 hour
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveSiteUrl(req) {
-  // Priority: ?siteUrl query param → Origin header → Referer header → fallback
   const fromQuery = req.query.siteUrl;
   const fromOrigin = req.headers["origin"];
-  const fromReferer = req.headers["referer"]
-    ? new URL(req.headers["referer"]).origin
-    : null;
+
+  // Safely parse referer — new URL() throws on malformed input
+  let fromReferer = null;
+  try {
+    if (req.headers["referer"]) {
+      fromReferer = new URL(req.headers["referer"]).origin;
+    }
+  } catch {
+    // malformed referer — ignore
+  }
 
   const candidate = fromQuery || fromOrigin || fromReferer || FALLBACK_SITE_URL;
-  const normalized = candidate.replace(/\/$/, "");
-
-  return normalized;
+  return candidate.replace(/\/$/, "");
 }
 
 function buildUrl(
@@ -43,11 +47,26 @@ function buildUrl(
 function toDateString(date) {
   return new Date(date).toISOString().split("T")[0];
 }
+async function getTemplateFromCache() {
+  const raw = await getCache(SITEMAP_CACHE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "string" ? parsed : null;
+  } catch {
+    return null; // corrupted cache entry — treat as a miss
+  }
+}
+
+async function saveTemplateToCache(template) {
+  // Pass the plain string; setCache will JSON.stringify it before storing.
+  await setCache(SITEMAP_CACHE_KEY, template, CACHE_TTL_SEC);
+}
 
 // ─── Build template with __SITE_URL__ placeholder ─────────────────────────────
 
 async function buildSitemapTemplate() {
-  const P = "__SITE_URL__"; // placeholder
+  const P = "__SITE_URL__";
 
   /* USERS */
   const users = await User.find({}).select("_id userName updatedAt").lean();
@@ -86,28 +105,31 @@ async function buildSitemapTemplate() {
     })
     .filter(Boolean);
 
-  /* NOTES */
-  const notes = await Note.find({
-    visibility: "public",
-    collectionId: { $in: collections.map((c) => c._id) },
-  })
-    .select("_id slug collectionId userId updatedAt contentUpdatedAt")
-    .lean();
+  /* NOTES — only query if there are public collections to avoid a vacuous $in [] */
+  const noteUrls = [];
+  if (collections.length > 0) {
+    const notes = await Note.find({
+      visibility: "public",
+      collectionId: { $in: collections.map((c) => c._id) },
+    })
+      .select("_id slug collectionId userId updatedAt contentUpdatedAt")
+      .lean();
 
-  const noteUrls = notes
-    .map((note) => {
+    for (const note of notes) {
       const userName = userMap.get(note.userId.toString());
       const collectionSlug = collectionMap.get(note.collectionId.toString());
-      if (!userName || !collectionSlug || !note.slug) return null;
-      return buildUrl(
-        P,
-        `/user/${userName}/${collectionSlug}/${note.slug}`,
-        toDateString(note.contentUpdatedAt || note.updatedAt),
-        "weekly",
-        "0.8",
+      if (!userName || !collectionSlug || !note.slug) continue;
+      noteUrls.push(
+        buildUrl(
+          P,
+          `/user/${userName}/${collectionSlug}/${note.slug}`,
+          toDateString(note.contentUpdatedAt || note.updatedAt),
+          "weekly",
+          "0.8",
+        ),
       );
-    })
-    .filter(Boolean);
+    }
+  }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -136,22 +158,21 @@ ${noteUrls.join("")}
 </urlset>`;
 }
 
-// ─── Controller ───────────────────────────────────────────────────────────────
+// ─── GET /sitemap.xml ─────────────────────────────────────────────────────────
 
 export async function getSitemap(req, res) {
   try {
     const siteUrl = resolveSiteUrl(req);
-    // Try Redis first
-    let template = await getCache(SITEMAP_CACHE_KEY);
+
+    let template = await getTemplateFromCache();
 
     if (!template) {
-      // Cache miss — rebuild from DB and store in Redis
       template = await buildSitemapTemplate();
-      await setCache(SITEMAP_CACHE_KEY, template, CACHE_TTL_SEC);
+      await saveTemplateToCache(template);
     }
 
-    // Swap __SITE_URL__ placeholder with this client's base URL
-    const xml = template.replaceAll("__SITE_URL__", siteUrl);
+    // replaceAll is available in Node 15+; use a regex for broader compat
+    const xml = template.split("__SITE_URL__").join(siteUrl);
 
     res.setHeader("Content-Type", "application/xml");
     res.setHeader("Cache-Control", "public, max-age=3600");
@@ -162,15 +183,15 @@ export async function getSitemap(req, res) {
   }
 }
 
-// Call this after any note/collection publish or unpublish
-export async function bustSitemapCache(_, res) {
+// ─── DELETE /sitemap/cache (admin only) ───────────────────────────────────────
+
+export async function bustSitemapCache(req, res) {
   try {
     await delCache(SITEMAP_CACHE_KEY);
-
     return res.status(200).json({
       message: "Sitemap cache cleared. Next request will rebuild from DB.",
     });
-  } catch (error) {
+  } catch (err) {
     console.error("❌ Sitemap cache bust failed:", err);
     return res.status(500).json({ message: "Failed to clear sitemap cache" });
   }
