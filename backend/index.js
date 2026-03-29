@@ -4,13 +4,14 @@ import connectToDb from "./utils/connectToDb.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import authRoutes from "./routers/auth.router.js";
-import userRoutes from "./routers/user.router.js";
-import passwordRoutes from "./routers/password.router.js";
-import collectionRoutes from "./routers/collection.router.js";
-import noteRoutes from "./routers/note.router.js";
-import ImageRoutes from "./routers/Image.router.js";
-import searchRoutes from "./routers/search.router.js";
+import authRoutes from "./routers/auth.routes.js";
+import userRoutes from "./routers/user.routes.js";
+import passwordRoutes from "./routers/password.routes.js";
+import collectionRoutes from "./routers/collection.routes.js";
+import noteRoutes from "./routers/note.routes.js";
+import ImageRoutes from "./routers/Image.routes.js";
+import searchRoutes from "./routers/search.routes.js";
+import sitemapRoutes from "./routers/sitemap.routes.js"
 
 import "./model/Image.model.js";
 import path from "path";
@@ -47,6 +48,7 @@ app.use("/api/password", passwordRoutes);
 app.use("/api/collection", collectionRoutes);
 app.use("/api/note", noteRoutes);
 app.use("/api/images", ImageRoutes);
+app.use("/", sitemapRoutes);
 
 // Serve frontend in production
 if (ENV.NODE_ENV === "production") {
