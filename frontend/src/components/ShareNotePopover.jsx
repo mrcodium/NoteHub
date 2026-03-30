@@ -50,7 +50,7 @@ const socialMedia = [
   },
 ];
 
-// /user/abhijeetsingh/daa-design-and-analysis/all-pairs-shortest-path-floyd-s
+// /abhijeetsingh/daa-design-and-analysis/all-pairs-shortest-path-floyd-s
 
 export function ShareNotePopover({ shareLink }) {
   const [copied, setCopied] = useState(false);

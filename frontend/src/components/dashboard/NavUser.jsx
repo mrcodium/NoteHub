@@ -85,7 +85,7 @@ const NavUser = () => {
             side={"bottom"}
             sideOffset={10}
           >
-            <Link to={`/user/${authUser?.userName}`}>
+            <Link to={`/${authUser?.userName}`}>
               <DropdownMenuItem
                 onClick={() => isMobile && closeSidebar()}
                 className="!h-auto"

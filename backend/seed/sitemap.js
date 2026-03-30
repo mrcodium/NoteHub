@@ -37,7 +37,7 @@ async function generateSitemap() {
     const userUrls = users.map(
       (user) => `
   <url>
-    <loc>${SITE_URL}/user/${user.userName}</loc>
+    <loc>${SITE_URL}/${user.userName}</loc>
     <lastmod>${user.updatedAt.toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -61,7 +61,7 @@ async function generateSitemap() {
 
         return `
   <url>
-    <loc>${SITE_URL}/user/${userName}/${col.slug}</loc>
+    <loc>${SITE_URL}/${userName}/${col.slug}</loc>
     <lastmod>${col.updatedAt.toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -87,7 +87,7 @@ async function generateSitemap() {
 
         return `
   <url>
-    <loc>${SITE_URL}/user/${userName}/${collectionSlug}/${note.slug}</loc>
+    <loc>${SITE_URL}/${userName}/${collectionSlug}/${note.slug}</loc>
     <lastmod>${note.contentUpdatedAt.toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

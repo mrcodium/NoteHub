@@ -141,9 +141,24 @@ async function buildSitemapTemplate() {
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>${P}/explore</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
+    <loc>${P}/login</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>${P}/signup</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>${P}/forgot-password</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>${P}/privacy-policy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
 
 <!-- Users -->

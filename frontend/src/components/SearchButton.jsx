@@ -346,7 +346,7 @@ export function SearchButton() {
                             className="flex border-b border-primary/20 hover:bg-primary/10 items-start gap-3 p-2 px-4  group cursor-pointer"
                             onClick={() => {
                               navigate(
-                                `/user/${note.userId?.userName}/${note.collectionId?.slug}/${note.slug}`,
+                                `/${note.userId?.userName}/${note.collectionId?.slug}/${note.slug}`,
                               );
                               setOpen(false);
                             }}
@@ -429,7 +429,7 @@ export function SearchButton() {
                             key={user._id || index}
                             onClick={() => {
                               addSearchHistory(user);
-                              navigate(`/user/${user.userName}`);
+                              navigate(`/${user.userName}`);
                               setOpen(false);
                             }}
                             className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer"
@@ -501,7 +501,7 @@ export function SearchButton() {
                           <div
                             key={user._id || index}
                             onClick={() => {
-                              navigate(`/user/${user.userName}`);
+                              navigate(`/${user.userName}`);
                               setOpen(false);
                             }}
                             className="flex items-center gap-3 p-2 rounded-md  cursor-pointer group"

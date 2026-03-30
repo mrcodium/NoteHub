@@ -239,7 +239,7 @@ const NotePage = () => {
 
   const generateSharableLink = () => {
     const collection = collections.find((c) => c._id === note.collectionId);
-    return `https://notehub-38kp.onrender.com/user/${authUser?.userName}/${collection?.slug}/${note?.slug}`;
+    return `https://notehub-38kp.onrender.com/${authUser?.userName}/${collection?.slug}/${note?.slug}`;
   };
 
   if (status.noteContent.state === "loading") {
@@ -314,7 +314,7 @@ const NotePage = () => {
           <div className="py-8 px-4 space-y-6 border-b border-dashed mb-6 sm:mb-12">
             <div className="flex items-center justify-between">
               <Link
-                to={`/user/${authUser?.userName}`}
+                to={`/${authUser?.userName}`}
                 className="flex flex-row items-center w-max gap-3"
               >
                 <Avatar className="size-12 bg-muted">

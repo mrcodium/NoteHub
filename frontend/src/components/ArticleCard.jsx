@@ -106,7 +106,7 @@ export function ArticleCard({
           />
         ) : (
           <Link
-            to={`user/${author?.userName}`}
+            to={`/${author?.userName}`}
             className="flex flex-row items-center w-max gap-3"
           >
             <Avatar className="w-10 h-10">
@@ -164,14 +164,14 @@ export function ArticleCard({
           <div className="flex-1 w-full">
             <CardTitle className="text-base sm:text-xl font-semibold mb-2">
               <Link
-                to={`/user/${author?.userName}/${collection.slug}`}
+                to={`/${author?.userName}/${collection.slug}`}
                 className="text-muted-foreground hover:underline"
               >
                 {collection.name}
               </Link>
               {" / "}
               <Link
-                to={`/user/${author?.userName}/${collection.slug}/${note.slug}`}
+                to={`/${author?.userName}/${collection.slug}/${note.slug}`}
                 className="hover:underline"
               >
                 {note.name}
@@ -207,7 +207,7 @@ export function ArticleCard({
                 className="bg-primary/10"
               >
                 <Link
-                  to={`/user/${author?.userName}/${collection.slug}/${note.slug}`}
+                  to={`/${author?.userName}/${collection.slug}/${note.slug}`}
                   className="block w-fit"
                   aria-label={`Rad more about ${note.name}`}
                 >

@@ -45,7 +45,7 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
           </DialogContent>
         </Dialog>
         <div>
-          <Link to={`/user/${user?.userName}`}>
+          <Link to={`/${user?.userName}`}>
             <h2 className="flex gap-2.5 items-center text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
               {user?.fullName}
               {user.role === "admin" && (
@@ -53,7 +53,7 @@ export const CollectionHeader = ({ user, collection, isOwner }) => {
               )}
             </h2>
             <div
-              to={`/user/${user?.userName}`}
+              to={`/${user?.userName}`}
               className="text-sm sm:text-base text-muted-foreground transition-colors"
             >
               @{user?.userName}

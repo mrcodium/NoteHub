@@ -125,13 +125,13 @@ function App() {
               {/* Dashboard with public routes this route have a layout wrapped inside sidebarinset */}
               <Route path="/" element={<Dashboard />}>
                 <Route index element={<HomePage />} />
-                <Route path="user/:username" element={<ProfilePage />} />
+                <Route path="/:username" element={<ProfilePage />} />
                 <Route
-                  path="user/:username/:collectionSlug"
+                  path="/:username/:collectionSlug"
                   element={<CollectionPage />}
                 />
                 <Route
-                  path="user/:username/:collectionSlug/:noteSlug"
+                  path="/:username/:collectionSlug/:noteSlug"
                   element={<NotePagePublic />}
                 />
 

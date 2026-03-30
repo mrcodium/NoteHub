@@ -377,7 +377,7 @@ const NotePagePublic = () => {
           <div className="py-8 px-4 space-y-6 border-b border-dashed mb-6 sm:mb-12">
             <div className="flex items-center justify-between">
               <Link
-                to={`/user/${author?.userName}`}
+                to={`/${author?.userName}`}
                 className="flex flex-row items-center w-max gap-3"
               >
                 <Avatar className="size-12 bg-muted">
@@ -598,7 +598,7 @@ const FloatingActionButtons = memo(
         <MemoEditorTypographyControls />
         <MemoShareNotePopover
           note={note}
-          shareLink={`https://notehub-38kp.onrender.com/user/${username}/${collectionSlug}/${noteSlug}`}
+          shareLink={`https://notehub-38kp.onrender.com/${username}/${collectionSlug}/${noteSlug}`}
         />
         {isOwner && (
           <Button

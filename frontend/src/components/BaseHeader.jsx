@@ -41,7 +41,7 @@ const BaseHeader = () => {
         </TooltipWrapper>
         <ModeToggleMini />
         {authUser && (
-          <Link to={`/user/${authUser?.userName}`}>
+          <Link to={`/${authUser?.userName}`}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Avatar className="w-8 h-8">

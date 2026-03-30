@@ -250,7 +250,7 @@ const DashboardHeader = () => {
               />
 
               <Link
-                to={`/user/${authUser?.userName}`}
+                to={`/${authUser?.userName}`}
                 aria-label={`Go to ${authUser?.fullName || "user"} profile`}
               >
                 <Tooltip>
