@@ -75,7 +75,7 @@ const ProfilePage = () => {
           setCollections(ownerCollections || []);
         } else {
           // Fetch data for other users
-          const response = await axiosInstance.get(`/${username}`);
+          const response = await axiosInstance.get(`user/${username}`);
           setUser(response.data);
 
           const collectionsData = await getAllCollections({
