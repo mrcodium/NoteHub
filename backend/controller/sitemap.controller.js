@@ -75,7 +75,7 @@ async function buildSitemapTemplate() {
   const userUrls = users.map((u) =>
     buildUrl(
       P,
-      `/user/${u.userName}`,
+      `/${u.userName}`,
       toDateString(u.updatedAt),
       "weekly",
       "0.6",
@@ -97,7 +97,7 @@ async function buildSitemapTemplate() {
       if (!userName || !col.slug) return null;
       return buildUrl(
         P,
-        `/user/${userName}/${col.slug}`,
+        `/${userName}/${col.slug}`,
         toDateString(col.updatedAt),
         "weekly",
         "0.7",
@@ -122,7 +122,7 @@ async function buildSitemapTemplate() {
       noteUrls.push(
         buildUrl(
           P,
-          `/user/${userName}/${collectionSlug}/${note.slug}`,
+          `/${userName}/${collectionSlug}/${note.slug}`,
           toDateString(note.contentUpdatedAt || note.updatedAt),
           "weekly",
           "0.8",
