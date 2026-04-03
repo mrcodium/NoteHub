@@ -282,9 +282,6 @@ export const updateProfile = async (req, res) => {
     const { password, ...userWithoutPassword } = user.toObject();
     res.status(200).json({ user: userWithoutPassword, message: "Profile updated successfully." });
   } catch (error) {
-    if (error.message.includes("Username is already taken")) {
-      return res.status(400).json({ message: error.message });
-    }
     console.error("Error in updateProfile:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });

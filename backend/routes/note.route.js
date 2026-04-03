@@ -17,17 +17,21 @@ import { requester } from "../middleware/requester.middleware.js";
 
 const router = express.Router();
 
+// public routes
 router.get('/', requester, getPublicNotes);
 router.get('/search', requester, searchNotes);
 router.get('/:username/:collectionSlug/:noteSlug', requester, getNoteBySlug);
-router.get('/:_id', protectRoute, getNoteById);
 
-router.post('/', protectRoute, createNote);
-router.delete('/:_id', protectRoute, deleteNote);
-router.put('/', protectRoute, updateContent);
-router.put('/rename', protectRoute, renameNote);
-router.put('/update-visibility', protectRoute, updateVisibility);
-router.post('/move-to', protectRoute, moveTo);
-router.put('/update-collaborators', protectRoute, updateCollaborators);
+// protected routes 
+router.use(protectRoute);
+
+router.get('/:_id', getNoteById);
+router.post('/', createNote);
+router.delete('/:_id', deleteNote);
+router.put('/', updateContent);
+router.put('/rename', renameNote);
+router.put('/update-visibility', updateVisibility);
+router.post('/move-to', moveTo);
+router.put('/update-collaborators', updateCollaborators);
 
 export default router;

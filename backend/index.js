@@ -4,14 +4,15 @@ import connectToDb from "./utils/connectToDb.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import authRoutes from "./routers/auth.routes.js";
-import userRoutes from "./routers/user.routes.js";
-import passwordRoutes from "./routers/password.routes.js";
-import collectionRoutes from "./routers/collection.routes.js";
-import noteRoutes from "./routers/note.routes.js";
-import ImageRoutes from "./routers/Image.routes.js";
-import searchRoutes from "./routers/search.routes.js";
-import sitemapRoutes from "./routers/sitemap.routes.js"
+import authRoutes from "./routes/auth.route.js";
+import userRoutes from "./routes/user.route.js";
+import passwordRoutes from "./routes/password.route.js";
+import collectionRoutes from "./routes/collection.route.js";
+import noteRoutes from "./routes/note.route.js";
+import ImageRoutes from "./routes/Image.route.js";
+import searchRoutes from "./routes/search.route.js";
+import sitemapRoutes from "./routes/sitemap.route.js";
+import adminRouter from "./routes/admin.route.js";
 
 import "./model/Image.model.js";
 import path from "path";
@@ -48,6 +49,7 @@ app.use("/api/password", passwordRoutes);
 app.use("/api/collection", collectionRoutes);
 app.use("/api/note", noteRoutes);
 app.use("/api/images", ImageRoutes);
+app.use("/api/admin", adminRouter);
 app.use("/", sitemapRoutes);
 
 // Serve frontend in production
