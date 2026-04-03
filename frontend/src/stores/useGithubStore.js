@@ -11,8 +11,8 @@ export const useGithubStore = create((set) => ({
       );
       const count = response.data?.stargazers_count ?? 0;
       set({ starCount: formatCompactNumber(count) });
-    } catch (err) {
-      console.error("Failed to fetch GitHub stars", err);
+    } catch (error) {
+      console.error("Failed to fetch GitHub stars", error);
       set({ starCount: null });
     }
   },

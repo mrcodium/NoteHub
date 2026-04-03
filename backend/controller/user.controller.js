@@ -32,10 +32,8 @@ export const isEmailAvailable = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in isEmailAvailable:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while checking email availability",
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -49,7 +47,8 @@ export const checkAuth = async (req, res) => {
     res.status(200).json(userWithoutPassword);
   } catch (error) {
     console.error("Error in checkAuth controller: ", error);
-    res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -86,7 +85,8 @@ export const getUser = async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     console.error("Error in getUser controller:", error);
-    res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -145,7 +145,8 @@ export const getAllUsers = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getAllUsers controller:", error);
-    res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -181,7 +182,8 @@ export const uploadAvatar = async (req, res) => {
     });
   } catch (error) {
     console.error("Upload avatar error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -203,7 +205,8 @@ export const removeAvatar = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in removeAvatar controller:", error);
-    res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -236,7 +239,8 @@ export const uploadCover = async (req, res) => {
     });
   } catch (error) {
     console.error("Upload cover error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -258,7 +262,8 @@ export const removeCover = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in removeCover controller:", error);
-    res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -281,7 +286,8 @@ export const updateProfile = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
     console.error("Error in updateProfile:", error);
-    res.status(500).json({ message: "Internal server error." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -304,7 +310,8 @@ export const updateFullName = async (req, res) => {
     });
   } catch (error) {
     console.error("error in updateFullName controller\n", error);
-    res.status(500).json({ message: "Internal server error." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -327,11 +334,9 @@ export const updateUserName = async (req, res) => {
       message: "Username updated successfully.",
     });
   } catch (error) {
-    if (error.message.includes("Username is already taken")) {
-      return res.status(400).json({ message: error.message });
-    }
     console.error("error in updateUserName controller\n", error);
-    res.status(500).json({ message: "Internal server error." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -377,9 +382,8 @@ export const requestEmailUpdateOtp = async (req, res) => {
     });
   } catch (error) {
     console.error("Email update OTP error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to send OTP." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -421,12 +425,7 @@ export const confirmEmailUpdate = async (req, res) => {
     });
   } catch (error) {
     console.error("Email update error:", error);
-    const status = error.name === "ValidationError" ? 400 : 500;
-    return res
-      .status(status)
-      .json({
-        success: false,
-        message: error.message || "Failed to update email.",
-      });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };

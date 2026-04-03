@@ -16,7 +16,8 @@ export const searchUsers = async (req, res) => {
     res.status(200).json(users);
   } catch (error) {
     console.error("Error in searchUsers:", error);
-    res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -35,7 +36,8 @@ export const searchNotes = async (req, res) => {
     res.status(200).json(notes);
   } catch (error) {
     console.error("Error in searchNotes:", error);
-    res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 

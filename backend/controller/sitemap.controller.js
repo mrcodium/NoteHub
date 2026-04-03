@@ -192,9 +192,10 @@ export async function getSitemap(req, res) {
     res.setHeader("Content-Type", "application/xml");
     res.setHeader("Cache-Control", "public, max-age=3600");
     return res.send(xml);
-  } catch (err) {
-    console.error("❌ Sitemap generation failed:", err);
-    return res.status(500).send("Failed to generate sitemap");
+  } catch (error) {
+    console.error("❌ Sitemap generation failed:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 }
 
@@ -206,8 +207,9 @@ export async function bustSitemapCache(req, res) {
     return res.status(200).json({
       message: "Sitemap cache cleared. Next request will rebuild from DB.",
     });
-  } catch (err) {
-    console.error("❌ Sitemap cache bust failed:", err);
-    return res.status(500).json({ message: "Failed to clear sitemap cache" });
+  } catch (error) {
+    console.error("❌ Sitemap cache bust failed:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 }

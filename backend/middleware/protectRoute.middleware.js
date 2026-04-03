@@ -22,10 +22,10 @@ export const protectRoute = async (req, res, next) => {
         issuer: ENV.JWT_ISSUER,
         audience: ENV.JWT_AUDIENCE,
       });
-    } catch (err) {
+    } catch (error) {
       return res.status(401).json({
         message: "Invalid or expired token",
-        code: err.name || "INVALID_TOKEN",
+        code: error.name || "INVALID_TOKEN",
       });
     }
 

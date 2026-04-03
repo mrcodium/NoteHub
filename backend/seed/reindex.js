@@ -62,8 +62,8 @@ async function reindex() {
 
     console.log("✅ Reindex completed");
     process.exit(0);
-  } catch (err) {
-    console.error("❌ Error:", err);
+  } catch (error) {
+    console.error("❌ Error:", error);
     process.exit(1);
   }
 }

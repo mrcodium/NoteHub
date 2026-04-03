@@ -38,8 +38,9 @@ export const createCollection = async (req, res) => {
       collection: { ...collection._doc, notes: [] },
     });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error." });
     console.error("Error in createCollection controller\n", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -73,8 +74,9 @@ export const deleteCollection = async (req, res) => {
     await Collection.findByIdAndDelete(_id);
     res.status(200).json({ message: "Collection deleted successfully." });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error." });
     console.error("Error in deleteCollection controller\n", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -97,8 +99,9 @@ export const renameCollection = async (req, res) => {
       .status(200)
       .json({ message: "Collection renamed successfully.", collection });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error." });
     console.error("Error in renameCollection controller\n", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -272,8 +275,9 @@ export const getAllCollections = async (req, res) => {
 
     res.status(200).json({ collections });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error." });
     console.error("Error in getAllCollections controller\n", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -307,8 +311,9 @@ export const getCollection = async (req, res) => {
 
     res.status(200).json({ collection: collections[0] });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
     console.error("Error in getCollection controller\n", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -473,7 +478,8 @@ export const getCollectionBySlug = async (req, res) => {
 
   } catch (error) {
     console.error("Error in getCollectionBySlug:", error);
-    return res.status(500).json({ message: "Internal server error", code: "SERVER_ERROR" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -505,10 +511,8 @@ export const updateVisibility = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in updateVisibility controller:", error);
-    return res.status(500).json({
-      message: "Failed to update visibility",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -545,9 +549,7 @@ export const updateCollaborators = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in updateCollaborators controller:", error);
-    return res.status(500).json({
-      message: "Failed to update collaborators",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
