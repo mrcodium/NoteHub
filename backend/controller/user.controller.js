@@ -262,6 +262,29 @@ export const removeCover = async (req, res) => {
   }
 };
 
+export const updateProfile = async (req, res) => {
+  try {
+    const { user } = req;
+    const { fullName, userName, bio, socials } = req.body;
+
+    if (fullName !== undefined) user.fullName = fullName.trim();
+    if (userName !== undefined) user.userName = userName.trim();
+    if (bio !== undefined) user.bio = bio.trim();
+    if (socials !== undefined) user.socials = socials.map(s => ({ url: s.url.trim() }));
+
+    await user.save();
+
+    const { password, ...userWithoutPassword } = user.toObject();
+    res.status(200).json({ user: userWithoutPassword, message: "Profile updated successfully." });
+  } catch (error) {
+    if (error.message.includes("Username is already taken")) {
+      return res.status(400).json({ message: error.message });
+    }
+    console.error("Error in updateProfile:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
 export const updateFullName = async (req, res) => {
   try {
     const { fullName } = req.body;

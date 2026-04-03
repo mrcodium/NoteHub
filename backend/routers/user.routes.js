@@ -12,6 +12,7 @@ import {
     isEmailAvailable,
     requestEmailUpdateOtp,
     confirmEmailUpdate,
+    updateProfile,
 } from "../controller/user.controller.js";
 import { protectRoute, adminOnly } from "../middleware/protectRoute.middleware.js";
 import { handlefileUpload } from "../middleware/multer.middleware.js";
@@ -32,6 +33,7 @@ router.post( "/upload-cover", handlefileUpload("file"), uploadCover);
 router.delete("/remove-avatar", removeAvatar);
 router.delete("/remove-cover", removeCover);
 
+router.patch("/profile", updateProfile);
 router.put("/update-fullname", updateFullName);
 router.put("/update-username", updateUserName);
 router.post('/request-update-email-otp', requestEmailUpdateOtp);
