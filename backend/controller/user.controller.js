@@ -275,7 +275,23 @@ export const updateProfile = async (req, res) => {
     if (fullName !== undefined) user.fullName = fullName.trim();
     if (userName !== undefined) user.userName = userName.trim();
     if (bio !== undefined) user.bio = bio.trim();
-    if (socials !== undefined) user.socials = socials.map(s => ({ url: s.url.trim() }));
+    if (socials !== undefined) {
+      if (!Array.isArray(socials)) {
+        return res.status(400).json({
+          success: false,
+          message: "Socials must be an array.",
+        });
+      }
+
+      const sanitizedSocials = socials
+        .filter((item) => item && typeof item === "object")
+        .map((item) => ({
+          url: typeof item.url === "string" ? item.url.trim() : "",
+        }))
+        .filter((item) => item.url.length > 0);
+
+      user.socials = sanitizedSocials;
+    }
 
     await user.save();
 
