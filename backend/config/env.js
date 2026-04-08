@@ -11,7 +11,7 @@ const required = (key) => {
 
 export const ENV = {
   // Server
-  PORT: process.env.PORT || 3001,
+  PORT: process.env.PORT || 5000,
   NODE_ENV: process.env.NODE_ENV || "development",
   
   JWT_SECRET: required("JWT_SECRET"),
@@ -30,7 +30,6 @@ export const ENV = {
 
   EMAIL_SENDER: required("EMAIL_SENDER"),
   EMAIL_PASS: required("EMAIL_PASS"),
-  RESEND_API_KEY: required("RESEND_API_KEY"),
   BREVO_API_KEY: required("BREVO_API_KEY"),
 
   GITHUB_TOKEN: required("GITHUB_TOKEN"),

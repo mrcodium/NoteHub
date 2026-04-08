@@ -34,7 +34,6 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -63,8 +62,6 @@ const userSchema = new mongoose.Schema(
       minlength: 1,
       maxlength: 39,
       lowercase: true,
-      unique: true,
-      index: true,
       validate: [
         {
           validator: (v) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v),
