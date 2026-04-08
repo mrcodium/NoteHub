@@ -118,9 +118,9 @@ async function migrateNote(note) {
     }
 
     stats.updated++;
-  } catch (err) {
+  } catch (error) {
     stats.errors++;
-    console.error(`  ✗ Failed on Note ${note._id}:`, err.message);
+    console.error(`  ✗ Failed on Note ${note._id}:`, error.message);
   }
 }
 

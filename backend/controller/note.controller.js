@@ -63,10 +63,8 @@ export const getNoteById = async (req, res) => {
     return res.status(200).json(responseData);
   } catch (error) {
     console.error("Error in getNote controller:", error);
-    return res.status(500).json({
-      message: "Failed to retrieve note",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -130,10 +128,8 @@ export const createNote = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in createNote controller:", error);
-    return res.status(500).json({
-      message: "Failed to create note",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -179,10 +175,8 @@ export const deleteNote = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in deleteNote controller:", error);
-    return res.status(500).json({
-      message: "Failed to delete note",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -241,10 +235,8 @@ export const updateContent = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in updateContent controller:", error);
-    return res.status(500).json({
-      message: "Failed to update note content",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -302,10 +294,8 @@ export const renameNote = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in renameNote controller:", error);
-    return res.status(500).json({
-      message: "Failed to rename note",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -444,10 +434,8 @@ export const getNoteBySlug = async (req, res) => {
     return res.status(200).json(responseData);
   } catch (error) {
     console.error("Aggregation error:", error);
-    return res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -616,14 +604,8 @@ export const getPublicNotes = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getPublicNotes:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve notes",
-      error:
-        process.env.NODE_ENV === "production"
-          ? "Internal server error"
-          : error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -681,10 +663,8 @@ export const moveTo = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in moveTo note controller:", error);
-    return res.status(500).json({
-      message: "Failed to move note",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -731,10 +711,8 @@ export const updateVisibility = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in updateVisibility controller:", error);
-    return res.status(500).json({
-      message: "Failed to update visibility",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -783,10 +761,8 @@ export const updateCollaborators = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in updateCollaborators controller:", error);
-    return res.status(500).json({
-      message: "Failed to update collaborators",
-      error: error.message,
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -999,8 +975,9 @@ export const searchNotes = async (req, res) => {
     await setCache(cacheKey, responseData, cacheTTL);
 
     res.status(200).json(responseData);
-  } catch (err) {
+  } catch (error) {
     console.error("Search error:", err);
-    res.status(500).json({ message: "Search failed" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };

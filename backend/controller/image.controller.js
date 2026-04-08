@@ -29,7 +29,8 @@ export const uploadGalleryImage = async (req, res) => {
     });
   } catch (error) {
     console.error("Gallery upload error:", error);
-    res.status(500).json({ message: "Internal server error." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -45,7 +46,8 @@ export const getGalleryImages = async (req, res) => {
     res.status(200).json({ images });
   } catch (error) {
     console.error("Fetch gallery error:", error);
-    res.status(500).json({ message: "Internal server error." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -68,6 +70,7 @@ export const deleteGalleryImage = async (req, res) => {
     res.status(200).json({ message: "Image deleted successfully." });
   } catch (error) {
     console.error("Delete gallery error:", error);
-    res.status(500).json({ message: "Internal server error." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };

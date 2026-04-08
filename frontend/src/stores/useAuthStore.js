@@ -47,10 +47,10 @@ export const useAuthStore = create((set, get) => ({
         otp,
       });
       toast.success(response.data.message || "email update successfully!");
-      if(response.data.user) {
-        set({authUser: response.data.user})
+      if (response.data.user) {
+        set({ authUser: response.data.user });
       }
-      
+
       return response.data;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update email");
@@ -315,6 +315,19 @@ export const useAuthStore = create((set, get) => ({
       console.error(error);
       toast.error(error.response.data.message);
       return { success: false };
+    }
+  },
+  updateProfile: async (data) => {
+    set({ isUpdatingProfile: true });
+    try {
+      res = await axiosInstance.post("/user", data);
+      return res.data.user;
+    } catch (error) {
+      toast.error(error.response.data.message);
+      console.error(error);
+      return null;
+    } finally {
+      set({ isUpdatingProfile: false });
     }
   },
   updateUserField: async (apiEndPoint, data) => {

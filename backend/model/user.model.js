@@ -93,6 +93,21 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    bio: {
+      type: String,
+      default: "",
+      maxlength: 300,
+      trim: true,
+    },
+    socials: [
+      {
+        url: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

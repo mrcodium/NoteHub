@@ -176,8 +176,8 @@ export function SearchButton() {
           notes: notesResponse.data.pagination,
           users: usersResponse.pagination,
         });
-      } catch (err) {
-        console.error("Failed to search:", err);
+      } catch (error) {
+        console.error("Failed to search:", error);
         setSearchResults({ notes: [], users: [] });
         // Optionally show error toast here
       } finally {

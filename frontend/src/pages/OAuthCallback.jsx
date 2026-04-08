@@ -26,7 +26,7 @@ const OAuthCallback = () => {
         try {
           const result = await googleLogin({ code, codeVerifier, redirectUri });
           navigate(result? "/" : "/login");
-        } catch (err) {
+        } catch (error) {
           navigate("/login");
         }
       } else {

@@ -10,8 +10,8 @@ export const initGeoIP = async () => {
   try {
     lookup = await maxmind.open(path.join(__dirname, '../../GeoLite2-City.mmdb'));
     console.log('GeoIP database loaded');
-  } catch (err) {
-    console.error('Could not load GeoIP database', err);
+  } catch (error) {
+    console.error('Could not load GeoIP database', error);
     lookup = null;
   }
 };

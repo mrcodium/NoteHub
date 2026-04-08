@@ -46,10 +46,8 @@ export const requestResetPasswordOtp = async (req, res) => {
     });
   } catch (error) {
     console.error("Password reset OTP error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to send OTP",
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -100,11 +98,8 @@ export const resetPassword = async (req, res) => {
     });
   } catch (error) {
     console.error("Password reset error:", error);
-    const status = error.name === "ValidationError" ? 400 : 500;
-    return res.status(status).json({
-      success: false,
-      message: error.message || "Password reset failed",
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -159,9 +154,7 @@ export const updatePassword = async (req, res) => {
     });
   } catch (error) {
     console.error("Password update error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update password",
-    });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };

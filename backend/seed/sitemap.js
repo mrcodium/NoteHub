@@ -119,8 +119,8 @@ ${noteUrls.join("\n")}
     console.log(
       `📊 Users: ${userUrls.length}, Collections: ${collectionUrls.length}, Notes: ${noteUrls.length}`,
     );
-  } catch (err) {
-    console.error("❌ Sitemap generation failed:", err);
+  } catch (error) {
+    console.error("❌ Sitemap generation failed:", error);
   } finally {
     await mongoose.disconnect();
   }

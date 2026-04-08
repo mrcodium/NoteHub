@@ -78,7 +78,8 @@ export const signup = async (req, res) => {
     return sendAuthResponse(res, newUser);
   } catch (error) {
     console.error("error in signup controller: \n", error);
-    res.status(500).json({ message: "Internal server error." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -103,9 +104,10 @@ export const sendSignupOtp = async (req, res) => {
       purpose: "signup",
     });
     res.status(result.status).json({ message: result.message });
-  } catch (err) {
-    res.status(err.status || 500).json({ message: "Internal server error" });
+  } catch (error) {
     console.error("error in sendSignupOtp\n", err);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -131,7 +133,8 @@ export const login = async (req, res) => {
     return sendAuthResponse(res, user);
   } catch (error) {
     console.error("error in login controller: ", error);
-    res.status(500).json({ message: "Internal server error" });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -228,7 +231,8 @@ export const googleLogin = async (req, res) => {
     return sendAuthResponse(res, user);
   } catch (error) {
     console.error("Error in Google login controller: ", error);
-    res.status(500).json({ message: "Internal server error." });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 
@@ -244,8 +248,7 @@ export const logout = async (req, res) => {
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);
-    const statusCode = error.statusCode || 500;
-    const message = statusCode >= 500 ? "Internal server error" : error.message;
-    res.status(statusCode).json({ message });
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
