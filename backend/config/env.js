@@ -32,8 +32,6 @@ export const ENV = {
   EMAIL_PASS: required("EMAIL_PASS"),
   BREVO_API_KEY: required("BREVO_API_KEY"),
 
-  GITHUB_TOKEN: required("GITHUB_TOKEN"),
-
   GOOGLE_CLIENT_ID: required("GOOGLE_CLIENT_ID"),
   GOOGLE_CLIENT_SECRET: required("GOOGLE_CLIENT_SECRET"),
   GOOGLE_REDIRECT_URIs: required("GOOGLE_REDIRECT_URIs"),

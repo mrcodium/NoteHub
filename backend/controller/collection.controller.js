@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Collection from "../model/collection.model.js";
 import Note from "../model/note.model.js";
-import { getCache, setCache } from "../services/cache.service.js";
+import { getCache, setCache, cacheKeys, invalidateFeedsAndSearch, invalidateCollectionCache, invalidateNoteCache, fetchWithCache } from "../services/cache.service.js";
 import User from "../model/user.model.js";
 
 export const createCollection = async (req, res) => {
@@ -72,6 +72,11 @@ export const deleteCollection = async (req, res) => {
     // deleting associated notes as well.
     await Note.deleteMany({ collectionId: _id });
     await Collection.findByIdAndDelete(_id);
+    
+    // Invalidate cache
+    await invalidateCollectionCache(user.userName, collection.slug);
+    await invalidateFeedsAndSearch();
+
     res.status(200).json({ message: "Collection deleted successfully." });
   } catch (error) {
     console.error("Error in deleteCollection controller\n", error);
@@ -93,8 +98,15 @@ export const renameCollection = async (req, res) => {
       return res.status(404).json({ message: "Collection not found." });
     }
 
+    const oldSlug = collection.slug;
     collection.name = newName;
     await collection.save();
+    
+    // Invalidate cache
+    await invalidateCollectionCache(user.userName, oldSlug);
+    await invalidateCollectionCache(user.userName, collection.slug); // invalidate new slug in case
+    await invalidateFeedsAndSearch();
+
     res
       .status(200)
       .json({ message: "Collection renamed successfully.", collection });
@@ -327,156 +339,151 @@ export const getCollectionBySlug = async (req, res) => {
   const requesterId = requester?._id || null;
   const requesterIdObj = requesterId ? new mongoose.Types.ObjectId(requesterId) : null;
 
-  const cacheKey = `collection:slug:${normalizedUsername}:${normalizedSlug}:user:${requesterId || "guest"}`;
+  const cacheKey = cacheKeys.collection.bySlug(normalizedUsername, normalizedSlug, requesterId || "guest");
 
   try {
-    // Check cache
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      return res.status(200).json(JSON.parse(cached));
-    }
+    const { data } = await fetchWithCache(cacheKey, async () => {
+      // STEP 1: Get user ID (cheap, uses index)
+      const user = await User.findOne(
+        { userName: normalizedUsername },
+        { _id: 1, userName: 1, fullName: 1, avatar: 1 }
+      ).lean();
 
-    // STEP 1: Get user ID (cheap, uses index)
-    const user = await User.findOne(
-      { userName: normalizedUsername },
-      { _id: 1, userName: 1, fullName: 1, avatar: 1 }
-    ).lean();
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found", code: "USER_NOT_FOUND" });
-    }
-
-    // STEP 2: Get collection with basic info (cheap, uses index)
-    const collection = await Collection.findOne(
-      { 
-        userId: user._id, 
-        slug: normalizedSlug,
-        $or: [
-          { visibility: "public" },
-          ...(requesterId ? [
-            { userId: requesterIdObj },
-            { collaborators: requesterIdObj }
-          ] : [])
-        ]
-      },
-      { _id: 1, name: 1, slug: 1, visibility: 1, userId: 1, createdAt: 1, updatedAt: 1, collaborators: 1 }
-    ).lean();
-
-    if (!collection) {
-      // Check if collection exists but no access
-      const exists = await Collection.exists({ userId: user._id, slug: normalizedSlug });
-      if (exists) {
-        return res.status(403).json({ message: "Access denied", code: "ACCESS_DENIED" });
+      if (!user) {
+        throw { status: 404, message: "User not found", code: "USER_NOT_FOUND" };
       }
-      return res.status(404).json({ message: "Collection not found", code: "COLLECTION_NOT_FOUND" });
-    }
 
-    // STEP 3: Get notes (separate query, but fast with indexes)
-    const notes = await Note.find(
-      {
-        collectionId: collection._id,
-        $or: [
-          { visibility: "public" },
-          ...(requesterId ? [
-            { userId: requesterIdObj },
-            { collaborators: requesterIdObj }
-          ] : [])
-        ]
-      },
-      {
-        _id: 1,
-        name: 1,
-        slug: 1,
-        visibility: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        contentUpdatedAt: 1,
-        userId: 1,
-        collaborators: 1,
-        // content: { $substr: ["$content", 0, 200] } // Preview only
+      // STEP 2: Get collection with basic info (cheap, uses index)
+      const collection = await Collection.findOne(
+        { 
+          userId: user._id, 
+          slug: normalizedSlug,
+          $or: [
+            { visibility: "public" },
+            ...(requesterId ? [
+              { userId: requesterIdObj },
+              { collaborators: requesterIdObj }
+            ] : [])
+          ]
+        },
+        { _id: 1, name: 1, slug: 1, visibility: 1, userId: 1, createdAt: 1, updatedAt: 1, collaborators: 1 }
+      ).lean();
+
+      if (!collection) {
+        // Check if collection exists but no access
+        const exists = await Collection.exists({ userId: user._id, slug: normalizedSlug });
+        if (exists) {
+          throw { status: 403, message: "Access denied", code: "ACCESS_DENIED" };
+        }
+        throw { status: 404, message: "Collection not found", code: "COLLECTION_NOT_FOUND" };
       }
-    )
-    .sort({ createdAt: -1 })
-    .lean();
 
-    // STEP 4: Get collaborator details (only if needed)
-    const collaboratorIds = [];
-    if (collection.collaborators?.length) {
-      collaboratorIds.push(...collection.collaborators);
-    }
-    
-    notes.forEach(note => {
-      if (note.collaborators?.length) {
-        collaboratorIds.push(...note.collaborators);
+      // STEP 3: Get notes (separate query, but fast with indexes)
+      const notes = await Note.find(
+        {
+          collectionId: collection._id,
+          $or: [
+            { visibility: "public" },
+            ...(requesterId ? [
+              { userId: requesterIdObj },
+              { collaborators: requesterIdObj }
+            ] : [])
+          ]
+        },
+        {
+          _id: 1,
+          name: 1,
+          slug: 1,
+          visibility: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          contentUpdatedAt: 1,
+          userId: 1,
+          collaborators: 1,
+        }
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+      // STEP 4: Get collaborator details (only if needed)
+      const collaboratorIds = [];
+      if (collection.collaborators?.length) {
+        collaboratorIds.push(...collection.collaborators);
       }
-    });
+      
+      notes.forEach(note => {
+        if (note.collaborators?.length) {
+          collaboratorIds.push(...note.collaborators);
+        }
+      });
 
-    // Get unique collaborator IDs
-    const uniqueCollabIds = [...new Set(collaboratorIds.map(id => id.toString()))];
-    
-    // Fetch all collaborator details in one query
-    const collaborators = uniqueCollabIds.length > 0 
-      ? await User.find(
-          { _id: { $in: uniqueCollabIds } },
-          { _id: 1, userName: 1, fullName: 1, avatar: 1, email: 1, role: 1 }
-        ).lean()
-      : [];
+      // Get unique collaborator IDs
+      const uniqueCollabIds = [...new Set(collaboratorIds.map(id => id.toString()))];
+      
+      // Fetch all collaborator details in one query
+      const collaborators = uniqueCollabIds.length > 0 
+        ? await User.find(
+            { _id: { $in: uniqueCollabIds } },
+            { _id: 1, userName: 1, fullName: 1, avatar: 1, email: 1, role: 1 }
+          ).lean()
+        : [];
 
-    // Create maps for quick lookup
-    const collaboratorMap = new Map(collaborators.map(c => [c._id.toString(), c]));
+      // Create maps for quick lookup
+      const collaboratorMap = new Map(collaborators.map(c => [c._id.toString(), c]));
 
-    // STEP 5: Attach collaborators to collection (if user has permission)
-    const canSeeCollectionCollabs = requesterId && (
-      collection.userId.toString() === requesterId.toString() ||
-      collection.collaborators?.some(id => id.toString() === requesterId.toString())
-    );
-
-    const collectionWithCollabs = {
-      ...collection,
-      collaborators: canSeeCollectionCollabs 
-        ? (collection.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
-        : undefined
-    };
-
-    // STEP 6: Attach collaborators to notes (if user has permission)
-    const notesWithCollabs = notes.map(note => {
-      const canSeeNoteCollabs = requesterId && (
-        note.userId?.toString() === requesterId.toString() ||
-        collection.userId.toString() === requesterId.toString() || // Collection owner
-        note.collaborators?.some(id => id.toString() === requesterId.toString()) ||
-        collection.collaborators?.some(id => id.toString() === requesterId.toString()) // Collection collaborator
+      // STEP 5: Attach collaborators to collection (if user has permission)
+      const canSeeCollectionCollabs = requesterId && (
+        collection.userId.toString() === requesterId.toString() ||
+        collection.collaborators?.some(id => id.toString() === requesterId.toString())
       );
 
-      return {
-        ...note,
-        collaborators: canSeeNoteCollabs
-          ? (note.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
+      const collectionWithCollabs = {
+        ...collection,
+        collaborators: canSeeCollectionCollabs 
+          ? (collection.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
           : undefined
       };
-    });
 
-    // STEP 7: Prepare response
-    const responseData = {
-      message: "Collection fetched successfully",
-      collection: {
-        ...collectionWithCollabs,
-        notes: notesWithCollabs,
-        noteCount: notes.length
-      },
-      author: {
-        _id: user._id,
-        userName: user.userName,
-        fullName: user.fullName,
-        avatar: user.avatar
-      }
-    };
+      // STEP 6: Attach collaborators to notes (if user has permission)
+      const notesWithCollabs = notes.map(note => {
+        const canSeeNoteCollabs = requesterId && (
+          note.userId?.toString() === requesterId.toString() ||
+          collection.userId.toString() === requesterId.toString() || // Collection owner
+          note.collaborators?.some(id => id.toString() === requesterId.toString()) ||
+          collection.collaborators?.some(id => id.toString() === requesterId.toString()) // Collection collaborator
+        );
 
-    // Cache for 5 minutes
-    await setCache(cacheKey, responseData, 300);
+        return {
+          ...note,
+          collaborators: canSeeNoteCollabs
+            ? (note.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
+            : undefined
+        };
+      });
 
-    return res.status(200).json(responseData);
+      // STEP 7: Prepare response
+      return {
+        message: "Collection fetched successfully",
+        collection: {
+          ...collectionWithCollabs,
+          notes: notesWithCollabs,
+          noteCount: notes.length
+        },
+        author: {
+          _id: user._id,
+          userName: user.userName,
+          fullName: user.fullName,
+          avatar: user.avatar
+        }
+      };
+    }, 300); // 5 mins cache
+
+    return res.status(200).json(data);
 
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message, code: error.code });
+    }
     console.error("Error in getCollectionBySlug:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
@@ -505,6 +512,11 @@ export const updateVisibility = async (req, res) => {
         .status(403)
         .json({ message: "you don't have permission to update it" });
     }
+    
+    // Invalidate cache
+    await invalidateCollectionCache(user.userName, collection.slug);
+    await invalidateFeedsAndSearch();
+
     return res.status(200).json({
       message: `visiblity updated to ${collection.visibility}`,
       collection,
@@ -542,6 +554,9 @@ export const updateCollaborators = async (req, res) => {
           "collection not found or you don't have permission to update it",
       });
     }
+
+    // Invalidate cache
+    await invalidateCollectionCache(user.userName, updatedCollection.slug);
 
     return res.status(200).json({
       message: "Collaborators updated and populated successfully",

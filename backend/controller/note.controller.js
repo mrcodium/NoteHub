@@ -9,7 +9,15 @@ import {
   normalizeText,
 } from "../services/indexer/textProcessor.js";
 import { updateIndex } from "../services/indexer/updateIndex.js";
-import { delCache, getCache, setCache } from "../services/cache.service.js";
+import { 
+  getCache, 
+  setCache, 
+  cacheKeys, 
+  invalidateNoteCache, 
+  invalidateCollectionCache, 
+  invalidateFeedsAndSearch,
+  fetchWithCache
+} from "../services/cache.service.js";
 
 export const getNoteById = async (req, res) => {
   const { _id } = req.params;
@@ -26,42 +34,34 @@ export const getNoteById = async (req, res) => {
     });
   }
 
-  const cacheKey = `note:id:${_id}:user:${user?._id || "guest"}`;
+  const cacheKey = cacheKeys.note.byId(_id, user?._id || "guest");
   try {
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      return res.status(200).json({
-        ...JSON.parse(cached),
-        cache: true, // optional flag
-      });
-    }
+    const { data } = await fetchWithCache(cacheKey, async () => {
+      const note = await Note.findById(_id);
 
-    const note = await Note.findById(_id);
+      if (!note) {
+        throw { status: 404, message: "Note not found or you don't have permission to access it" };
+      }
 
-    if (!note) {
-      return res.status(404).json({
-        message: "Note not found or you don't have permission to access it",
-      });
-    }
+      // 3️⃣ Permission check: author or admin
+      const isAuthor = note.userId._id.equals(user._id);
+      const isAdmin = user.role === "admin";
 
-    // 3️⃣ Permission check: author or admin
-    const isAuthor = note.userId._id.equals(user._id);
-    const isAdmin = user.role === "admin";
+      if (!isAuthor && !isAdmin) {
+        throw { status: 403, message: "You don't have permission to access this note" };
+      }
 
-    if (!isAuthor && !isAdmin) {
-      return res.status(403).json({
-        message: "You don't have permission to access this note",
-      });
-    }
+      return {
+        message: "Note retrieved successfully",
+        note,
+      };
+    }, 600); // 10 mins
 
-    const responseData = {
-      message: "Note retrieved successfully",
-      note,
-    };
-
-    await setCache(cacheKey, responseData, 600); // TTL 10 min
-    return res.status(200).json(responseData);
+    return res.status(200).json(data);
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
     console.error("Error in getNote controller:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
@@ -118,9 +118,13 @@ export const createNote = async (req, res) => {
       },
     }));
 
-    if (ops.length) {
-      await SearchIndex.bulkWrite(ops);
+    // 4️⃣ Invalidate caches
+    const username = user.userName;
+    const collection = await Collection.findById(collectionId);
+    if (collection) {
+      await invalidateCollectionCache(username, collection.slug);
     }
+    await invalidateFeedsAndSearch();
 
     return res.status(201).json({
       message: "Note created & indexed successfully",
@@ -164,10 +168,14 @@ export const deleteNote = async (req, res) => {
       { $pull: { notes: { noteId: note._id } } },
     );
 
-    // 3️⃣ Cleanup empty index docs
-    await SearchIndex.deleteMany({
-      notes: { $size: 0 },
-    });
+    // 4️⃣ Invalidate caches
+    await invalidateNoteCache(note._id, user.userName, null, null);
+    const collection = await Collection.findById(note.collectionId);
+    if (collection) {
+      await invalidateNoteCache(null, user.userName, collection.slug, note.slug);
+      await invalidateCollectionCache(user.userName, collection.slug);
+    }
+    await invalidateFeedsAndSearch();
 
     return res.status(200).json({
       message: "Note deleted and search index cleaned",
@@ -219,15 +227,12 @@ export const updateContent = async (req, res) => {
     await updateIndex(note._id, `${note.name} ${content}`);
 
     // Invalidate caches
-    await delCache(`note:id:${note._id}:user:${user._id}`);
-    await delCache(`note:id:${note._id}:user:guest`);
-
     const username = note.userId.userName;
     const collectionSlug = note.collectionId.slug;
     const noteSlug = note.slug;
 
-    await delCache(`note:slug:${username}:${collectionSlug}:${noteSlug}:user:${user._id}`);
-    await delCache(`note:slug:${username}:${collectionSlug}:${noteSlug}:user:guest`);
+    await invalidateNoteCache(note._id, username, collectionSlug, noteSlug);
+    await invalidateFeedsAndSearch();
 
     return res.status(200).json({
       message: "Note content updated & reindexed successfully",
@@ -278,15 +283,10 @@ export const renameNote = async (req, res) => {
     await updateIndex(note._id, newName);
 
     // 4️⃣ cache invalidation
-    await delCache(`note:id:${note._id}:user:${user._id}`);
-    await delCache(`note:id:${note._id}:user:guest`);
-
-    await delCache(
-      `note:slug:${username}:${collectionSlug}:${oldSlug}:user:${user._id}`,
-    );
-    await delCache(
-      `note:slug:${username}:${collectionSlug}:${oldSlug}:user:guest`,
-    );
+    await invalidateNoteCache(note._id, username, collectionSlug, oldSlug);
+    await invalidateNoteCache(null, username, collectionSlug, note.slug); // invalidate new slug too
+    await invalidateCollectionCache(username, collectionSlug);
+    await invalidateFeedsAndSearch();
 
     return res.status(200).json({
       message: "Note renamed & reindexed successfully",
@@ -311,128 +311,122 @@ export const getNoteBySlug = async (req, res) => {
   const normalizedUsername = username.trim().toLowerCase();
   const requesterId = requester?._id || null;
 
-  const cacheKey = `note:slug:${normalizedUsername}:${collectionSlug}:${noteSlug}:user:${requesterId || "guest"}`;
+  const cacheKey = cacheKeys.note.bySlug(normalizedUsername, collectionSlug, noteSlug, requesterId || "guest");
 
   try {
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      return res.status(200).json({
-        ...JSON.parse(cached),
-        cache: true,
-      });
-    }
+    const { data } = await fetchWithCache(cacheKey, async () => {
+      const result = await User.aggregate([
+        // 1️⃣ Match user
+        {
+          $match: { userName: normalizedUsername },
+        },
 
-    const result = await User.aggregate([
-      // 1️⃣ Match user
-      {
-        $match: { userName: normalizedUsername },
-      },
-
-      // 2️⃣ Join collections
-      {
-        $lookup: {
-          from: "collections",
-          let: { userId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$userId", "$$userId"] },
-                    { $eq: ["$slug", collectionSlug.toLowerCase()] },
-                  ],
+        // 2️⃣ Join collections
+        {
+          $lookup: {
+            from: "collections",
+            let: { userId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$userId", "$$userId"] },
+                      { $eq: ["$slug", collectionSlug.toLowerCase()] },
+                    ],
+                  },
                 },
               },
-            },
 
-            // 3️⃣ Join notes
-            {
-              $lookup: {
-                from: "notes",
-                let: { collectionId: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$collectionId", "$$collectionId"] },
-                          { $eq: ["$slug", noteSlug.toLowerCase()] },
-                        ],
+              // 3️⃣ Join notes
+              {
+                $lookup: {
+                  from: "notes",
+                  let: { collectionId: "$_id" },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            { $eq: ["$collectionId", "$$collectionId"] },
+                            { $eq: ["$slug", noteSlug.toLowerCase()] },
+                          ],
+                        },
                       },
                     },
-                  },
-                ],
-                as: "note",
+                  ],
+                  as: "note",
+                },
               },
+
+              { $unwind: "$note" },
+            ],
+            as: "collection",
+          },
+        },
+
+        { $unwind: "$collection" },
+
+        // 4️⃣ Project only what we need
+        {
+          $project: {
+            author: {
+              _id: "$_id",
+              userName: "$userName",
+              avatar: "$avatar",
+              fullName: "$fullName",
             },
+            collection: {
+              _id: "$collection._id",
+              visibility: "$collection.visibility",
+              collaborators: "$collection.collaborators",
+            },
+            note: {
+              _id: "$collection.note._id",
+              name: "$collection.note.name",
+              content: "$collection.note.content",
+              tableOfContent: "$collection.note.tableOfContent",
+              visibility: "$collection.note.visibility",
+              slug: "$collection.note.slug",
 
-            { $unwind: "$note" },
-          ],
-          as: "collection",
-        },
-      },
-
-      { $unwind: "$collection" },
-
-      // 4️⃣ Project only what we need
-      {
-        $project: {
-          author: {
-            _id: "$_id",
-            userName: "$userName",
-            avatar: "$avatar",
-            fullName: "$fullName",
-          },
-          collection: {
-            _id: "$collection._id",
-            visibility: "$collection.visibility",
-            collaborators: "$collection.collaborators",
-          },
-          note: {
-            _id: "$collection.note._id",
-            name: "$collection.note.name",
-            content: "$collection.note.content",
-            tableOfContent: "$collection.note.tableOfContent",
-            visibility: "$collection.note.visibility",
-            slug: "$collection.note.slug",
-
-            // ✅ DATES
-            createdAt: "$collection.note.createdAt",
-            updatedAt: "$collection.note.updatedAt",
-            contentUpdatedAt: "$collection.note.contentUpdatedAt",
+              // ✅ DATES
+              createdAt: "$collection.note.createdAt",
+              updatedAt: "$collection.note.updatedAt",
+              contentUpdatedAt: "$collection.note.contentUpdatedAt",
+            },
           },
         },
-      },
-    ]);
+      ]);
 
-    if (!result.length) {
-      return res.status(404).json({ message: "Note not found" });
-    }
+      if (!result.length) {
+        throw { status: 404, message: "Note not found" };
+      }
 
-    const { author, collection, note } = result[0];
+      const { author, collection, note } = result[0];
 
-    const accessAllowed = canAccessNote({
-      requester,
-      ownerId: author._id,
-      note,
-      collection,
-    });
+      const accessAllowed = canAccessNote({
+        requester,
+        ownerId: author._id,
+        note,
+        collection,
+      });
 
-    if (!accessAllowed) {
-      return res
-        .status(403)
-        .json({ message: "You don't have access to this note" });
-    }
+      if (!accessAllowed) {
+        throw { status: 403, message: "You don't have access to this note" };
+      }
 
-    const responseData = {
-      message: "Note fetched successfully",
-      note,
-      author,
-    };
+      return {
+        message: "Note fetched successfully",
+        note,
+        author,
+      };
+    }, 600);
 
-    await setCache(cacheKey, responseData, 600);
-    return res.status(200).json(responseData);
+    return res.status(200).json(data);
   } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
     console.error("Aggregation error:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
@@ -446,161 +440,152 @@ export const getPublicNotes = async (req, res) => {
 
   const requester = req.user || null;
   const requesterId = requester?._id;
-  const cacheKey = `public:notes:page:${page}:limit:${limit}:user:${requesterId || "guest"}`;
+  const cacheKey = cacheKeys.feed.public(page, limit, requesterId || "guest");
 
   try {
-    // ✅ Check cache
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      return res.status(200).json({
-        success: true,
-        data: JSON.parse(cached),
-        cache: true,
-      });
-    }
+    const { data } = await fetchWithCache(cacheKey, async () => {
+      /* ===============================
+         1️⃣ BUILD OPTIMIZED NOTE QUERY
+         - Single DB query instead of multiple passes
+         - Leverage MongoDB indexes
+      =============================== */
+      const noteQueryConditions = [];
 
-    /* ===============================
-       1️⃣ BUILD OPTIMIZED NOTE QUERY
-       - Single DB query instead of multiple passes
-       - Leverage MongoDB indexes
-    =============================== */
-    const noteQueryConditions = [];
-
-    // RULE 1: Public collection + Public note → Everyone
-    noteQueryConditions.push({
-      "collectionId.visibility": "public",
-      visibility: "public",
-    });
-
-    // Authenticated user conditions
-    if (requesterId) {
-      // RULE 2: Owner sees everything in their collections
-      noteQueryConditions.push({
-        "collectionId.userId": requesterId,
-      });
-
-      // RULE 3: Public collection + Private note → Note collaborators
+      // RULE 1: Public collection + Public note → Everyone
       noteQueryConditions.push({
         "collectionId.visibility": "public",
-        visibility: "private",
-        collaborators: requesterId,
-      });
-
-      // RULE 4: Private collection + Public note → Collection collaborators
-      noteQueryConditions.push({
-        "collectionId.visibility": "private",
         visibility: "public",
-        "collectionId.collaborators": requesterId,
       });
 
-      // RULE 5: Private collection + Private note → Note AND Collection collaborators
-      noteQueryConditions.push({
-        "collectionId.visibility": "private",
-        visibility: "private",
-        collaborators: requesterId,
-        "collectionId.collaborators": requesterId,
-      });
-    }
+      // Authenticated user conditions
+      if (requesterId) {
+        // RULE 2: Owner sees everything in their collections
+        noteQueryConditions.push({
+          "collectionId.userId": requesterId,
+        });
 
-    /* ===============================
-       2️⃣ AGGREGATION PIPELINE (SINGLE QUERY)
-       - Join collections with notes
-       - Apply all filters at DB level
-       - More efficient than separate queries + filtering
-    =============================== */
-    const pipeline = [
-      // Join with collections
-      {
-        $lookup: {
-          from: "collections",
-          localField: "collectionId",
-          foreignField: "_id",
-          as: "collectionId",
+        // RULE 3: Public collection + Private note → Note collaborators
+        noteQueryConditions.push({
+          "collectionId.visibility": "public",
+          visibility: "private",
+          collaborators: requesterId,
+        });
+
+        // RULE 4: Private collection + Public note → Collection collaborators
+        noteQueryConditions.push({
+          "collectionId.visibility": "private",
+          visibility: "public",
+          "collectionId.collaborators": requesterId,
+        });
+
+        // RULE 5: Private collection + Private note → Note AND Collection collaborators
+        noteQueryConditions.push({
+          "collectionId.visibility": "private",
+          visibility: "private",
+          collaborators: requesterId,
+          "collectionId.collaborators": requesterId,
+        });
+      }
+
+      /* ===============================
+         2️⃣ AGGREGATION PIPELINE (SINGLE QUERY)
+         - Join collections with notes
+         - Apply all filters at DB level
+         - More efficient than separate queries + filtering
+      =============================== */
+      const pipeline = [
+        // Join with collections
+        {
+          $lookup: {
+            from: "collections",
+            localField: "collectionId",
+            foreignField: "_id",
+            as: "collectionId",
+          },
         },
-      },
-      {
-        $unwind: "$collectionId",
-      },
-
-      // Apply access rules at DB level
-      {
-        $match: {
-          $or: noteQueryConditions,
+        {
+          $unwind: "$collectionId",
         },
-      },
 
-      // Add facet for count + data in single query
-      {
-        $facet: {
-          metadata: [{ $count: "total" }],
-          data: [
-            { $sort: { contentUpdatedAt: -1 } },
-            { $skip: skip },
-            { $limit: limit },
-            // Join with user
-            {
-              $lookup: {
-                from: "users",
-                localField: "userId",
-                foreignField: "_id",
-                as: "userId",
+        // Apply access rules at DB level
+        {
+          $match: {
+            $or: noteQueryConditions,
+          },
+        },
+
+        // Add facet for count + data in single query
+        {
+          $facet: {
+            metadata: [{ $count: "total" }],
+            data: [
+              { $sort: { contentUpdatedAt: -1 } },
+              { $skip: skip },
+              { $limit: limit },
+              // Join with user
+              {
+                $lookup: {
+                  from: "users",
+                  localField: "userId",
+                  foreignField: "_id",
+                  as: "userId",
+                },
               },
-            },
-            { $unwind: "$userId" },
-            // Project only needed fields
-            {
-              $project: {
-                _id: 1,
-                name: 1,
-                slug: 1,
-                content: 1,
-                tableOfContent: 1,
-                visibility: 1,
-                contentUpdatedAt: 1,
-                createdAt: 1,
-                collaborators: 1,
-                "userId.role": 1,
-                "userId._id": 1,
-                "userId.userName": 1,
-                "userId.fullName": 1,
-                "userId.avatar": 1,
-                "collectionId._id": 1,
-                "collectionId.name": 1,
-                "collectionId.slug": 1,
-                "collectionId.visibility": 1,
-                "collectionId.userId": 1,
-                "collectionId.collaborators": 1,
+              { $unwind: "$userId" },
+              // Project only needed fields
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                  slug: 1,
+                  content: 1,
+                  tableOfContent: 1,
+                  visibility: 1,
+                  contentUpdatedAt: 1,
+                  createdAt: 1,
+                  collaborators: 1,
+                  "userId.role": 1,
+                  "userId._id": 1,
+                  "userId.userName": 1,
+                  "userId.fullName": 1,
+                  "userId.avatar": 1,
+                  "collectionId._id": 1,
+                  "collectionId.name": 1,
+                  "collectionId.slug": 1,
+                  "collectionId.visibility": 1,
+                  "collectionId.userId": 1,
+                  "collectionId.collaborators": 1,
+                },
               },
-            },
-          ],
+            ],
+          },
         },
-      },
-    ];
+      ];
 
-    const result = await Note.aggregate(pipeline);
+      const result = await Note.aggregate(pipeline);
 
-    const totalNotes = result[0]?.metadata[0]?.total || 0;
-    const notes = result[0]?.data || [];
-    const totalPages = Math.ceil(totalNotes / limit);
+      const totalNotes = result[0]?.metadata[0]?.total || 0;
+      const notes = result[0]?.data || [];
+      const totalPages = Math.ceil(totalNotes / limit);
 
-    /* ===============================
-       3️⃣ RESPONSE
-    =============================== */
-    const responseData = {
-      notes,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalNotes,
-        notesPerPage: limit,
-        hasMore: page < totalPages,
-      },
-    };
+      /* ===============================
+         3️⃣ RESPONSE
+      =============================== */
+      return {
+        notes,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalNotes,
+          notesPerPage: limit,
+          hasMore: page < totalPages,
+        },
+      };
+    }, 120);
 
-    await setCache(cacheKey, responseData, 120);
     return res.status(200).json({
       success: true,
-      data: responseData,
+      data,
     });
   } catch (error) {
     console.error("Error in getPublicNotes:", error);
@@ -643,18 +628,19 @@ export const moveTo = async (req, res) => {
     await note.save(); // slug may regenerate
 
     // ❌ invalidate OLD cache
-    await delCache(`note:id:${note._id}:user:${user._id}`);
-    await delCache(`note:id:${note._id}:user:guest`);
-
-    await delCache(
-      `note:slug:${username}:${oldCollectionSlug}:${oldNoteSlug}:user:${user._id}`,
-    );
-    await delCache(
-      `note:slug:${username}:${oldCollectionSlug}:${oldNoteSlug}:user:guest`,
-    );
+    await invalidateNoteCache(note._id, username, oldCollectionSlug, oldNoteSlug);
+    await invalidateCollectionCache(username, oldCollectionSlug);
 
     // 2️⃣ Fetch ONLY required collection fields
     const collection = await Collection.findById(collectionId);
+
+    // Invalidate new collection cache
+    if (collection) {
+      await invalidateNoteCache(null, username, collection.slug, note.slug);
+      await invalidateCollectionCache(username, collection.slug);
+    }
+    
+    await invalidateFeedsAndSearch();
 
     return res.status(200).json({
       message: "Note moved to new collection successfully",
@@ -695,15 +681,8 @@ export const updateVisibility = async (req, res) => {
     }
 
     // invalidate
-    await delCache(`note:id:${note._id}:user:${user._id}`);
-    await delCache(`note:id:${note._id}:user:guest`);
-
-    await delCache(
-      `note:slug:${note.userId.userName}:${note.collectionId.slug}:${note.slug}:user:${user._id}`,
-    );
-    await delCache(
-      `note:slug:${note.userId.userName}:${note.collectionId.slug}:${note.slug}:user:guest`,
-    );
+    await invalidateNoteCache(note._id, note.userId.userName, note.collectionId.slug, note.slug);
+    await invalidateFeedsAndSearch();
 
     return res.status(200).json({
       message: `visiblity updated to ${note.visibility}`,
@@ -745,15 +724,9 @@ export const updateCollaborators = async (req, res) => {
     }
 
     // invalidate
-    await delCache(`note:id:${updatedNote._id}:user:${user._id}`);
-    await delCache(`note:id:${updatedNote._id}:user:guest`);
-
-    await delCache(
-      `note:slug:${updatedNote.userId.userName}:${updatedNote.collectionId.slug}:${updatedNote.slug}:user:${user._id}`,
-    );
-    await delCache(
-      `note:slug:${updatedNote.userId.userName}:${updatedNote.collectionId.slug}:${updatedNote.slug}:user:guest`,
-    );
+    await invalidateNoteCache(updatedNote._id, updatedNote.userId.userName, updatedNote.collectionId.slug, updatedNote.slug);
+    await invalidateCollectionCache(updatedNote.userId.userName, updatedNote.collectionId.slug); // just in case
+    await invalidateFeedsAndSearch();
 
     return res.status(200).json({
       message: "Collaborators updated and populated successfully",
@@ -784,199 +757,186 @@ export const searchNotes = async (req, res) => {
     }
 
     const normalizedQueryKey = [...new Set(tokens)].sort().join("_");
-    const cacheKey = `search:${userKey}:q:${normalizedQueryKey}:p:${page}:l:${limit}`;
+    const cacheKey = cacheKeys.search.query(userKey, normalizedQueryKey, page, limit);
 
-    // 1️⃣ Check cache first
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      return res.status(200).json({
-        ...JSON.parse(cached),
-        cache: true,
-      });
-    }
+    const { data } = await fetchWithCache(cacheKey, async () => {
+      const currentPage = Number(page);
+      const notesPerPage = Number(limit);
+      const skip = (currentPage - 1) * notesPerPage;
 
-    const currentPage = Number(page);
-    const notesPerPage = Number(limit);
-    const skip = (currentPage - 1) * notesPerPage;
+      const queryTokenSet = new Set(tokens);
+      const uniqueTokens = [...queryTokenSet];
 
-    const queryTokenSet = new Set(tokens);
-    const uniqueTokens = [...queryTokenSet];
+      // 🔹 Parallel fetch with optimized queries
+      const [indexDocs, titleNotes, TOTAL_NOTES] = await Promise.all([
+        SearchIndex.find({ lemma: { $in: uniqueTokens } })
+          .select("lemma notes")
+          .lean(),
+        Note.find({
+          name: new RegExp(uniqueTokens.join("|"), "i"),
+        })
+          .select("_id name")
+          .lean(),
+        Note.countDocuments(),
+      ]);
 
-    // 🔹 Parallel fetch with optimized queries
-    const [indexDocs, titleNotes, TOTAL_NOTES] = await Promise.all([
-      SearchIndex.find({ lemma: { $in: uniqueTokens } })
-        .select("lemma notes")
-        .lean(),
-      Note.find({
-        name: new RegExp(uniqueTokens.join("|"), "i"),
-      })
-        .select("_id name")
-        .lean(),
-      Note.countDocuments(),
-    ]);
+      // 🎯 Enhanced scoring with multiple signals
+      const scoreMap = new Map();
+      const noteMetrics = new Map(); // Track individual scoring components
 
-    // 🎯 Enhanced scoring with multiple signals
-    const scoreMap = new Map();
-    const noteMetrics = new Map(); // Track individual scoring components
+      // === SIGNAL 1: Content TF-IDF (weighted: 2x) ===
+      for (const doc of indexDocs) {
+        const df = doc.notes.length;
+        const idf = Math.log((TOTAL_NOTES + 1) / (df + 1));
 
-    // === SIGNAL 1: Content TF-IDF (weighted: 2x) ===
-    for (const doc of indexDocs) {
-      const df = doc.notes.length;
-      const idf = Math.log((TOTAL_NOTES + 1) / (df + 1));
+        for (const { noteId, tf } of doc.notes) {
+          const key = noteId.toString();
+          const tfidf = tf * idf;
+          const contentScore = tfidf * 2;
 
-      for (const { noteId, tf } of doc.notes) {
-        const key = noteId.toString();
-        const tfidf = tf * idf;
-        const contentScore = tfidf * 2;
+          scoreMap.set(key, (scoreMap.get(key) || 0) + contentScore);
 
-        scoreMap.set(key, (scoreMap.get(key) || 0) + contentScore);
-
-        // Track metrics
-        if (!noteMetrics.has(key)) {
-          noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
-        }
-        noteMetrics.get(key).content += contentScore;
-      }
-    }
-
-    // === SIGNAL 2: Title Matching (weighted: 6x per term) ===
-    for (const note of titleNotes) {
-      const key = note._id.toString();
-      const titleTokens = normalizeText(note.name);
-      const titleLower = note.name.toLowerCase();
-
-      let titleScore = 0;
-      const matched = new Set();
-
-      // Term frequency in title
-      for (const token of tokens) {
-        const tf = titleTokens.filter((t) => t === token).length;
-        if (tf > 0) {
-          matched.add(token);
-          titleScore += tf * 6;
+          // Track metrics
+          if (!noteMetrics.has(key)) {
+            noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+          }
+          noteMetrics.get(key).content += contentScore;
         }
       }
 
-      // === SIGNAL 3: Full query coverage bonus (+8) ===
-      if (matched.size === queryTokenSet.size) {
-        titleScore += 8;
-        if (!noteMetrics.has(key)) {
-          noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+      // === SIGNAL 2: Title Matching (weighted: 6x per term) ===
+      for (const note of titleNotes) {
+        const key = note._id.toString();
+        const titleTokens = normalizeText(note.name);
+        const titleLower = note.name.toLowerCase();
+
+        let titleScore = 0;
+        const matched = new Set();
+
+        // Term frequency in title
+        for (const token of tokens) {
+          const tf = titleTokens.filter((t) => t === token).length;
+          if (tf > 0) {
+            matched.add(token);
+            titleScore += tf * 6;
+          }
         }
-        noteMetrics.get(key).coverage = 8;
-      }
 
-      // === SIGNAL 4: Exact phrase match (+10, stronger) ===
-      const phraseRegex = new RegExp(tokens.join("\\s+"), "i");
-      if (phraseRegex.test(note.name)) {
-        titleScore += 10;
-        if (!noteMetrics.has(key)) {
-          noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+        // === SIGNAL 3: Full query coverage bonus (+8) ===
+        if (matched.size === queryTokenSet.size) {
+          titleScore += 8;
+          if (!noteMetrics.has(key)) {
+            noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+          }
+          noteMetrics.get(key).coverage = 8;
         }
-        noteMetrics.get(key).exact = 10;
-      }
 
-      // === SIGNAL 5: Title starts with query (high relevance) (+5) ===
-      if (titleLower.startsWith(q.toLowerCase())) {
-        titleScore += 5;
-      }
-
-      // === SIGNAL 6: Query token order preserved (+3) ===
-      let lastIndex = -1;
-      let orderPreserved = true;
-      for (const token of tokens) {
-        const idx = titleTokens.indexOf(token, lastIndex + 1);
-        if (idx === -1 || idx <= lastIndex) {
-          orderPreserved = false;
-          break;
+        // === SIGNAL 4: Exact phrase match (+10, stronger) ===
+        const phraseRegex = new RegExp(tokens.join("\\s+"), "i");
+        if (phraseRegex.test(note.name)) {
+          titleScore += 10;
+          if (!noteMetrics.has(key)) {
+            noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+          }
+          noteMetrics.get(key).exact = 10;
         }
-        lastIndex = idx;
-      }
-      if (orderPreserved && tokens.length > 1) {
-        titleScore += 3;
-      }
 
-      if (titleScore > 0) {
-        scoreMap.set(key, (scoreMap.get(key) || 0) + titleScore);
-        if (!noteMetrics.has(key)) {
-          noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+        // === SIGNAL 5: Title starts with query (high relevance) (+5) ===
+        if (titleLower.startsWith(q.toLowerCase())) {
+          titleScore += 5;
         }
-        noteMetrics.get(key).title += titleScore;
-      }
-    }
 
-    // Sort by total score (descending)
-    const sortedNoteIds = [...scoreMap.entries()]
-      .sort((a, b) => {
-        const scoreDiff = b[1] - a[1];
-        // Tie-breaker: prefer notes with title matches
-        if (Math.abs(scoreDiff) < 0.01) {
-          const aMetrics = noteMetrics.get(a[0]) || {};
-          const bMetrics = noteMetrics.get(b[0]) || {};
-          return (bMetrics.title || 0) - (aMetrics.title || 0);
+        // === SIGNAL 6: Query token order preserved (+3) ===
+        let lastIndex = -1;
+        let orderPreserved = true;
+        for (const token of tokens) {
+          const idx = titleTokens.indexOf(token, lastIndex + 1);
+          if (idx === -1 || idx <= lastIndex) {
+            orderPreserved = false;
+            break;
+          }
+          lastIndex = idx;
         }
-        return scoreDiff;
-      })
-      .map(([id]) => id);
+        if (orderPreserved && tokens.length > 1) {
+          titleScore += 3;
+        }
 
-    if (!sortedNoteIds.length) {
-      const emptyResult = {
-        notes: [],
-        pagination: { currentPage, totalPages: 0, totalItems: 0 },
+        if (titleScore > 0) {
+          scoreMap.set(key, (scoreMap.get(key) || 0) + titleScore);
+          if (!noteMetrics.has(key)) {
+            noteMetrics.set(key, { content: 0, title: 0, exact: 0, coverage: 0 });
+          }
+          noteMetrics.get(key).title += titleScore;
+        }
+      }
+
+      // Sort by total score (descending)
+      const sortedNoteIds = [...scoreMap.entries()]
+        .sort((a, b) => {
+          const scoreDiff = b[1] - a[1];
+          // Tie-breaker: prefer notes with title matches
+          if (Math.abs(scoreDiff) < 0.01) {
+            const aMetrics = noteMetrics.get(a[0]) || {};
+            const bMetrics = noteMetrics.get(b[0]) || {};
+            return (bMetrics.title || 0) - (aMetrics.title || 0);
+          }
+          return scoreDiff;
+        })
+        .map(([id]) => id);
+
+      if (!sortedNoteIds.length) {
+        return {
+          notes: [],
+          pagination: { currentPage, totalPages: 0, totalItems: 0 },
+        };
+      }
+
+      const totalNotes = sortedNoteIds.length;
+      const totalPages = Math.ceil(totalNotes / notesPerPage);
+      const pagedNoteIds = sortedNoteIds.slice(skip, skip + notesPerPage);
+
+      // Fetch full note details (only for current page)
+      const notes = await Note.find({ _id: { $in: pagedNoteIds } })
+        .populate("userId", "_id userName role fullName avatar")
+        .populate("collectionId", "_id name slug visibility collaborators userId")
+        .lean();
+
+      // Permission filtering
+      const accessibleNotes = notes.filter((note) =>
+        canAccessNote({
+          requester,
+          ownerId: note.userId._id,
+          note,
+          collection: note.collectionId,
+        }),
+      );
+
+      // Preserve ranking order
+      const noteMap = new Map(accessibleNotes.map((n) => [n._id.toString(), n]));
+      const rankedNotes = pagedNoteIds
+        .map((id) => noteMap.get(id))
+        .filter(Boolean);
+
+      return {
+        notes: rankedNotes,
+        pagination: {
+          currentPage,
+          totalPages,
+          totalItems: totalNotes,
+          itemsPerPage: notesPerPage,
+          hasNextPage: currentPage < totalPages,
+          hasPreviousPage: currentPage > 1,
+        },
+        meta: {
+          query: q,
+          tokensMatched: uniqueTokens.length,
+        },
       };
-      await setCache(cacheKey, emptyResult, 300); // Cache empty results longer
-      return res.json(emptyResult);
-    }
+    }, 120);
 
-    const totalNotes = sortedNoteIds.length;
-    const totalPages = Math.ceil(totalNotes / notesPerPage);
-    const pagedNoteIds = sortedNoteIds.slice(skip, skip + notesPerPage);
-
-    // Fetch full note details (only for current page)
-    const notes = await Note.find({ _id: { $in: pagedNoteIds } })
-      .populate("userId", "_id userName role fullName avatar")
-      .populate("collectionId", "_id name slug visibility collaborators userId")
-      .lean();
-
-    // Permission filtering
-    const accessibleNotes = notes.filter((note) =>
-      canAccessNote({
-        requester,
-        ownerId: note.userId._id,
-        note,
-        collection: note.collectionId,
-      }),
-    );
-
-    // Preserve ranking order
-    const noteMap = new Map(accessibleNotes.map((n) => [n._id.toString(), n]));
-    const rankedNotes = pagedNoteIds
-      .map((id) => noteMap.get(id))
-      .filter(Boolean);
-
-    const responseData = {
-      notes: rankedNotes,
-      pagination: {
-        currentPage,
-        totalPages,
-        totalItems: totalNotes,
-        itemsPerPage: notesPerPage,
-        hasNextPage: currentPage < totalPages,
-        hasPreviousPage: currentPage > 1,
-      },
-      meta: {
-        query: q,
-        tokensMatched: uniqueTokens.length,
-      },
-    };
-
-    // 2️⃣ Smart cache TTL based on result size
-    const cacheTTL = totalNotes === 0 ? 300 : totalNotes < 10 ? 120 : 60;
-    await setCache(cacheKey, responseData, cacheTTL);
-
-    res.status(200).json(responseData);
+    return res.status(200).json(data);
   } catch (error) {
-    console.error("Search error:", err);
+    console.error("Search error:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
   }
