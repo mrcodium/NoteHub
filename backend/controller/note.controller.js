@@ -354,6 +354,34 @@ export const getNoteBySlug = async (req, res) => {
                         },
                       },
                     },
+                    // 4️⃣ Join note collaborators info
+                    {
+                      $lookup: {
+                        from: "users",
+                        localField: "collaborators",
+                        foreignField: "_id",
+                        as: "collaborators",
+                      },
+                    },
+                    {
+                      $project: {
+                        _id: 1,
+                        name: 1,
+                        content: 1,
+                        tableOfContent: 1,
+                        visibility: 1,
+                        slug: 1,
+                        createdAt: 1,
+                        updatedAt: 1,
+                        contentUpdatedAt: 1,
+                        collaborators: {
+                          _id: 1,
+                          userName: 1,
+                          fullName: 1,
+                          avatar: 1,
+                        },
+                      },
+                    },
                   ],
                   as: "note",
                 },
@@ -393,6 +421,7 @@ export const getNoteBySlug = async (req, res) => {
               createdAt: "$collection.note.createdAt",
               updatedAt: "$collection.note.updatedAt",
               contentUpdatedAt: "$collection.note.contentUpdatedAt",
+              collaborators: "$collection.note.collaborators",
             },
           },
         },
@@ -739,6 +768,69 @@ export const updateCollaborators = async (req, res) => {
   }
 };
 
+export const updateNote = async (req, res) => {
+  const { _id } = req.params;
+  const { name, slug, visibility, collaborators } = req.body;
+  const { user } = req;
+
+  if (!_id) {
+    return res.status(400).json({ message: "Note ID is required" });
+  }
+
+  try {
+    const note = await Note.findById(_id);
+    if (!note) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+
+    const isAuthor = note.userId.equals(user._id);
+    const isAdmin = user.role === "admin";
+
+    if (!isAuthor && !isAdmin) {
+      return res.status(403).json({ message: "You are not allowed to update this note" });
+    }
+
+    // Capture context for cache invalidation
+    await note.populate("userId", "userName");
+    await note.populate("collectionId", "slug");
+    const oldSlug = note.slug;
+    const username = note.userId.userName;
+    const collectionSlug = note.collectionId.slug;
+
+    // Update fields
+    if (name !== undefined) note.name = name;
+    if (slug !== undefined) note.slug = slug;
+    if (visibility !== undefined) note.visibility = visibility;
+    if (collaborators !== undefined) note.collaborators = collaborators;
+
+    await note.save();
+
+    // Reindex if name changed
+    if (name !== undefined) {
+      await updateIndex(note._id, `${note.name} ${note.content}`);
+    }
+
+    // Invalidate caches
+    await invalidateNoteCache(note._id, username, collectionSlug, oldSlug);
+    if (oldSlug !== note.slug) {
+      await invalidateNoteCache(null, username, collectionSlug, note.slug);
+    }
+    await invalidateCollectionCache(username, collectionSlug);
+    await invalidateFeedsAndSearch();
+
+    return res.status(200).json({
+      message: "Note updated successfully",
+      note,
+    });
+  } catch (error) {
+    console.error("Error in updateNote controller:", error);
+    // Generic error handler if handleDbError is missing or fails
+    const status = error.name === "ValidationError" ? 400 : 500;
+    const message = error.message || "An unexpected error occurred";
+    return res.status(status).json({ success: false, message });
+  }
+};
+
 // controllers/search.controller.js
 export const searchNotes = async (req, res) => {
   try {
@@ -939,5 +1031,34 @@ export const searchNotes = async (req, res) => {
     console.error("Search error:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
+  }
+};
+
+export const checkSlugAvailability = async (req, res) => {
+  const { collectionId, slug, noteId } = req.query;
+
+  if (!collectionId || !slug) {
+    return res.status(400).json({ message: "Collection ID and slug are required" });
+  }
+
+  try {
+    const query = {
+      collectionId,
+      slug: slug.toLowerCase(),
+    };
+
+    // If updating, exclude current note
+    if (noteId) {
+      query._id = { $ne: noteId };
+    }
+
+    const existingNote = await Note.findOne(query);
+
+    return res.status(200).json({
+      available: !existingNote,
+    });
+  } catch (error) {
+    console.error("Error checking slug availability:", error);
+    return res.status(500).json({ message: "Error checking slug availability" });
   }
 };

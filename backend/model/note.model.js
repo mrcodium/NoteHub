@@ -136,29 +136,42 @@ noteSchema.index({
 /* ===================== MIDDLEWARE ===================== */
 
 // Slug generator (MUST run before validation)
+// Slug generator (MUST run before validation)
 noteSchema.pre("validate", async function (next) {
-  if (!this.slug && this.name) {
-    const baseSlug = this.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+  // 1. If slug is explicitly provided and not modified, skip
+  // 2. If name is modified and slug is NOT explicitly modified, regenerate slug from name
+  // 3. If slug is missing, generate from name
+  
+  const slugModified = this.isModified("slug");
+  const nameModified = this.isModified("name");
 
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (
-      await this.constructor.exists({
-        collectionId: this.collectionId,
-        slug,
-        _id: { $ne: this._id },
-      })
-    ) {
-      slug = `${baseSlug}-${counter++}`;
-    }
-
-    this.slug = slug;
+  if (!slugModified && !nameModified && this.slug) {
+    return next();
   }
 
+  // Determine base string for slug
+  let baseString = slugModified ? this.slug : this.name;
+  if (!baseString) return next();
+
+  const baseSlug = baseString
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  let slug = baseSlug;
+  let counter = 1;
+
+  while (
+    await this.constructor.exists({
+      collectionId: this.collectionId,
+      slug,
+      _id: { $ne: this._id },
+    })
+  ) {
+    slug = `${baseSlug}-${counter++}`;
+  }
+
+  this.slug = slug;
   next();
 });
 
