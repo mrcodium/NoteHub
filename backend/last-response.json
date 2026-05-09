@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-05-09T21:07:01.515Z",
+  "method": "GET",
+  "url": "/api/note/.well-known/appspecific/com.chrome.devtools.json",
+  "response": {
+    "message": "Note not found"
+  }
+}

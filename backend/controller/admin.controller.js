@@ -3,8 +3,11 @@ import { handleDbError } from "../utils/dbError.js";
 
 // GET /api/admin/users
 export const getAllUsers = async (req, res) => {
+  console.log('getall users');
   try {
-    const { page = 1, limit = 20, search = "" } = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const search = req.query.search?.trim() || "";
     const skip = (page - 1) * limit;
 
     const filter = search
@@ -17,25 +20,66 @@ export const getAllUsers = async (req, res) => {
         }
       : {};
 
-    const [users, total] = await Promise.all([
-      User.find(filter)
-        .select("-password")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit)),
-      User.countDocuments(filter),
-    ]);
+    const pipeline = [
+      { $match: filter },
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          users: [
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: "notes",
+                localField: "_id",
+                foreignField: "userId",
+                as: "userNotes",
+                pipeline: [{ $count: "count" }],
+              },
+            },
+            {
+              $lookup: {
+                from: "collections",
+                localField: "_id",
+                foreignField: "userId",
+                as: "userCollections",
+                pipeline: [{ $count: "count" }],
+              },
+            },
+            {
+              $addFields: {
+                notesCount: {
+                  $ifNull: [{ $arrayElemAt: ["$userNotes.count", 0] }, 0],
+                },
+                collectionsCount: {
+                  $ifNull: [{ $arrayElemAt: ["$userCollections.count", 0] }, 0],
+                },
+              },
+            },
+            {
+              $project: { password: 0, userNotes: 0, userCollections: 0 },
+            },
+          ],
+        },
+      },
+    ];
 
-    res.status(200).json({
+    const [result] = await User.aggregate(pipeline);
+    const total = result.metadata[0]?.total || 0;
+
+    const response = {
       success: true,
-      users,
+      users: result.users,
       pagination: {
         total,
-        page: Number(page),
-        limit: Number(limit),
+        page,
+        limit,
         totalPages: Math.ceil(total / limit),
       },
-    });
+    };
+    console.log(response);
+    res.status(200).json(response);
   } catch (error) {
     console.error("Error in admin.getAllUsers:", error);
     const { status, message } = handleDbError(error);
@@ -65,7 +109,7 @@ export const getUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { fullName, userName, bio, socials } = req.body;
+    const { fullName, userName, bio, socials, role, isBanned } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -85,6 +129,8 @@ export const updateUser = async (req, res) => {
     if (fullName !== undefined) user.fullName = fullName.trim();
     if (bio !== undefined) user.bio = bio.trim();
     if (socials !== undefined) user.socials = socials.map((s) => ({ url: s.url.trim() }));
+    if (role !== undefined) user.role = role;
+    if (isBanned !== undefined) user.isBanned = isBanned;
 
     await user.save();
 
@@ -101,6 +147,47 @@ export const updateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in admin.updateUser:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// POST /api/admin/users/batch
+export const batchUpdateUsers = async (req, res) => {
+  try {
+    const { userIds, action, role } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ success: false, message: "No users selected." });
+    }
+
+    if (!["delete", "ban", "unban", "assignRole"].includes(action)) {
+      return res.status(400).json({ success: false, message: "Invalid action." });
+    }
+
+    let updateQuery = {};
+    if (action === "ban") updateQuery = { isBanned: true };
+    if (action === "unban") updateQuery = { isBanned: false };
+    if (action === "assignRole") {
+      if (!["user", "admin"].includes(role)) {
+        return res.status(400).json({ success: false, message: "Invalid role." });
+      }
+      updateQuery = { role };
+    }
+
+    if (action === "delete") {
+      await User.updateMany({ _id: { $in: userIds } }, { $set: { isDeleted: true } });
+    } else {
+      await User.updateMany({ _id: { $in: userIds } }, { $set: updateQuery });
+    }
+
+    console.log(
+      `[ADMIN ACTION] ${req.user.userName} performed batch ${action} on ${userIds.length} users`
+    );
+
+    res.status(200).json({ success: true, message: `Batch ${action} completed successfully.` });
+  } catch (error) {
+    console.error("Error in admin.batchUpdateUsers:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
   }

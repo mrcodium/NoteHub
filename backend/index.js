@@ -18,12 +18,18 @@ import "./model/Image.model.js";
 import path from "path";
 import { ENV } from "./config/env.js";
 import { connectRedis } from "./config/redis.js";
+import { requestLogger, captureResponse } from "./middleware/logger.js";
 
 config();
 const PORT = ENV.PORT;
 const __dirname = path.resolve();
 
 const app = express();
+
+if (process.env.NODE_ENV !== "production") {
+  app.use(captureResponse);
+  app.use(requestLogger);
+}
 
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());

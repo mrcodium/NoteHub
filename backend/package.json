@@ -24,6 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "maxmind": "^4.3.27",
     "mongoose": "^8.16.5",
+    "morgan": "^1.10.1",
     "multer": "^2.0.1",
     "natural": "^8.1.0",
     "nodemailer": "^8.0.7",

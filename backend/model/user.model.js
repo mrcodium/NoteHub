@@ -108,6 +108,14 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -127,6 +135,7 @@ userSchema.pre("validate", async function (next) {
 // Your existing indexes are perfect
 userSchema.index({ userName: 1 }, { unique: true }); // ✅ Perfect for username lookups
 userSchema.index({ email: 1 }); // ✅ For email lookups in getUser
+userSchema.index({ createdAt: -1 }); // for the default sort
 
 
 const User = mongoose.model("User", userSchema);
