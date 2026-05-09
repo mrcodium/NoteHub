@@ -18,6 +18,7 @@ import {
   invalidateFeedsAndSearch,
   fetchWithCache
 } from "../services/cache.service.js";
+import { handleDbError } from "../utils/dbError.js";
 
 export const getNoteById = async (req, res) => {
   const { _id } = req.params;

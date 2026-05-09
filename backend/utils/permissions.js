@@ -1,9 +1,9 @@
 export const canAccessNote = ({ requester, ownerId, note, collection }) => {
-  const isOwner = requester && requester._id.equals(ownerId);
+  const isOwner = requester && String(requester._id) === String(ownerId);
   const isNotePublic = note.visibility === "public";
   const isCollectionPublic = collection.visibility === "public";
-  const isNoteCollaborator = requester && note.collaborators?.some(id => id.equals(requester._id));
-  const isCollectionCollaborator = requester && collection.collaborators?.some(id => id.equals(requester._id));
+  const isNoteCollaborator = requester && note.collaborators?.some(id => String(id) === String(requester._id));
+  const isCollectionCollaborator = requester && collection.collaborators?.some(id => String(id) === String(requester._id));
 
   if (isOwner) return true;
   if (isCollectionPublic  && isNotePublic)  return true;
