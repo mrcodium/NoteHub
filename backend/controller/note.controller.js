@@ -152,10 +152,9 @@ export const deleteNote = async (req, res) => {
 
   try {
     // 1️⃣ Delete note
-    const note = await Note.findOneAndDelete({
-      _id,
-      userId: user._id,
-    });
+    const isAdmin = user.role === "admin";
+    const query = isAdmin ? { _id } : { _id, userId: user._id };
+    const note = await Note.findOneAndDelete(query);
 
     if (!note) {
       return res.status(404).json({
@@ -258,10 +257,9 @@ export const renameNote = async (req, res) => {
 
   try {
     // 1️⃣ Fetch note WITH required context
-    const note = await Note.findOne({
-      _id: noteId,
-      userId: user._id,
-    })
+    const isAdmin = user.role === "admin";
+    const query = isAdmin ? { _id: noteId } : { _id: noteId, userId: user._id };
+    const note = await Note.findOne(query)
       .populate("collectionId", "slug")
       .populate("userId", "userName");
 
@@ -636,10 +634,9 @@ export const moveTo = async (req, res) => {
 
   try {
     // 1️⃣ Move the note
-    const note = await Note.findOne({
-      _id: noteId,
-      userId: user._id,
-    })
+    const isAdmin = user.role === "admin";
+    const query = isAdmin ? { _id: noteId } : { _id: noteId, userId: user._id };
+    const note = await Note.findOne(query)
       .populate("collectionId", "slug")
       .populate("userId", "userName");
 
@@ -696,8 +693,10 @@ export const updateVisibility = async (req, res) => {
   }
 
   try {
+    const isAdmin = user.role === "admin";
+    const query = isAdmin ? { _id: noteId } : { _id: noteId, userId: user._id };
     const note = await Note.findOneAndUpdate(
-      { _id: noteId, userId: user._id },
+      query,
       { visibility },
       { new: true },
     )
@@ -738,8 +737,10 @@ export const updateCollaborators = async (req, res) => {
   collaborators = [...new Set(collaborators)];
 
   try {
+    const isAdmin = user.role === "admin";
+    const query = isAdmin ? { _id: noteId } : { _id: noteId, userId: user._id };
     const updatedNote = await Note.findOneAndUpdate(
-      { _id: noteId, userId: user._id },
+      query,
       { collaborators },
       { new: true },
     )

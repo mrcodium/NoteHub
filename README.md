@@ -59,7 +59,7 @@ A modern note-taking app with rich editing, collaboration, and cloud sync.
 Create `.env` in `/backend`:
 
 ```env
-PORT=5000
+PORT=8000
 JWT_SECRET=your_64char_secret_here
 MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/dbname
 
@@ -81,7 +81,7 @@ NODE_ENV=development
 Create a `.env`  the `/frontend` 
 
 ```env
-VITE_API_BASE=http://localhost:5000
+VITE_API_BASE=http://localhost:8000
 VITE_GOOGLE_CLIENT_ID=123-abcd.apps.googleusercontent.com
 VITE_GOOGLE_REDIRECT_URI=http://localhost:3000
 ```

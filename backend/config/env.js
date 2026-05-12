@@ -11,9 +11,9 @@ const required = (key) => {
 
 export const ENV = {
   // Server
-  PORT: process.env.PORT || 5000,
+  PORT: process.env.PORT || 8000,
   NODE_ENV: process.env.NODE_ENV || "development",
-  
+
   JWT_SECRET: required("JWT_SECRET"),
   JWT_EXPIRY: required("JWT_EXPIRY"),
   JWT_ISSUER: required("JWT_ISSUER"),
@@ -28,8 +28,6 @@ export const ENV = {
   CLOUDINARY_API_KEY: required("CLOUDINARY_API_KEY"),
   CLOUDINARY_API_SECRET: required("CLOUDINARY_API_SECRET"),
 
-  EMAIL_SENDER: required("EMAIL_SENDER"),
-  EMAIL_PASS: required("EMAIL_PASS"),
   BREVO_API_KEY: required("BREVO_API_KEY"),
 
   GOOGLE_CLIENT_ID: required("GOOGLE_CLIENT_ID"),
