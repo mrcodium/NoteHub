@@ -40,8 +40,11 @@ export const protectRoute = async (req, res, next) => {
 
     const user = await User.findById(userId).select("-password");
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
+      // Issue 6B fixed: returning 404 here bypasses the axios interceptor's
+      // 401 handler, causing unhandled errors on the frontend.
+      // 401 correctly signals "re-authenticate" when the user no longer exists.
+      return res.status(401).json({
+        message: "User not found — please log in again",
         code: "USER_NOT_FOUND",
       });
     }

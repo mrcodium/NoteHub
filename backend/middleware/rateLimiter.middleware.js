@@ -27,3 +27,14 @@ export const loginLimiter = rateLimit({
     max: 5,
     message: {message: "Too many login attempts from this IP, please try again later."},
 });
+
+// Issue 9D: 5 refresh attempts per minute per IP
+// Prevents an attacker with a valid refresh cookie from continuously
+// rotating tokens to prevent legitimate expiry.
+export const refreshLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 5,
+    message: {message: "Too many token refresh attempts. Please try again later."},
+    standardHeaders: true,
+    legacyHeaders: false,
+});

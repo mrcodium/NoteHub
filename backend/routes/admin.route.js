@@ -1,5 +1,6 @@
 import express from "express";
 import { protectRoute, adminOnly } from "../middleware/protectRoute.middleware.js";
+import { handlefileUpload } from "../middleware/multer.middleware.js";
 import { 
   getAllUsers, 
   getUser, 
@@ -8,7 +9,11 @@ import {
   getUserSessionsByAdmin,
   terminateUserSessionByAdmin,
   terminateAllUserSessionsByAdmin,
-  updateUserPasswordByAdmin
+  updateUserPasswordByAdmin,
+  uploadUserAvatarByAdmin,
+  removeUserAvatarByAdmin,
+  uploadUserCoverByAdmin,
+  removeUserCoverByAdmin,
 } from "../controller/admin.controller.js";
 
 const router = express.Router();
@@ -26,5 +31,11 @@ router.get("/users/:userId/sessions", getUserSessionsByAdmin);
 router.delete("/users/:userId/sessions", terminateAllUserSessionsByAdmin);
 router.delete("/users/:userId/sessions/:sessionId", terminateUserSessionByAdmin);
 router.patch("/users/:userId/password", updateUserPasswordByAdmin);
+
+// Photo Management (admin overrides for any user)
+router.post("/users/:userId/avatar", handlefileUpload("file"), uploadUserAvatarByAdmin);
+router.delete("/users/:userId/avatar", removeUserAvatarByAdmin);
+router.post("/users/:userId/cover", handlefileUpload("file"), uploadUserCoverByAdmin);
+router.delete("/users/:userId/cover", removeUserCoverByAdmin);
 
 export default router;

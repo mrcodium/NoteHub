@@ -9,12 +9,16 @@ config();
 
 /* ---------------- COOKIE HELPERS ---------------- */
 
+// Issue 5A fixed: "strict" blocks cookies on cross-origin requests (Vercel → Render).
+// In production use "none" (requires secure:true, already set below).
+// In development use "lax" so cookies work with local http.
+// Issue 5B: Domain is intentionally omitted for cross-origin setups;
+// sameSite "none" handles scoping without a shared parent domain.
 const getCookieOptions = (maxAgeMs) => ({
   httpOnly: true,
   secure: ENV.NODE_ENV === "production",
-  sameSite: "strict", // required by prompt
+  sameSite: ENV.NODE_ENV === "production" ? "none" : "lax",
   path: "/",
-  domain: ENV.COOKIE_DOMAIN || undefined,
   maxAge: maxAgeMs,
 });
 
@@ -32,9 +36,8 @@ export const clearAuthCookies = (res) => {
   const options = {
     httpOnly: true,
     secure: ENV.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: ENV.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
-    domain: ENV.COOKIE_DOMAIN || undefined,
   };
   res.clearCookie("accessToken", options);
   res.clearCookie("refreshToken", options);

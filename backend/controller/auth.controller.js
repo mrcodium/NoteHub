@@ -322,9 +322,12 @@ export const refresh = async (req, res) => {
 
     return await sendAuthResponse(req, res, user);
   } catch (error) {
+    // Issue 6A fixed: always return 401 (not 500) so the Axios interceptor's
+    // refresh guard (`url.includes("/auth/refresh")`) catches it uniformly.
+    // A 500 here bypasses the guard and can trigger a retry storm.
     console.error("Refresh token error:", error);
     clearAuthCookies(res);
-    return res.status(500).json({ message: "Internal server error during refresh" });
+    return res.status(401).json({ message: "Session refresh failed" });
   }
 };
 

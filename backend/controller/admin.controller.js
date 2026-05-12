@@ -2,6 +2,7 @@ import User from "../model/user.model.js";
 import { handleDbError } from "../utils/dbError.js";
 import { getUserSessions as getSessions, deleteSession, deleteAllUserSessions } from "../utils/sessionStore.js";
 import bcrypt from "bcryptjs";
+import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
 
 // GET /api/admin/users
 export const getAllUsers = async (req, res) => {
@@ -264,6 +265,108 @@ export const updateUserPasswordByAdmin = async (req, res) => {
     res.status(200).json({ success: true, message: "Password updated successfully." });
   } catch (error) {
     console.error("Error in admin.updateUserPasswordByAdmin:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// POST /api/admin/users/:userId/avatar
+export const uploadUserAvatarByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const file = req.file;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    if (!file) return res.status(400).json({ success: false, message: "No file uploaded." });
+
+    if (user.avatar) await deleteImage(user.avatar);
+
+    const folder = `user_profiles/${user._id}`;
+    const { secure_url } = await uploadStream(file.buffer, folder, "avatar");
+    user.avatar = secure_url;
+    await user.save();
+
+    console.log(`[ADMIN ACTION] ${req.user.userName} updated avatar of ${user.userName} (${user._id})`);
+
+    const { password, ...userWithoutPassword } = user.toObject();
+    res.status(200).json({ success: true, user: userWithoutPassword, message: "Avatar updated successfully." });
+  } catch (error) {
+    console.error("Error in admin.uploadUserAvatarByAdmin:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// DELETE /api/admin/users/:userId/avatar
+export const removeUserAvatarByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    if (!user.avatar) return res.status(400).json({ success: false, message: "No avatar to remove." });
+
+    await deleteImage(user.avatar);
+    user.avatar = null;
+    await user.save();
+
+    console.log(`[ADMIN ACTION] ${req.user.userName} removed avatar of ${user.userName} (${user._id})`);
+
+    const { password, ...userWithoutPassword } = user.toObject();
+    res.status(200).json({ success: true, user: userWithoutPassword, message: "Avatar removed successfully." });
+  } catch (error) {
+    console.error("Error in admin.removeUserAvatarByAdmin:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// POST /api/admin/users/:userId/cover
+export const uploadUserCoverByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const file = req.file;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    if (!file) return res.status(400).json({ success: false, message: "No file uploaded." });
+
+    if (user.cover) await deleteImage(user.cover);
+
+    const folder = `user_covers/${user._id}`;
+    const { secure_url } = await uploadStream(file.buffer, folder, "cover");
+    user.cover = secure_url;
+    await user.save();
+
+    console.log(`[ADMIN ACTION] ${req.user.userName} updated cover of ${user.userName} (${user._id})`);
+
+    const { password, ...userWithoutPassword } = user.toObject();
+    res.status(200).json({ success: true, user: userWithoutPassword, message: "Cover updated successfully." });
+  } catch (error) {
+    console.error("Error in admin.uploadUserCoverByAdmin:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// DELETE /api/admin/users/:userId/cover
+export const removeUserCoverByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    if (!user.cover) return res.status(400).json({ success: false, message: "No cover to remove." });
+
+    await deleteImage(user.cover);
+    user.cover = null;
+    await user.save();
+
+    console.log(`[ADMIN ACTION] ${req.user.userName} removed cover of ${user.userName} (${user._id})`);
+
+    const { password, ...userWithoutPassword } = user.toObject();
+    res.status(200).json({ success: true, user: userWithoutPassword, message: "Cover removed successfully." });
+  } catch (error) {
+    console.error("Error in admin.removeUserCoverByAdmin:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
   }

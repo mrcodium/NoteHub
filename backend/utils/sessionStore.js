@@ -90,6 +90,16 @@ export const getSession = async (userId, sessionId) => {
 };
 
 export const updateLastActive = async (userId, sessionId) => {
+  // Issue 10A fixed: throttle to at most once per 5 minutes per session.
+  // Without this, every authenticated API call causes a Redis read + write,
+  // which can become a bottleneck under high traffic.
+  const throttleKey = `lastActive_throttle:${userId}:${sessionId}`;
+  const alreadyUpdated = await redisClient.exists(throttleKey);
+  if (alreadyUpdated) return;
+
+  // Set a 5-minute TTL flag before doing the actual update
+  await redisClient.setEx(throttleKey, 300, "1");
+
   const sessionData = await getSession(userId, sessionId);
   if (sessionData) {
     sessionData.lastActiveAt = new Date().toISOString();
@@ -99,7 +109,7 @@ export const updateLastActive = async (userId, sessionId) => {
     if (ttl > 0) {
       await redisClient.setEx(sessionKey, ttl, JSON.stringify(sessionData));
     }
-    
+
     // Update Mongo without waiting
     Session.updateOne({ sessionId }, { lastActiveAt: new Date() }).exec();
   }
