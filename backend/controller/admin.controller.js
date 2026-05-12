@@ -1,5 +1,7 @@
 import User from "../model/user.model.js";
 import { handleDbError } from "../utils/dbError.js";
+import { getUserSessions as getSessions, deleteSession, deleteAllUserSessions } from "../utils/sessionStore.js";
+import bcrypt from "bcryptjs";
 
 // GET /api/admin/users
 export const getAllUsers = async (req, res) => {
@@ -12,12 +14,12 @@ export const getAllUsers = async (req, res) => {
 
     const filter = search
       ? {
-          $or: [
-            { userName: { $regex: search, $options: "i" } },
-            { fullName: { $regex: search, $options: "i" } },
-            { email: { $regex: search, $options: "i" } },
-          ],
-        }
+        $or: [
+          { userName: { $regex: search, $options: "i" } },
+          { fullName: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      }
       : {};
 
     const pipeline = [
@@ -72,10 +74,12 @@ export const getAllUsers = async (req, res) => {
       success: true,
       users: result.users,
       pagination: {
-        total,
-        page,
-        limit,
+        totalItems: total,
+        currentPage: page,
+        itemsPerPage: limit,
         totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPreviousPage: page > 1,
       },
     };
     console.log(response);
@@ -188,6 +192,78 @@ export const batchUpdateUsers = async (req, res) => {
     res.status(200).json({ success: true, message: `Batch ${action} completed successfully.` });
   } catch (error) {
     console.error("Error in admin.batchUpdateUsers:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// GET /api/admin/users/:userId/sessions
+export const getUserSessionsByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const sessions = await getSessions(userId);
+    
+    const formattedSessions = sessions.map(s => ({
+      sessionId: s.sessionId,
+      deviceName: s.deviceName,
+      ip: s.ip,
+      location: s.location,
+      createdAt: s.createdAt,
+      lastActiveAt: s.lastActiveAt,
+    }));
+
+    res.status(200).json({ success: true, sessions: formattedSessions });
+  } catch (error) {
+    console.error("Error in admin.getUserSessionsByAdmin:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// DELETE /api/admin/users/:userId/sessions/:sessionId
+export const terminateUserSessionByAdmin = async (req, res) => {
+  try {
+    const { userId, sessionId } = req.params;
+    await deleteSession(userId, sessionId);
+    res.status(200).json({ success: true, message: "Session terminated successfully." });
+  } catch (error) {
+    console.error("Error in admin.terminateUserSessionByAdmin:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// DELETE /api/admin/users/:userId/sessions
+export const terminateAllUserSessionsByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await deleteAllUserSessions(userId);
+    res.status(200).json({ success: true, message: "All sessions terminated successfully." });
+  } catch (error) {
+    console.error("Error in admin.terminateAllUserSessionsByAdmin:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// PATCH /api/admin/users/:userId/password
+export const updateUserPasswordByAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters long." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    res.status(200).json({ success: true, message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Error in admin.updateUserPasswordByAdmin:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
   }

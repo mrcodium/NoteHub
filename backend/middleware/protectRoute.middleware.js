@@ -1,27 +1,27 @@
-import jwt from "jsonwebtoken";
 import User from "../model/user.model.js";
-import { ENV } from "../config/env.js";
+import { verifyToken } from "../utils/jwt.js";
+import { updateLastActive } from "../utils/sessionStore.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
-    const token =
-      req.cookies?.jwt ||
+    const accessToken =
+      req.cookies?.accessToken ||
       req.headers.authorization?.split(" ")[1];
 
-    if (!token) {
+    if (!accessToken) {
+      // Clear legacy jwt cookie if it exists to clean up state
+      if (req.cookies?.jwt) {
+        res.clearCookie("jwt");
+      }
       return res.status(401).json({
-        message: "Authentication required, jwt token is missing",
+        message: "Authentication required, access token missing",
         code: "AUTH_REQUIRED",
       });
     }
 
     let decoded;
     try {
-      decoded = jwt.verify(token, ENV.JWT_SECRET, {
-        algorithms: ["HS256"],
-        issuer: ENV.JWT_ISSUER,
-        audience: ENV.JWT_AUDIENCE,
-      });
+      decoded = verifyToken(accessToken);
     } catch (error) {
       return res.status(401).json({
         message: "Invalid or expired token",
@@ -29,9 +29,9 @@ export const protectRoute = async (req, res, next) => {
       });
     }
 
-    const { userId } = decoded;
+    const { userId, sessionId } = decoded;
 
-    if (!userId) {
+    if (!userId || !sessionId) {
       return res.status(401).json({
         message: "Invalid token payload",
         code: "INVALID_PAYLOAD",
@@ -46,13 +46,17 @@ export const protectRoute = async (req, res, next) => {
       });
     }
 
-    // ✅ Attach user only
+    // Attach user and sessionId
     req.user = user;
+    req.sessionId = sessionId;
+
+    // Optional: update lastActiveAt asynchronously
+    updateLastActive(userId, sessionId).catch(console.error);
 
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
-    res.clearCookie("jwt");
+    res.clearCookie("accessToken");
 
     res.status(500).json({
       message: "Authentication failed",
@@ -70,3 +74,4 @@ export const adminOnly = (req, res, next) => {
   }
   next();
 };
+

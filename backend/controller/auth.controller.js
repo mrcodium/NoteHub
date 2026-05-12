@@ -1,45 +1,92 @@
 import User from "../model/user.model.js";
 import bcrypt from "bcryptjs";
-import { clearCookie, generateToken, setCookie } from "../utils/jwt.js";
+import { clearAuthCookies, generateAccessToken, generateRefreshToken, hashToken, setAuthCookies } from "../utils/jwt.js";
+import { createSession, deleteSession, deleteAllSessionsExcept, deleteAllUserSessions, getUserSessions, getSession } from "../utils/sessionStore.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
 import { OAuth2Client } from "google-auth-library";
 import { ENV } from "../config/env.js";
-import {
-  escape,
-  isEmail,
-  isLength,
-  normalizeEmail,
-} from "../utils/validator.js";
+import { escape, isEmail, isLength, normalizeEmail } from "../utils/validator.js";
+import { v4 as uuidv4 } from "uuid";
+import { UAParser } from "ua-parser-js";
+
+// Helper to get location from IP using ip-api with 2s timeout
+const getLocationFromIp = async (ip) => {
+  if (!ip || ip === "::1" || ip === "127.0.0.1") return "Localhost";
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch(`http://ip-api.com/json/${ip}`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!response.ok) return "Unknown Location";
+    const data = await response.json();
+    if (data.status === "success") {
+      return `${data.city}, ${data.countryCode}`;
+    }
+  } catch (error) {
+    // Fail silently
+  }
+  return "Unknown Location";
+};
 
 // common response functions
-const sendAuthResponse = (res, user) => {
-  const token = generateToken({ userId: user._id, role: user.role });
-  setCookie(res, "jwt", token);
+const sendAuthResponse = async (req, res, user) => {
+  const sessionId = uuidv4();
+  
+  // Parse device info
+  const parser = new UAParser(req.headers["user-agent"]);
+  const browser = parser.getBrowser();
+  const os = parser.getOS();
+  const deviceName = `${browser.name || "Unknown Browser"} on ${os.name || "Unknown OS"}`;
+  
+  // Get IP
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket?.remoteAddress;
+  const location = await getLocationFromIp(ip);
+
+  const rawToken = generateRefreshToken();
+  const refreshToken = `${user._id}:${sessionId}:${rawToken}`;
+  const refreshTokenHash = hashToken(rawToken);
+
+  // Save session
+  await createSession({
+    userId: user._id,
+    sessionId,
+    refreshTokenHash,
+    deviceName,
+    ip,
+    location,
+  });
+
+  const accessToken = generateAccessToken({ userId: user._id, sessionId, role: user.role });
+  
+  setAuthCookies(res, accessToken, refreshToken);
 
   const { password, ...userWithoutPassword } = user.toObject();
 
   return res.status(200).json({
     user: userWithoutPassword,
+    sessionId,
   });
+};
+
+const handleDbError = (error) => {
+  return { status: 500, message: "Internal Server Error" };
 };
 
 export const signup = async (req, res) => {
   let { fullName, email, password: inputPassword, otp } = req.body;
-  fullName = fullName.trim();
-  email = email.trim();
-  inputPassword = inputPassword.trim();
-  otp = otp.trim();
+  fullName = fullName?.trim();
+  email = email?.trim();
+  inputPassword = inputPassword?.trim();
+  otp = otp?.trim();
 
   if (!fullName || !email || !inputPassword || !otp) {
     return res.status(400).json({ message: "All fields required." });
   }
 
-  // Validate email format
   if (!isEmail(email)) {
     return res.status(400).json({ message: "Invalid email format" });
   }
 
-  // Validate password strength
   if (!isLength(inputPassword, { min: 6 })) {
     return res.status(400).json({
       message: "Password must contain at least 6 characters.",
@@ -64,18 +111,16 @@ export const signup = async (req, res) => {
         .json({ message: otpValidation.message });
     }
 
-    // password hashing
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(inputPassword, salt);
 
-    // creating the user with temporary username
     const newUser = await User.create({
       fullName: escape(fullName),
       email: normalizedEmail,
       password: hashedPassword,
     });
 
-    return sendAuthResponse(res, newUser);
+    return await sendAuthResponse(req, res, newUser);
   } catch (error) {
     console.error("error in signup controller: \n", error);
     const { status, message } = handleDbError(error);
@@ -105,7 +150,7 @@ export const sendSignupOtp = async (req, res) => {
     });
     res.status(result.status).json({ message: result.message });
   } catch (error) {
-    console.error("error in sendSignupOtp\n", err);
+    console.error("error in sendSignupOtp\n", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
   }
@@ -122,7 +167,6 @@ export const login = async (req, res) => {
       $or: [{ email: identifier.toLowerCase() }, { userName: identifier }],
     }).select("+password");
 
-    // Verify credentials
     if (
       !user ||
       !user.password ||
@@ -130,7 +174,7 @@ export const login = async (req, res) => {
     ) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    return sendAuthResponse(res, user);
+    return await sendAuthResponse(req, res, user);
   } catch (error) {
     console.error("error in login controller: ", error);
     const { status, message } = handleDbError(error);
@@ -138,20 +182,17 @@ export const login = async (req, res) => {
   }
 };
 
-// Initialize without redirect URI
 const client = new OAuth2Client(ENV.GOOGLE_CLIENT_ID, ENV.GOOGLE_CLIENT_SECRET);
 
 export const googleLogin = async (req, res) => {
   const { code, codeVerifier, redirectUri } = req.body;
-  // Input validation and trimming
   if (!code?.trim() || !codeVerifier?.trim() || !redirectUri?.trim()) {
     return res.status(400).json({ message: "All fields required." });
   }
 
-  // Split by comma, optionally surrounded by spaces, and remove empty strings
-  const allowedRedirectUris = ENV.GOOGLE_REDIRECT_URIs.split(/\s*,\s*/) // split on ',' with optional spaces around
-    .map((uri) => uri.trim()) // remove leading/trailing spaces
-    .filter(Boolean); // remove empty strings
+  const allowedRedirectUris = ENV.GOOGLE_REDIRECT_URIs.split(/\s*,\s*/)
+    .map((uri) => uri.trim())
+    .filter(Boolean);
 
   if (!allowedRedirectUris.includes(redirectUri)) {
     return res.status(400).json({
@@ -160,7 +201,6 @@ export const googleLogin = async (req, res) => {
   }
 
   try {
-    // Create token endpoint URL with all parameters
     const tokenEndpoint = `https://oauth2.googleapis.com/token`;
     const params = new URLSearchParams();
     params.append("code", code);
@@ -170,7 +210,6 @@ export const googleLogin = async (req, res) => {
     params.append("grant_type", "authorization_code");
     params.append("code_verifier", codeVerifier);
 
-    // Make direct HTTP request to token endpoint
     const tokenResponse = await fetch(tokenEndpoint, {
       method: "POST",
       headers: {
@@ -182,11 +221,9 @@ export const googleLogin = async (req, res) => {
     const tokens = await tokenResponse.json();
 
     if (!tokenResponse.ok) {
-      console.error("Google token exchange error:", tokens);
       return res.status(400).json({ message: "Invalid authorization code." });
     }
 
-    // Verify ID token using the library
     const ticket = await client.verifyIdToken({
       idToken: tokens.id_token,
       audience: ENV.GOOGLE_CLIENT_ID,
@@ -195,8 +232,7 @@ export const googleLogin = async (req, res) => {
     const payload = ticket.getPayload();
     if (!payload?.email_verified) {
       return res.status(403).json({
-        message:
-          "Google email not verified. Please verify your email with Google first.",
+        message: "Google email not verified.",
       });
     }
 
@@ -204,11 +240,9 @@ export const googleLogin = async (req, res) => {
     const avatar = picture.replace(/=s96-c$/, "=s400-c");
     const normalizedEmail = normalizeEmail(email);
 
-    // Find or create user (aligned with your signup flow)
     let user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      // Create new user (like in signup)
       user = await User.create({
         fullName: escape(fullName || ""),
         email: normalizedEmail,
@@ -218,7 +252,6 @@ export const googleLogin = async (req, res) => {
         hasGoogleAuth: true,
       });
     } else {
-      // Add Google auth to existing account
       if (!user.googleId) {
         user.googleId = googleId;
         user.hasGoogleAuth = true;
@@ -227,8 +260,7 @@ export const googleLogin = async (req, res) => {
       await user.save();
     }
 
-    // Generate token and send response (aligned with login/signup)
-    return sendAuthResponse(res, user);
+    return await sendAuthResponse(req, res, user);
   } catch (error) {
     console.error("Error in Google login controller: ", error);
     const { status, message } = handleDbError(error);
@@ -238,17 +270,122 @@ export const googleLogin = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    const { jwt: token } = req.cookies || {};
-    clearCookie(res, "jwt");
-
-    if (!token) {
-      return res.status(200).json({ message: "Logged out successfully" });
+    if (req.user && req.sessionId) {
+      await deleteSession(req.user._id, req.sessionId);
     }
-
-    res.status(200).json({ message: "Logged out successfully" });
+    clearAuthCookies(res);
+    return res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
   }
 };
+
+export const refresh = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      clearAuthCookies(res);
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
+
+    const [userId, sessionId, rawToken] = refreshToken.split(":");
+    if (!userId || !sessionId || !rawToken) {
+      clearAuthCookies(res);
+      return res.status(401).json({ message: "Invalid refresh token format" });
+    }
+
+    const sessionData = await getSession(userId, sessionId);
+    if (!sessionData) {
+      // Reuse detection: Wiping all sessions!
+      await deleteAllUserSessions(userId);
+      clearAuthCookies(res);
+      return res.status(401).json({ message: "Session invalid or revoked. All sessions terminated." });
+    }
+
+    const expectedHash = hashToken(rawToken);
+    if (sessionData.refreshTokenHash !== expectedHash) {
+      await deleteAllUserSessions(userId);
+      clearAuthCookies(res);
+      return res.status(401).json({ message: "Invalid token hash. All sessions terminated." });
+    }
+
+    // Rotate
+    await deleteSession(userId, sessionId);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      clearAuthCookies(res);
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    return await sendAuthResponse(req, res, user);
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    clearAuthCookies(res);
+    return res.status(500).json({ message: "Internal server error during refresh" });
+  }
+};
+
+export const getSessions = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const currentSessionId = req.sessionId;
+
+    const sessions = await getUserSessions(userId);
+    
+    // Map to response format
+    const formattedSessions = sessions.map(s => ({
+      sessionId: s.sessionId,
+      deviceName: s.deviceName,
+      ip: s.ip,
+      location: s.location,
+      createdAt: s.createdAt,
+      lastActiveAt: s.lastActiveAt,
+      isCurrent: s.sessionId === currentSessionId,
+    }));
+
+    return res.status(200).json({ sessions: formattedSessions });
+  } catch (error) {
+    console.error("getSessions error:", error);
+    return res.status(500).json({ message: "Failed to fetch sessions" });
+  }
+};
+
+export const logoutOthers = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const currentSessionId = req.sessionId;
+    
+    await deleteAllSessionsExcept(userId, currentSessionId);
+    return res.status(200).json({ message: "Logged out all other devices" });
+  } catch (error) {
+    console.error("logoutOthers error:", error);
+    return res.status(500).json({ message: "Failed to logout other devices" });
+  }
+};
+
+export const killSession = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { sessionId } = req.params;
+
+    if (!sessionId) {
+      return res.status(400).json({ message: "Session ID required" });
+    }
+
+    await deleteSession(userId, sessionId);
+
+    if (sessionId === req.sessionId) {
+      clearAuthCookies(res);
+      return res.status(200).json({ message: "Current session logged out" });
+    }
+
+    return res.status(200).json({ message: "Session terminated" });
+  } catch (error) {
+    console.error("killSession error:", error);
+    return res.status(500).json({ message: "Failed to terminate session" });
+  }
+};
+
