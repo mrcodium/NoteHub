@@ -1,7 +1,7 @@
 import User from "../model/user.model.js";
 import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
-import { isEmail, normalizeEmail } from "../utils/validator.js";
+import { isEmail, normalizeEmail, validateUsername } from "../utils/validator.js";
 
 export const isEmailAvailable = async (req, res) => {
   try {
@@ -32,6 +32,43 @@ export const isEmailAvailable = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in isEmailAvailable:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+export const isUserNameAvailable = async (req, res) => {
+  try {
+    const { userName } = req.params;
+    if (!userName) {
+      return res.status(400).json({
+        success: false,
+        message: "Username is required",
+      });
+    }
+
+    // validate the username before checking
+    const { isValid, error } = validateUsername(userName);
+    if (!isValid) {
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: error,
+      });
+    }
+
+    const trimmed = userName.trim().toLowerCase();
+    const existingUser = await User.findOne({ userName: trimmed });
+
+    res.status(200).json({
+      success: true,
+      available: !existingUser,
+      message: existingUser
+        ? "Username is already taken"
+        : "Username is available",
+    });
+  } catch (error) {
+    console.error("Error in isUserNameAvailable:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
   }

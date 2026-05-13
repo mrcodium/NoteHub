@@ -6,6 +6,7 @@ import {
   getUser, 
   updateUser, 
   batchUpdateUsers,
+  createUser,
   getUserSessionsByAdmin,
   terminateUserSessionByAdmin,
   terminateAllUserSessionsByAdmin,
@@ -22,6 +23,7 @@ const router = express.Router();
 router.use(protectRoute, adminOnly);
 
 router.get("/users", getAllUsers);
+router.post("/users", createUser);
 router.post("/users/batch", batchUpdateUsers);
 router.get("/users/:userId", getUser);
 router.patch("/users/:userId", updateUser);

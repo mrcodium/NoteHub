@@ -487,11 +487,15 @@ export const getPublicNotes = async (req, res) => {
 
       // Authenticated user conditions
       if (requesterId) {
-        // RULE 2: Owner sees everything in their collections
-        noteQueryConditions.push({
-          "collectionId.userId": requesterId,
-        });
-
+        // RULE 0: Admins see everything
+        if (requester.role === "admin") {
+          noteQueryConditions.push({}); // Match all
+        } else {
+          // RULE 2: Owner sees everything in their collections
+          noteQueryConditions.push({
+            "collectionId.userId": requesterId,
+          });
+        }
         // RULE 3: Public collection + Private note → Note collaborators
         noteQueryConditions.push({
           "collectionId.visibility": "public",

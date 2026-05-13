@@ -3,6 +3,7 @@ import Collection from "../model/collection.model.js";
 import Note from "../model/note.model.js";
 import { getCache, setCache, cacheKeys, invalidateFeedsAndSearch, invalidateCollectionCache, invalidateNoteCache, fetchWithCache } from "../services/cache.service.js";
 import User from "../model/user.model.js";
+import { handleDbError } from "../utils/dbError.js";
 
 export const createCollection = async (req, res) => {
   const { name, visibility, collaborators } = req.body;
@@ -62,7 +63,8 @@ export const deleteCollection = async (req, res) => {
       return res.status(404).json({ message: "Collection not found." });
     }
 
-    if (collection.userId.toString() !== user._id.toString()) {
+    const isAdmin = user.role === "admin";
+    if (collection.userId.toString() !== user._id.toString() && !isAdmin) {
       return res.status(403).json({
         message:
           "Forbidden: you do not have permission to delete this collection.",
@@ -72,9 +74,10 @@ export const deleteCollection = async (req, res) => {
     // deleting associated notes as well.
     await Note.deleteMany({ collectionId: _id });
     await Collection.findByIdAndDelete(_id);
-    
+
     // Invalidate cache
-    await invalidateCollectionCache(user.userName, collection.slug);
+    const owner = await User.findById(collection.userId);
+    await invalidateCollectionCache(owner.userName, collection.slug);
     await invalidateFeedsAndSearch();
 
     res.status(200).json({ message: "Collection deleted successfully." });
@@ -86,7 +89,8 @@ export const deleteCollection = async (req, res) => {
 };
 
 export const renameCollection = async (req, res) => {
-  const { _id, newName } = req.body;
+  const { _id, newName, newSlug } = req.body;
+  const { user } = req;
 
   if (!_id || !newName) {
     return res.status(400).json({ message: "_id and newName are required." });
@@ -98,13 +102,24 @@ export const renameCollection = async (req, res) => {
       return res.status(404).json({ message: "Collection not found." });
     }
 
+    const isAdmin = user.role === "admin";
+    if (collection.userId.toString() !== user._id.toString() && !isAdmin) {
+      return res.status(403).json({
+        message: "You don't have permission to rename this collection.",
+      });
+    }
+
     const oldSlug = collection.slug;
     collection.name = newName;
+    if (newSlug && newSlug !== oldSlug) {
+      collection.slug = newSlug.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    }
     await collection.save();
-    
+
     // Invalidate cache
-    await invalidateCollectionCache(user.userName, oldSlug);
-    await invalidateCollectionCache(user.userName, collection.slug); // invalidate new slug in case
+    const owner = await User.findById(collection.userId);
+    await invalidateCollectionCache(owner.userName, oldSlug);
+    await invalidateCollectionCache(owner.userName, collection.slug);
     await invalidateFeedsAndSearch();
 
     res
@@ -117,19 +132,50 @@ export const renameCollection = async (req, res) => {
   }
 };
 
+export const checkCollectionAvailability = async (req, res) => {
+  const { slug, collectionId, userId } = req.query;
+  const { user } = req;
+
+  if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const targetUserId = user.role === "admin" && userId ? userId : user._id;
+
+    const query = {
+      userId: targetUserId,
+      slug: slug.toLowerCase(),
+    };
+
+    if (collectionId && mongoose.Types.ObjectId.isValid(collectionId)) {
+
+      query._id = { $ne: collectionId };
+    }
+
+    const exists = await Collection.exists(query);
+    res.status(200).json({ available: !exists });
+  } catch (error) {
+    console.error("Error in checkCollectionAvailability:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const getCollectionsAggregatePipeline = (
   userId,
-  requestingUserId = null,
+  requester = null,
   slug = null,
   includeNoteCollaborators = false,
 ) => {
-  const requestingUserIdObj = requestingUserId
-    ? new mongoose.Types.ObjectId(requestingUserId)
-    : null;
-  const userIdObj = new mongoose.Types.ObjectId(userId);
+  const requestingUserId = requester?._id;
+  const requestingUserIdStr = requestingUserId ? String(requestingUserId) : null;
+  const userIdStr = userId ? String(userId) : null;
 
-  const isOwner = requestingUserId && userIdObj.equals(requestingUserIdObj);
-  const isCollaborator = requestingUserId && !isOwner;
+  const isOwner = requestingUserIdStr && userIdStr && requestingUserIdStr === userIdStr;
+  const isAdmin = requester?.role === "admin";
+  const isCollaborator = requestingUserId && !isOwner && !isAdmin;
+  const hasFullAccess = isOwner || isAdmin;
+
+  const userIdObj = userIdStr ? new mongoose.Types.ObjectId(userIdStr) : null;
+  const requestingUserIdObj = requestingUserIdStr ? new mongoose.Types.ObjectId(requestingUserIdStr) : null;
 
   // Base note projection
   const noteProjection = {
@@ -149,16 +195,19 @@ const getCollectionsAggregatePipeline = (
     {
       $match: {
         $and: [
-          { userId: userIdObj },
-          {
-            $or: [
-              { visibility: "public" },
-              ...(isOwner ? [{}] : []),
-              ...(isCollaborator
-                ? [{ collaborators: requestingUserIdObj }]
-                : []),
-            ],
-          },
+          ...(userIdObj ? [{ userId: userIdObj }] : []),
+          ...(hasFullAccess
+            ? []
+            : [
+              {
+                $or: [
+                  { visibility: "public" },
+                  ...(isCollaborator
+                    ? [{ collaborators: requestingUserIdObj }]
+                    : []),
+                ],
+              },
+            ]),
           ...(slug ? [{ slug: slug.toLowerCase() }] : []),
         ],
       },
@@ -196,13 +245,13 @@ const getCollectionsAggregatePipeline = (
                   {
                     $or: [
                       { $eq: ["$visibility", "public"] },
-                      ...(isOwner ? [{}] : []),
+                      ...(hasFullAccess ? [{ $eq: [true, true] }] : []),
                       ...(isCollaborator
                         ? [
-                            {
-                              $in: [requestingUserIdObj, "$collaborators"], // ✅ checking note.collaborators
-                            },
-                          ]
+                          {
+                            $in: [requestingUserIdObj, "$collaborators"], // ✅ checking note.collaborators
+                          },
+                        ]
                         : []),
                     ],
                   },
@@ -215,27 +264,27 @@ const getCollectionsAggregatePipeline = (
           },
           ...(includeNoteCollaborators
             ? [
-                {
-                  $lookup: {
-                    from: "users",
-                    localField: "collaborators",
-                    foreignField: "_id",
-                    as: "collaborators",
-                    pipeline: [
-                      {
-                        $project: {
-                          _id: 1,
-                          role: 1,
-                          fullName: 1,
-                          userName: 1,
-                          avatar: 1,
-                          email: 1,
-                        },
+              {
+                $lookup: {
+                  from: "users",
+                  localField: "collaborators",
+                  foreignField: "_id",
+                  as: "collaborators",
+                  pipeline: [
+                    {
+                      $project: {
+                        _id: 1,
+                        role: 1,
+                        fullName: 1,
+                        userName: 1,
+                        avatar: 1,
+                        email: 1,
                       },
-                    ],
-                  },
+                    },
+                  ],
                 },
-              ]
+              },
+            ]
             : []),
         ],
         as: "notes",
@@ -245,6 +294,7 @@ const getCollectionsAggregatePipeline = (
       $addFields: {
         isRequesterCollaborator: isCollaborator,
         isOwner: isOwner,
+        isAdmin: isAdmin,
       },
     },
     {
@@ -259,7 +309,7 @@ const getCollectionsAggregatePipeline = (
         notes: 1,
         collaborators: {
           $cond: {
-            if: { $or: ["$isOwner", "$isRequesterCollaborator"] },
+            if: { $or: ["$isOwner", "$isAdmin", "$isRequesterCollaborator"] },
             then: "$collaborators",
             else: "$$REMOVE",
           },
@@ -279,7 +329,7 @@ export const getAllCollections = async (req, res) => {
     const requestingUserId = req.user?._id; // Check if user is authenticated
     const pipeline = getCollectionsAggregatePipeline(
       userId,
-      requestingUserId,
+      req.user,
       null,
       true,
     );
@@ -311,7 +361,7 @@ export const getCollection = async (req, res) => {
     }
     const pipeline = getCollectionsAggregatePipeline(
       userId,
-      requestingUserId,
+      req.user,
       slug.toLowerCase(),
       true, // Include note collaborators for getCollection
     );
@@ -337,13 +387,13 @@ export const getCollectionBySlug = async (req, res) => {
   const normalizedUsername = username.trim().toLowerCase();
   const normalizedSlug = collectionSlug.trim().toLowerCase();
   const requesterId = requester?._id || null;
-  const requesterIdObj = requesterId ? new mongoose.Types.ObjectId(requesterId) : null;
+  const isAdmin = requester?.role === "admin";
+  const requesterIdObj = (requesterId && mongoose.Types.ObjectId.isValid(requesterId)) ? new mongoose.Types.ObjectId(requesterId) : null;
 
   const cacheKey = cacheKeys.collection.bySlug(normalizedUsername, normalizedSlug, requesterId || "guest");
 
   try {
     const { data } = await fetchWithCache(cacheKey, async () => {
-      // STEP 1: Get user ID (cheap, uses index)
       const user = await User.findOne(
         { userName: normalizedUsername },
         { _id: 1, userName: 1, fullName: 1, avatar: 1 }
@@ -353,13 +403,13 @@ export const getCollectionBySlug = async (req, res) => {
         throw { status: 404, message: "User not found", code: "USER_NOT_FOUND" };
       }
 
-      // STEP 2: Get collection with basic info (cheap, uses index)
       const collection = await Collection.findOne(
-        { 
-          userId: user._id, 
+        {
+          userId: user._id,
           slug: normalizedSlug,
           $or: [
             { visibility: "public" },
+            ...(isAdmin ? [{ _id: { $exists: true } }] : []),
             ...(requesterId ? [
               { userId: requesterIdObj },
               { collaborators: requesterIdObj }
@@ -370,7 +420,6 @@ export const getCollectionBySlug = async (req, res) => {
       ).lean();
 
       if (!collection) {
-        // Check if collection exists but no access
         const exists = await Collection.exists({ userId: user._id, slug: normalizedSlug });
         if (exists) {
           throw { status: 403, message: "Access denied", code: "ACCESS_DENIED" };
@@ -378,12 +427,12 @@ export const getCollectionBySlug = async (req, res) => {
         throw { status: 404, message: "Collection not found", code: "COLLECTION_NOT_FOUND" };
       }
 
-      // STEP 3: Get notes (separate query, but fast with indexes)
       const notes = await Note.find(
         {
           collectionId: collection._id,
           $or: [
             { visibility: "public" },
+            ...(isAdmin ? [{ _id: { $exists: true } }] : []),
             ...(requesterId ? [
               { userId: requesterIdObj },
               { collaborators: requesterIdObj }
@@ -402,56 +451,56 @@ export const getCollectionBySlug = async (req, res) => {
           collaborators: 1,
         }
       )
-      .sort({ createdAt: -1 })
-      .lean();
+        .sort({ createdAt: -1 })
+        .lean();
 
-      // STEP 4: Get collaborator details (only if needed)
       const collaboratorIds = [];
       if (collection.collaborators?.length) {
         collaboratorIds.push(...collection.collaborators);
       }
-      
+
       notes.forEach(note => {
         if (note.collaborators?.length) {
           collaboratorIds.push(...note.collaborators);
         }
       });
 
-      // Get unique collaborator IDs
-      const uniqueCollabIds = [...new Set(collaboratorIds.map(id => id.toString()))];
-      
-      // Fetch all collaborator details in one query
-      const collaborators = uniqueCollabIds.length > 0 
+      const uniqueCollabIds = [...new Set(
+        collaboratorIds
+          .filter(id => id && mongoose.Types.ObjectId.isValid(id.toString()))
+          .map(id => id.toString())
+      )];
+
+      const collaborators = uniqueCollabIds.length > 0
         ? await User.find(
-            { _id: { $in: uniqueCollabIds } },
-            { _id: 1, userName: 1, fullName: 1, avatar: 1, email: 1, role: 1 }
-          ).lean()
+          { _id: { $in: uniqueCollabIds } },
+          { _id: 1, userName: 1, fullName: 1, avatar: 1, email: 1, role: 1 }
+        ).lean()
         : [];
 
-      // Create maps for quick lookup
       const collaboratorMap = new Map(collaborators.map(c => [c._id.toString(), c]));
 
-      // STEP 5: Attach collaborators to collection (if user has permission)
-      const canSeeCollectionCollabs = requesterId && (
+      const canSeeCollectionCollabs = isAdmin || (requesterId && (
         collection.userId.toString() === requesterId.toString() ||
         collection.collaborators?.some(id => id.toString() === requesterId.toString())
-      );
+      ));
+
+
 
       const collectionWithCollabs = {
         ...collection,
-        collaborators: canSeeCollectionCollabs 
+        collaborators: canSeeCollectionCollabs
           ? (collection.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
           : undefined
       };
 
-      // STEP 6: Attach collaborators to notes (if user has permission)
       const notesWithCollabs = notes.map(note => {
-        const canSeeNoteCollabs = requesterId && (
+        const canSeeNoteCollabs = isAdmin || (requesterId && (
           note.userId?.toString() === requesterId.toString() ||
-          collection.userId.toString() === requesterId.toString() || // Collection owner
+          collection.userId.toString() === requesterId.toString() ||
           note.collaborators?.some(id => id.toString() === requesterId.toString()) ||
-          collection.collaborators?.some(id => id.toString() === requesterId.toString()) // Collection collaborator
-        );
+          collection.collaborators?.some(id => id.toString() === requesterId.toString())
+        ));
 
         return {
           ...note,
@@ -461,7 +510,6 @@ export const getCollectionBySlug = async (req, res) => {
         };
       });
 
-      // STEP 7: Prepare response
       return {
         message: "Collection fetched successfully",
         collection: {
@@ -476,7 +524,7 @@ export const getCollectionBySlug = async (req, res) => {
           avatar: user.avatar
         }
       };
-    }, 300); // 5 mins cache
+    }, 300);
 
     return res.status(200).json(data);
 
@@ -502,19 +550,24 @@ export const updateVisibility = async (req, res) => {
   }
 
   try {
-    const collection = await Collection.findOneAndUpdate(
-      { _id: collectionId, userId: user._id },
-      { visibility },
-      { new: true },
-    );
+    const collection = await Collection.findById(collectionId);
     if (!collection) {
-      return res
-        .status(403)
-        .json({ message: "you don't have permission to update it" });
+      return res.status(404).json({ message: "Collection not found" });
     }
-    
+
+    const isAdmin = user.role === "admin";
+    if (collection.userId.toString() !== user._id.toString() && !isAdmin) {
+      return res.status(403).json({
+        message: "You don't have permission to update this collection's visibility.",
+      });
+    }
+
+    collection.visibility = visibility;
+    await collection.save();
+
     // Invalidate cache
-    await invalidateCollectionCache(user.userName, collection.slug);
+    const owner = await User.findById(collection.userId);
+    await invalidateCollectionCache(owner.userName, collection.slug);
     await invalidateFeedsAndSearch();
 
     return res.status(200).json({
@@ -541,27 +594,31 @@ export const updateCollaborators = async (req, res) => {
   collaborators = [...new Set(collaborators)];
 
   try {
-    // Update the collection's collaborators
-    const updatedCollection = await Collection.findOneAndUpdate(
-      { _id: collectionId, userId: user._id },
-      { collaborators },
-      { new: true },
-    ).populate("collaborators", "role fullName userName email avatar _id");
+    const collection = await Collection.findById(collectionId);
+    if (!collection) {
+      return res.status(404).json({ message: "Collection not found" });
+    }
 
-    if (!updatedCollection) {
-      return res.status(404).json({
-        message:
-          "collection not found or you don't have permission to update it",
+    const isAdmin = user.role === "admin";
+    if (collection.userId.toString() !== user._id.toString() && !isAdmin) {
+      return res.status(403).json({
+        message: "You don't have permission to update collaborators for this collection.",
       });
     }
 
+    collection.collaborators = collaborators;
+    await collection.save();
+
     // Invalidate cache
-    await invalidateCollectionCache(user.userName, updatedCollection.slug);
+    const owner = await User.findById(collection.userId);
+    await invalidateCollectionCache(owner.userName, collection.slug);
+    await invalidateFeedsAndSearch();
 
     return res.status(200).json({
-      message: "Collaborators updated and populated successfully",
-      collection: updatedCollection,
+      message: "Collaborators updated successfully",
+      collection: await collection.populate("collaborators", "role fullName userName email avatar _id"),
     });
+
   } catch (error) {
     console.error("Error in updateCollaborators controller:", error);
     const { status, message } = handleDbError(error);

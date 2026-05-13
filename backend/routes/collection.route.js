@@ -9,6 +9,7 @@ import {
     updateVisibility,
     updateCollaborators,
     getCollectionBySlug,
+    checkCollectionAvailability,
 } from '../controller/collection.controller.js';
 import { requester } from '../middleware/requester.middleware.js';
 
@@ -16,6 +17,7 @@ import { requester } from '../middleware/requester.middleware.js';
 const router = express.Router();
 
 router.get('/all-collections', requester, getAllCollections);
+router.get('/check-availability', protectRoute, checkCollectionAvailability);
 router.get('/', requester, getCollection);
 router.get('/:username/:collectionSlug', requester, getCollectionBySlug);
 

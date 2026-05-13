@@ -10,6 +10,7 @@ import {
     getUser,
     getAllUsers,
     isEmailAvailable,
+    isUserNameAvailable,
     requestEmailUpdateOtp,
     confirmEmailUpdate,
     updateProfile,
@@ -22,6 +23,7 @@ const router = express.Router();
 // public routes
 router.get("/", getAllUsers);
 router.get("/check-email/:email", isEmailAvailable);
+router.get("/check-username/:userName", isUserNameAvailable);
 router.get("/me", protectRoute, checkAuth);
 router.get("/:identifier", getUser);
 

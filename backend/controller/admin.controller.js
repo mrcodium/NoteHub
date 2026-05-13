@@ -3,6 +3,7 @@ import { handleDbError } from "../utils/dbError.js";
 import { getUserSessions as getSessions, deleteSession, deleteAllUserSessions } from "../utils/sessionStore.js";
 import bcrypt from "bcryptjs";
 import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
+import { escape, isEmail, isLength, normalizeEmail } from "../utils/validator.js";
 
 // GET /api/admin/users
 export const getAllUsers = async (req, res) => {
@@ -367,6 +368,79 @@ export const removeUserCoverByAdmin = async (req, res) => {
     res.status(200).json({ success: true, user: userWithoutPassword, message: "Cover removed successfully." });
   } catch (error) {
     console.error("Error in admin.removeUserCoverByAdmin:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+
+// POST /api/admin/users
+export const createUser = async (req, res) => {
+  try {
+    let { fullName, userName, email, password, bio, socials } = req.body;
+
+    fullName = fullName?.trim();
+    userName = userName?.trim()?.toLowerCase();
+    email = email?.trim();
+    password = password?.trim();
+
+    if (!fullName || !userName || !email || !password) {
+      return res.status(400).json({ success: false, message: "Required fields missing." });
+    }
+
+    if (!isEmail(email)) {
+      return res.status(400).json({ success: false, message: "Invalid email format." });
+    }
+
+    if (!isLength(password, { min: 6 })) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters." });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+
+    // Uniqueness checks
+    const existingEmail = await User.findOne({ email: normalizedEmail });
+    if (existingEmail) {
+      return res.status(409).json({ success: false, message: "Email already registered." });
+    }
+
+    const existingUserName = await User.findOne({ userName });
+    if (existingUserName) {
+      return res.status(409).json({ success: false, message: "Username already taken." });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Sanitize socials
+    let sanitizedSocials = [];
+    if (Array.isArray(socials)) {
+      sanitizedSocials = socials
+        .filter((item) => item && typeof item === "object" && item.url)
+        .map((item) => ({ url: item.url.trim() }))
+        .filter((item) => item.url.length > 0);
+    }
+
+    const newUser = await User.create({
+      fullName: escape(fullName),
+      userName,
+      email: normalizedEmail,
+      password: hashedPassword,
+      bio: bio?.trim() || "",
+      socials: sanitizedSocials,
+    });
+
+    const { password: _, ...userWithoutPassword } = newUser.toObject();
+
+    console.log(`[ADMIN ACTION] ${req.user.userName} created new user: ${userName} (${newUser._id})`);
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully.",
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    console.error("Error in admin.createUser:", error);
     const { status, message } = handleDbError(error);
     return res.status(status).json({ success: false, message });
   }
