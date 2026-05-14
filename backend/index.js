@@ -51,6 +51,7 @@ app.use(
 
 //ROUTES
 app.use("/api/auth", authRoutes);
+app.use("/api/auth/github", githubRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/password", passwordRoutes);
@@ -58,7 +59,6 @@ app.use("/api/collection", collectionRoutes);
 app.use("/api/note", noteRoutes);
 app.use("/api/images", ImageRoutes);
 app.use("/api/admin", adminRouter);
-app.use("/api/github", githubRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {
