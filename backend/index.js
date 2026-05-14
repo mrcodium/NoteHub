@@ -59,17 +59,6 @@ app.use("/api/note", noteRoutes);
 app.use("/api/images", ImageRoutes);
 app.use("/api/admin", adminRouter);
 app.use("/api/github", githubRoutes);
-app.use("/", sitemapRoutes);
-
-
-// Serve frontend in production
-if (ENV.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
-
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
-  });
-}
 
 app.get("/api/health", async (req, res) => {
   try {
@@ -117,6 +106,27 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
+
+// Catch-all for API routes (returns JSON 404)
+app.all("/api/*", (req, res) => {
+  res.status(404).json({
+    status: "ERROR",
+    message: `API route ${req.originalUrl} not found`,
+  });
+});
+
+app.use("/", sitemapRoutes);
+
+
+// Serve frontend in production
+if (ENV.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  });
+}
+
 
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);

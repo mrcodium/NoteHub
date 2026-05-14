@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
 
-const reservedNames = ["admin", "root", "support", "notehub", "system"];
+const reservedNames = ["admin", "root", "support", "notehub", "system", "api"];
 
 // helper
 const generateUsername = async (base, UserModel) => {
