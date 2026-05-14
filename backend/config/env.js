@@ -13,6 +13,8 @@ export const ENV = {
   // Server
   PORT: process.env.PORT || 8000,
   NODE_ENV: process.env.NODE_ENV || "development",
+  FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+
 
   JWT_SECRET: required("JWT_SECRET"),
   JWT_EXPIRY: required("JWT_EXPIRY"),
@@ -33,6 +35,10 @@ export const ENV = {
   GOOGLE_CLIENT_ID: required("GOOGLE_CLIENT_ID"),
   GOOGLE_CLIENT_SECRET: required("GOOGLE_CLIENT_SECRET"),
   GOOGLE_REDIRECT_URIs: required("GOOGLE_REDIRECT_URIs"),
+
+  GITHUB_CLIENT_ID: required("GITHUB_CLIENT_ID"),
+  GITHUB_CLIENT_SECRET: required("GITHUB_CLIENT_SECRET"),
+  GITHUB_REDIRECT_URI: required("GITHUB_REDIRECT_URI"),
 
   REFRESH_TOKEN_EXPIRY_DAYS: parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "30", 10),
 };

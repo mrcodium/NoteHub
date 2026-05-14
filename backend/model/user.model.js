@@ -116,6 +116,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    github: {
+      username: String,
+      accessToken: String,
+      connectedAt: Date,
+    },
   },
   {
     timestamps: true,

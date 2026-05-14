@@ -135,7 +135,12 @@ export const updateUser = async (req, res) => {
     if (fullName !== undefined) user.fullName = fullName.trim();
     if (bio !== undefined) user.bio = bio.trim();
     if (socials !== undefined) user.socials = socials.map((s) => ({ url: s.url.trim() }));
-    if (role !== undefined) user.role = role;
+    if (role !== undefined) {
+      if (userId === req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: "Administrators cannot change their own roles." });
+      }
+      user.role = role;
+    }
     if (isBanned !== undefined) user.isBanned = isBanned;
 
     await user.save();
@@ -181,10 +186,16 @@ export const batchUpdateUsers = async (req, res) => {
       updateQuery = { role };
     }
 
+    const filteredUserIds = userIds.filter((id) => id !== req.user._id.toString());
+
     if (action === "delete") {
-      await User.updateMany({ _id: { $in: userIds } }, { $set: { isDeleted: true } });
+      if (filteredUserIds.length > 0) {
+        await User.updateMany({ _id: { $in: filteredUserIds } }, { $set: { isDeleted: true } });
+      }
     } else {
-      await User.updateMany({ _id: { $in: userIds } }, { $set: updateQuery });
+      if (filteredUserIds.length > 0) {
+        await User.updateMany({ _id: { $in: filteredUserIds } }, { $set: updateQuery });
+      }
     }
 
     console.log(

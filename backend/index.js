@@ -13,6 +13,8 @@ import ImageRoutes from "./routes/Image.route.js";
 import searchRoutes from "./routes/search.route.js";
 import sitemapRoutes from "./routes/sitemap.route.js";
 import adminRouter from "./routes/admin.route.js";
+import githubRoutes from "./routes/github.route.js";
+
 
 import "./model/Image.model.js";
 import path from "path";
@@ -56,7 +58,9 @@ app.use("/api/collection", collectionRoutes);
 app.use("/api/note", noteRoutes);
 app.use("/api/images", ImageRoutes);
 app.use("/api/admin", adminRouter);
+app.use("/api/github", githubRoutes);
 app.use("/", sitemapRoutes);
+
 
 // Serve frontend in production
 if (ENV.NODE_ENV === "production") {
