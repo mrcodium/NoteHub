@@ -41,4 +41,6 @@ export const ENV = {
   GITHUB_REDIRECT_URI: required("GITHUB_REDIRECT_URI"),
 
   REFRESH_TOKEN_EXPIRY_DAYS: parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "30", 10),
+
+  ENCRYPTION_KEY: required("ENCRYPTION_KEY"),
 };

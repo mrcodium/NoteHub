@@ -80,8 +80,13 @@ export const checkAuth = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     const user = req.user;
-    const { password, ...userWithoutPassword } = user.toObject();
-    res.status(200).json(userWithoutPassword);
+    const userObj = user.toObject();
+    const { password, github, ...userWithoutPassword } = userObj;
+    // Strip the sensitive accessToken but keep the public github info
+    const safeGithub = github
+      ? { username: github.username, connectedAt: github.connectedAt }
+      : undefined;
+    res.status(200).json({ ...userWithoutPassword, ...(safeGithub && { github: safeGithub }) });
   } catch (error) {
     console.error("Error in checkAuth controller: ", error);
     const { status, message } = handleDbError(error);
@@ -113,7 +118,7 @@ export const getUser = async (req, res) => {
       query = { userName: identifier };
     }
 
-    const user = await User.findOne(query).select("-password");
+    const user = await User.findOne(query).select("-password -github.accessToken");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
