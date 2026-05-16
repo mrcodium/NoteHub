@@ -77,13 +77,13 @@ export const githubCallback = async (req, res) => {
 
   if (!code) {
     console.error("GitHub callback: no code provided");
-    return res.redirect(`${ENV.FRONTEND_URL}/profile/${req.user?.userName ?? ""}?github=error&reason=no_code`);
+    return res.redirect(`${ENV.FRONTEND_URL}/${req.user?.userName ?? ""}?github=error&reason=no_code`);
   }
 
   // CSRF: state must match the logged-in user's ID
   if (!req.user || state !== req.user._id.toString()) {
     console.error("GitHub callback: state mismatch or no user", { state, userId: req.user?._id });
-    return res.redirect(`${ENV.FRONTEND_URL}/profile/${req.user?.userName ?? ""}?github=error&reason=state_mismatch`);
+    return res.redirect(`${ENV.FRONTEND_URL}/${req.user?.userName ?? ""}?github=error&reason=state_mismatch`);
   }
 
   try {
@@ -121,7 +121,7 @@ export const githubCallback = async (req, res) => {
 
     if (!userResponse.ok) {
       console.error("GitHub user fetch failed:", userResponse.status);
-      return res.redirect(`${ENV.FRONTEND_URL}/profile/${req.user?.userName ?? ""}?github=error&reason=user_fetch_failed`);
+      return res.redirect(`${ENV.FRONTEND_URL}/${req.user?.userName ?? ""}?github=error&reason=user_fetch_failed`);
     }
 
     const githubUser = await userResponse.json();
@@ -129,7 +129,7 @@ export const githubCallback = async (req, res) => {
     // 3. Save encrypted token to DB
     const user = await User.findById(req.user._id);
     if (!user) {
-      return res.redirect(`${ENV.FRONTEND_URL}/profile/${req.user?.userName ?? ""}?github=error&reason=user_not_found`);
+      return res.redirect(`${ENV.FRONTEND_URL}/${req.user?.userName ?? ""}?github=error&reason=user_not_found`);
     }
 
     user.github = {
@@ -141,10 +141,10 @@ export const githubCallback = async (req, res) => {
     await user.save();
     console.log(`GitHub connected for user ${user.userName} → @${githubUser.login}`);
 
-    res.redirect(`${ENV.FRONTEND_URL}/profile/${user.userName}?github=success`);
+    res.redirect(`${ENV.FRONTEND_URL}/${user.userName}?github=success`);
   } catch (error) {
     console.error("Error in githubCallback:", error);
-    res.redirect(`${ENV.FRONTEND_URL}/profile/${req.user?.userName ?? ""}?github=error&reason=server_error`);
+    res.redirect(`${ENV.FRONTEND_URL}/${req.user?.userName ?? ""}?github=error&reason=server_error`);
   }
 };
 
