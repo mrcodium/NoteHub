@@ -108,6 +108,10 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    skills: {
+      type: [String],
+      default: [],
+    },
     isBanned: {
       type: Boolean,
       default: false,

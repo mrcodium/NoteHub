@@ -312,7 +312,7 @@ export const removeCover = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { user } = req;
-    const { fullName, userName, bio, socials } = req.body;
+    const { fullName, userName, bio, socials, skills } = req.body;
 
     if (fullName !== undefined) user.fullName = fullName.trim();
     if (userName !== undefined) user.userName = userName.trim();
@@ -333,6 +333,23 @@ export const updateProfile = async (req, res) => {
         .filter((item) => item.url.length > 0);
 
       user.socials = sanitizedSocials;
+    }
+
+    if (skills !== undefined) {
+      if (!Array.isArray(skills)) {
+        return res.status(400).json({
+          success: false,
+          message: "Skills must be an array.",
+        });
+      }
+
+      const sanitizedSkills = skills
+        .filter((item) => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+        .slice(0, 10);
+
+      user.skills = sanitizedSkills;
     }
 
     await user.save();

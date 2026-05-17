@@ -115,7 +115,7 @@ export const getUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { fullName, userName, bio, socials, role, isBanned } = req.body;
+    const { fullName, userName, bio, socials, role, isBanned, skills } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -135,6 +135,16 @@ export const updateUser = async (req, res) => {
     if (fullName !== undefined) user.fullName = fullName.trim();
     if (bio !== undefined) user.bio = bio.trim();
     if (socials !== undefined) user.socials = socials.map((s) => ({ url: s.url.trim() }));
+    if (skills !== undefined) {
+      if (!Array.isArray(skills)) {
+        return res.status(400).json({ success: false, message: "Skills must be an array." });
+      }
+      user.skills = skills
+        .filter((s) => typeof s === "string")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+        .slice(0, 10);
+    }
     if (role !== undefined) {
       if (userId === req.user._id.toString()) {
         return res.status(403).json({ success: false, message: "Administrators cannot change their own roles." });
@@ -387,7 +397,7 @@ export const removeUserCoverByAdmin = async (req, res) => {
 // POST /api/admin/users
 export const createUser = async (req, res) => {
   try {
-    let { fullName, userName, email, password, bio, socials } = req.body;
+    let { fullName, userName, email, password, bio, socials, skills } = req.body;
 
     fullName = fullName?.trim();
     userName = userName?.trim()?.toLowerCase();
@@ -432,6 +442,16 @@ export const createUser = async (req, res) => {
         .filter((item) => item.url.length > 0);
     }
 
+    // Sanitize skills
+    let sanitizedSkills = [];
+    if (Array.isArray(skills)) {
+      sanitizedSkills = skills
+        .filter((item) => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+        .slice(0, 10);
+    }
+
     const newUser = await User.create({
       fullName: escape(fullName),
       userName,
@@ -439,6 +459,7 @@ export const createUser = async (req, res) => {
       password: hashedPassword,
       bio: bio?.trim() || "",
       socials: sanitizedSocials,
+      skills: sanitizedSkills,
     });
 
     const { password: _, ...userWithoutPassword } = newUser.toObject();
