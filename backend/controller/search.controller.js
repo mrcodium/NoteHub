@@ -3,8 +3,10 @@ import User from "../model/user.model.js";
 export const searchUsers = async (req, res) => {
   const { query = '' } = req.query;
   try {
+    const activeUser = { isDeleted: false, isBanned: false };
     const users = await User.find(
       {
+        ...activeUser,
         $or: [
           { fullName: { $regex: query, $options: 'i' } },
           { email: { $regex: query, $options: 'i' } },

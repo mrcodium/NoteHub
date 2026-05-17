@@ -25,7 +25,7 @@ export const requester = async (req, res, next) => {
     if (!userId) return next();
 
     const user = await User.findById(userId).select("-password");
-    if (user) {
+    if (user && !user.isDeleted && !user.isBanned) {
       req.user = user;
     }
 

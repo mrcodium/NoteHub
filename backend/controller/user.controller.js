@@ -118,7 +118,8 @@ export const getUser = async (req, res) => {
       query = { userName: identifier };
     }
 
-    const user = await User.findOne(query).select("-password -github.accessToken");
+    const activeUser = { isDeleted: false, isBanned: false };
+    const user = await User.findOne({ ...query, ...activeUser }).select("-password -github.accessToken");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -140,7 +141,8 @@ export const getAllUsers = async (req, res) => {
     const search = req.query.search?.trim().toLowerCase() || "";
     const filter = req.query.filter || "all";
 
-    const query = {};
+    const activeUser = { isDeleted: false, isBanned: false };
+    const query = { ...activeUser };
 
     // Search (prefix-based for performance)
     if (search) {

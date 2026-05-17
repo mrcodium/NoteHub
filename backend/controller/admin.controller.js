@@ -14,15 +14,17 @@ export const getAllUsers = async (req, res) => {
     const search = req.query.search?.trim() || "";
     const skip = (page - 1) * limit;
 
-    const filter = search
-      ? {
-        $or: [
-          { userName: { $regex: search, $options: "i" } },
-          { fullName: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
-        ],
-      }
-      : {};
+    const filter = {
+      isDeleted: false,
+    };
+
+    if (search) {
+      filter.$or = [
+        { userName: { $regex: search, $options: "i" } },
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
 
     const pipeline = [
       { $match: filter },
@@ -99,7 +101,7 @@ export const getUser = async (req, res) => {
     const { userId } = req.params;
 
     const user = await User.findById(userId).select("-password");
-    if (!user) {
+    if (!user || user.isDeleted) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
@@ -118,14 +120,14 @@ export const updateUser = async (req, res) => {
     const { fullName, userName, bio, socials, role, isBanned, skills } = req.body;
 
     const user = await User.findById(userId);
-    if (!user) {
+    if (!user || user.isDeleted) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
     // Username uniqueness check before staging
     if (userName !== undefined) {
       const trimmed = userName.trim();
-      const exists = await User.exists({ userName: trimmed, _id: { $ne: userId } });
+      const exists = await User.exists({ userName: trimmed, _id: { $ne: userId }, isDeleted: false });
       if (exists) {
         return res.status(409).json({ success: false, message: "Username is already taken." });
       }
@@ -224,6 +226,10 @@ export const batchUpdateUsers = async (req, res) => {
 export const getUserSessionsByAdmin = async (req, res) => {
   try {
     const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
     const sessions = await getSessions(userId);
     
     const formattedSessions = sessions.map(s => ({
@@ -247,6 +253,10 @@ export const getUserSessionsByAdmin = async (req, res) => {
 export const terminateUserSessionByAdmin = async (req, res) => {
   try {
     const { userId, sessionId } = req.params;
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
     await deleteSession(userId, sessionId);
     res.status(200).json({ success: true, message: "Session terminated successfully." });
   } catch (error) {
@@ -260,6 +270,10 @@ export const terminateUserSessionByAdmin = async (req, res) => {
 export const terminateAllUserSessionsByAdmin = async (req, res) => {
   try {
     const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
     await deleteAllUserSessions(userId);
     res.status(200).json({ success: true, message: "All sessions terminated successfully." });
   } catch (error) {
@@ -275,6 +289,11 @@ export const updateUserPasswordByAdmin = async (req, res) => {
     const { userId } = req.params;
     const { password } = req.body;
 
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
     if (!password || password.length < 6) {
       return res.status(400).json({ success: false, message: "Password must be at least 6 characters long." });
     }
@@ -282,7 +301,8 @@ export const updateUserPasswordByAdmin = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+    user.password = hashedPassword;
+    await user.save();
 
     res.status(200).json({ success: true, message: "Password updated successfully." });
   } catch (error) {
@@ -299,7 +319,7 @@ export const uploadUserAvatarByAdmin = async (req, res) => {
     const file = req.file;
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    if (!user || user.isDeleted) return res.status(404).json({ success: false, message: "User not found." });
     if (!file) return res.status(400).json({ success: false, message: "No file uploaded." });
 
     if (user.avatar) await deleteImage(user.avatar);
@@ -325,7 +345,7 @@ export const removeUserAvatarByAdmin = async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    if (!user || user.isDeleted) return res.status(404).json({ success: false, message: "User not found." });
     if (!user.avatar) return res.status(400).json({ success: false, message: "No avatar to remove." });
 
     await deleteImage(user.avatar);
@@ -350,7 +370,7 @@ export const uploadUserCoverByAdmin = async (req, res) => {
     const file = req.file;
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    if (!user || user.isDeleted) return res.status(404).json({ success: false, message: "User not found." });
     if (!file) return res.status(400).json({ success: false, message: "No file uploaded." });
 
     if (user.cover) await deleteImage(user.cover);
@@ -376,7 +396,7 @@ export const removeUserCoverByAdmin = async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found." });
+    if (!user || user.isDeleted) return res.status(404).json({ success: false, message: "User not found." });
     if (!user.cover) return res.status(400).json({ success: false, message: "No cover to remove." });
 
     await deleteImage(user.cover);
@@ -419,12 +439,12 @@ export const createUser = async (req, res) => {
     const normalizedEmail = normalizeEmail(email);
 
     // Uniqueness checks
-    const existingEmail = await User.findOne({ email: normalizedEmail });
+    const existingEmail = await User.findOne({ email: normalizedEmail, isDeleted: false });
     if (existingEmail) {
       return res.status(409).json({ success: false, message: "Email already registered." });
     }
 
-    const existingUserName = await User.findOne({ userName });
+    const existingUserName = await User.findOne({ userName, isDeleted: false });
     if (existingUserName) {
       return res.status(409).json({ success: false, message: "Username already taken." });
     }

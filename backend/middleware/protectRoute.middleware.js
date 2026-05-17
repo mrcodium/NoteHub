@@ -49,6 +49,13 @@ export const protectRoute = async (req, res, next) => {
       });
     }
 
+    if (user.isDeleted || user.isBanned) {
+      return res.status(401).json({
+        message: user.isDeleted ? "Your account has been deleted" : "Your account has been banned",
+        code: user.isDeleted ? "USER_DELETED" : "USER_BANNED",
+      });
+    }
+
     // Attach user and sessionId
     req.user = user;
     req.sessionId = sessionId;
