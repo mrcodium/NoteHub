@@ -118,7 +118,7 @@ export const getUser = async (req, res) => {
       query = { userName: identifier };
     }
 
-    const activeUser = { isDeleted: false, isBanned: false };
+    const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
     const user = await User.findOne({ ...query, ...activeUser }).select("-password -github.accessToken");
 
     if (!user) {
@@ -141,7 +141,7 @@ export const getAllUsers = async (req, res) => {
     const search = req.query.search?.trim().toLowerCase() || "";
     const filter = req.query.filter || "all";
 
-    const activeUser = { isDeleted: false, isBanned: false };
+    const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
     const query = { ...activeUser };
 
     // Search (prefix-based for performance)

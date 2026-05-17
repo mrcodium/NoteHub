@@ -15,8 +15,15 @@ export const getAllUsers = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filter = {
-      isDeleted: false,
+      isDeleted: { $ne: true },
     };
+
+    const roleFilter = req.query.filter;
+    if (roleFilter === "admin") {
+      filter.role = "admin";
+    } else if (roleFilter === "user") {
+      filter.role = "user";
+    }
 
     if (search) {
       filter.$or = [
@@ -127,7 +134,7 @@ export const updateUser = async (req, res) => {
     // Username uniqueness check before staging
     if (userName !== undefined) {
       const trimmed = userName.trim();
-      const exists = await User.exists({ userName: trimmed, _id: { $ne: userId }, isDeleted: false });
+      const exists = await User.exists({ userName: trimmed, _id: { $ne: userId }, isDeleted: { $ne: true } });
       if (exists) {
         return res.status(409).json({ success: false, message: "Username is already taken." });
       }
@@ -439,12 +446,12 @@ export const createUser = async (req, res) => {
     const normalizedEmail = normalizeEmail(email);
 
     // Uniqueness checks
-    const existingEmail = await User.findOne({ email: normalizedEmail, isDeleted: false });
+    const existingEmail = await User.findOne({ email: normalizedEmail, isDeleted: { $ne: true } });
     if (existingEmail) {
       return res.status(409).json({ success: false, message: "Email already registered." });
     }
 
-    const existingUserName = await User.findOne({ userName, isDeleted: false });
+    const existingUserName = await User.findOne({ userName, isDeleted: { $ne: true } });
     if (existingUserName) {
       return res.status(409).json({ success: false, message: "Username already taken." });
     }

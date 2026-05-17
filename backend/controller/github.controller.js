@@ -226,6 +226,7 @@ export const getGithubContributions = async (req, res) => {
     res.status(200).json({
       weeks: calendar.weeks,
       totalContributions: calendar.totalContributions,
+      username: user.github.username,
     });
   } catch (error) {
     console.error("Error in getGithubContributions:", error);

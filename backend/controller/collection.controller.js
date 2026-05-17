@@ -394,7 +394,7 @@ export const getCollectionBySlug = async (req, res) => {
 
   try {
     const { data } = await fetchWithCache(cacheKey, async () => {
-      const activeUser = { isDeleted: false, isBanned: false };
+      const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
       const user = await User.findOne(
         { userName: normalizedUsername, ...activeUser },
         { _id: 1, userName: 1, fullName: 1, avatar: 1 }
@@ -468,11 +468,11 @@ export const getCollectionBySlug = async (req, res) => {
 
       const uniqueCollabIds = [...new Set(
         collaboratorIds
-          .filter(id => id && mongoose.Types.ObjectId.isValid(id.toString()))
-          .map(id => id.toString())
+            .filter(id => id && mongoose.Types.ObjectId.isValid(id.toString()))
+            .map(id => id.toString())
       )];
 
-      const activeUserCollab = { isDeleted: false, isBanned: false };
+      const activeUserCollab = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
       const collaborators = uniqueCollabIds.length > 0
         ? await User.find(
           { _id: { $in: uniqueCollabIds }, ...activeUserCollab },

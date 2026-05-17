@@ -3,7 +3,7 @@ import User from "../model/user.model.js";
 export const searchUsers = async (req, res) => {
   const { query = '' } = req.query;
   try {
-    const activeUser = { isDeleted: false, isBanned: false };
+    const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
     const users = await User.find(
       {
         ...activeUser,
