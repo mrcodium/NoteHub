@@ -50,6 +50,35 @@ const noteSchema = new mongoose.Schema(
       default: "",
     },
 
+    seo: {
+      slug: {
+        type: String,
+        default: "",
+      },
+      title: {
+        type: String,
+        default: "",
+      },
+      description: {
+        type: String,
+        default: "",
+      },
+      keywords: {
+        type: [String],
+        default: [],
+      },
+      image: {
+        url: {
+          type: String,
+          default: "",
+        },
+        alt: {
+          type: String,
+          default: "",
+        },
+      },
+    },
+
     tableOfContent: {
       type: [tocEntrySchema],
       default: [],

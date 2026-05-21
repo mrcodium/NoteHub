@@ -348,7 +348,12 @@ export const getNoteBySlug = async (req, res) => {
                         $expr: {
                           $and: [
                             { $eq: ["$collectionId", "$$collectionId"] },
-                            { $eq: ["$slug", noteSlug.toLowerCase()] },
+                            {
+                              $or: [
+                                { $eq: ["$slug", noteSlug.toLowerCase()] },
+                                { $eq: ["$seo.slug", noteSlug.toLowerCase()] },
+                              ]
+                            }
                           ],
                         },
                       },
@@ -370,6 +375,7 @@ export const getNoteBySlug = async (req, res) => {
                         tableOfContent: 1,
                         visibility: 1,
                         slug: 1,
+                        seo: 1,
                         createdAt: 1,
                         updatedAt: 1,
                         contentUpdatedAt: 1,
@@ -415,6 +421,7 @@ export const getNoteBySlug = async (req, res) => {
               tableOfContent: "$collection.note.tableOfContent",
               visibility: "$collection.note.visibility",
               slug: "$collection.note.slug",
+              seo: "$collection.note.seo",
 
               // ✅ DATES
               createdAt: "$collection.note.createdAt",
@@ -573,6 +580,7 @@ export const getPublicNotes = async (req, res) => {
                   content: 1,
                   tableOfContent: 1,
                   visibility: 1,
+                  seo: 1,
                   contentUpdatedAt: 1,
                   createdAt: 1,
                   collaborators: 1,
@@ -776,7 +784,7 @@ export const updateCollaborators = async (req, res) => {
 
 export const updateNote = async (req, res) => {
   const { _id } = req.params;
-  const { name, slug, visibility, collaborators } = req.body;
+  const { name, slug, visibility, collaborators, seo } = req.body;
   const { user } = req;
 
   if (!_id) {
@@ -800,6 +808,7 @@ export const updateNote = async (req, res) => {
     await note.populate("userId", "userName");
     await note.populate("collectionId", "slug");
     const oldSlug = note.slug;
+    const oldSeoSlug = note.seo?.slug;
     const username = note.userId.userName;
     const collectionSlug = note.collectionId.slug;
 
@@ -808,6 +817,20 @@ export const updateNote = async (req, res) => {
     if (slug !== undefined) note.slug = slug;
     if (visibility !== undefined) note.visibility = visibility;
     if (collaborators !== undefined) note.collaborators = collaborators;
+    if (seo !== undefined) {
+      note.seo = {
+        slug: seo.slug !== undefined ? seo.slug.trim().toLowerCase() : (note.seo && note.seo.slug) ?? "",
+        title: seo.title ?? (note.seo && note.seo.title) ?? "",
+        description: seo.description ?? (note.seo && note.seo.description) ?? "",
+        keywords: Array.isArray(seo.keywords)
+          ? seo.keywords.map((k) => k.trim()).filter(Boolean)
+          : (note.seo && Array.isArray(note.seo.keywords) ? note.seo.keywords : []),
+        image: {
+          url: (seo.image && seo.image.url) ?? (note.seo && note.seo.image && note.seo.image.url) ?? "",
+          alt: (seo.image && seo.image.alt) ?? (note.seo && note.seo.image && note.seo.image.alt) ?? "",
+        }
+      };
+    }
 
     await note.save();
 
@@ -820,6 +843,12 @@ export const updateNote = async (req, res) => {
     await invalidateNoteCache(note._id, username, collectionSlug, oldSlug);
     if (oldSlug !== note.slug) {
       await invalidateNoteCache(null, username, collectionSlug, note.slug);
+    }
+    if (oldSeoSlug && oldSeoSlug !== note.seo?.slug) {
+      await invalidateNoteCache(null, username, collectionSlug, oldSeoSlug);
+    }
+    if (note.seo?.slug) {
+      await invalidateNoteCache(null, username, collectionSlug, note.seo.slug);
     }
     await invalidateCollectionCache(username, collectionSlug);
     await invalidateFeedsAndSearch();
