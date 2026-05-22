@@ -532,12 +532,29 @@ export const getAllBlogs = async (req, res) => {
       filter["seo.score"] = { $lt: 50 };
     }
 
+    const sortBy = req.query.sortBy || "updated";
+    const sortDirection = req.query.sortDirection || "desc";
+
+    let sortOption = {};
+    const order = sortDirection === "asc" ? 1 : -1;
+
+    if (sortBy === "seo" || sortBy === "seoScore") {
+      sortOption["seo.score"] = order;
+      sortOption["updatedAt"] = -1; // Stable secondary sort
+    } else if (sortBy === "created" || sortBy === "date" || sortBy === "createdAt") {
+      sortOption["createdAt"] = order;
+    } else if (sortBy === "updated" || sortBy === "updatedAt") {
+      sortOption["updatedAt"] = order;
+    } else {
+      sortOption["updatedAt"] = -1;
+    }
+
     const total = await Note.countDocuments(filter);
 
     const blogs = await Note.find(filter)
       .populate("userId", "userName fullName email avatar")
       .populate("collectionId", "name slug")
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(limit);
 

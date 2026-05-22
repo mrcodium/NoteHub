@@ -149,4 +149,3 @@ userSchema.index({ createdAt: -1 }); // for the default sort
 
 const User = mongoose.model("User", userSchema);
 export default User;
-// "cover": "https://res.cloudinary.com/dhtxrpqna/image/upload/v1752660952/user_covers/68512eb887d26da4a9f7b8b1/file.jpg",
