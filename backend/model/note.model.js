@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { extractTOCAndAddIds } from "../services/extractTOC.js";
+import { calculateSEOScore } from "../services/seo.service.js";
 
 /* ─────────────────────────────────────────────
    SUB-SCHEMA: single TOC entry
@@ -76,6 +77,10 @@ const noteSchema = new mongoose.Schema(
           type: String,
           default: "",
         },
+      },
+      score: {
+        type: Number,
+        default: 100,
       },
     },
 
@@ -204,12 +209,19 @@ noteSchema.pre("validate", async function (next) {
   next();
 });
 
-// TOC regenerator — runs only when `content` actually changed
+// TOC and SEO score regenerator — runs only when `content` or `seo` actually changed
 noteSchema.pre("save", function (next) {
   if (this.isModified("content")) {
     const { html, toc } = extractTOCAndAddIds(this.content);
     this.content = html; // persist heading IDs back to content
     this.tableOfContent = toc;
+  }
+  
+  if (this.isModified("content") || this.isModified("seo") || this.isModified("name")) {
+    if (!this.seo) {
+      this.seo = {};
+    }
+    this.seo.score = calculateSEOScore(this);
   }
   next();
 });

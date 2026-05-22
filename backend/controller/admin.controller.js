@@ -1,4 +1,5 @@
 import User from "../model/user.model.js";
+import Note from "../model/note.model.js";
 import { handleDbError } from "../utils/dbError.js";
 import { getUserSessions as getSessions, deleteSession, deleteAllUserSessions } from "../utils/sessionStore.js";
 import bcrypt from "bcryptjs";
@@ -504,3 +505,58 @@ export const createUser = async (req, res) => {
     return res.status(status).json({ success: false, message });
   }
 };
+
+// GET /api/admin/blogs
+export const getAllBlogs = async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const search = req.query.search?.trim() || "";
+    const healthFilter = req.query.health || "all"; // 'good' (score >= 80), 'warning' (score >= 50 && score < 80), 'critical' (score < 50), 'all'
+    const skip = (page - 1) * limit;
+
+    const filter = {};
+
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { "seo.title": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (healthFilter === "good") {
+      filter["seo.score"] = { $gte: 80 };
+    } else if (healthFilter === "warning") {
+      filter["seo.score"] = { $gte: 50, $lt: 80 };
+    } else if (healthFilter === "critical") {
+      filter["seo.score"] = { $lt: 50 };
+    }
+
+    const total = await Note.countDocuments(filter);
+
+    const blogs = await Note.find(filter)
+      .populate("userId", "userName fullName email avatar")
+      .populate("collectionId", "name slug")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      blogs,
+      pagination: {
+        totalItems: total,
+        currentPage: page,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPreviousPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Error in admin.getAllBlogs:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
+

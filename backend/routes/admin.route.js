@@ -15,6 +15,7 @@ import {
   removeUserAvatarByAdmin,
   uploadUserCoverByAdmin,
   removeUserCoverByAdmin,
+  getAllBlogs,
 } from "../controller/admin.controller.js";
 
 const router = express.Router();
@@ -22,6 +23,7 @@ const router = express.Router();
 // All routes below require login + admin role
 router.use(protectRoute, adminOnly);
 
+router.get("/blogs", getAllBlogs);
 router.get("/users", getAllUsers);
 router.post("/users", createUser);
 router.post("/users/batch", batchUpdateUsers);
