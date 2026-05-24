@@ -20,8 +20,6 @@ const UPLOAD_PRESETS = {
   gallery: {
     quality: "auto",
     fetch_format: "auto",
-    width: 800,
-    crop: "limit",
   },
   default: {
     quality: "auto",
@@ -29,17 +27,34 @@ const UPLOAD_PRESETS = {
   },
 };
 
-export const uploadStream = (buffer, folder = "default_folder", type = "default") => {
+export const uploadStream = (buffer, folder = "default_folder", type = "default", fileMetadata = {}) => {
   return new Promise((resolve, reject) => {
     const preset = UPLOAD_PRESETS[type] || UPLOAD_PRESETS.default;
 
+    const isSvg = fileMetadata.mimetype === "image/svg+xml" || 
+                  (fileMetadata.originalname && fileMetadata.originalname.toLowerCase().endsWith(".svg"));
+
+    const isGif = fileMetadata.mimetype === "image/gif" ||
+                  (fileMetadata.originalname && fileMetadata.originalname.toLowerCase().endsWith(".gif"));
+
+    const uploadOptions = {
+      folder,
+      use_filename: false,
+      unique_filename: true,
+    };
+
+    if (isSvg) {
+      uploadOptions.format = "svg";
+      uploadOptions.resource_type = "image";
+    } else if (isGif) {
+      // Preserve GIF as-is to keep animation intact; skip quality/format transforms
+      uploadOptions.resource_type = "image";
+    } else {
+      Object.assign(uploadOptions, preset);
+    }
+
     const stream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        use_filename: false,
-        unique_filename: true,
-        ...preset,
-      },
+      uploadOptions,
       (error, result) => {
         if (error) return reject(error);
         resolve({

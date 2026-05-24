@@ -10,10 +10,12 @@ export const upload = multer({
       'image/jpeg',
       'image/png',
       'image/webp',
+      'image/gif',
       'image/avif',
+      'image/svg+xml',
     ];
     if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error('Only JPEG, PNG, WebP and AVIF files are allowed'), false);
+      return cb(new Error('Only JPEG, PNG, WebP, GIF, AVIF and SVG files are allowed'), false);
     }
     cb(null, true);
   },

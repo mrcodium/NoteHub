@@ -1,6 +1,7 @@
 import cloudinary from "../config/cloudinary.config.js";
 import Image from "../model/Image.model.js";
-import {uploadStream } from "../services/cloudinary.service.js";
+import { uploadStream } from "../services/cloudinary.service.js";
+import { handleDbError } from "../utils/dbError.js";
 
 
 // Upload gallery image to Cloudinary
@@ -15,7 +16,7 @@ export const uploadGalleryImage = async (req, res) => {
     }
 
     // Upload to Cloudinary from buffer
-    const { secure_url, public_id } = await uploadStream(file.buffer, "gallery", "gallery");
+    const { secure_url, public_id } = await uploadStream(file.buffer, "gallery", "gallery", file);
 
     const newImage = await Image.create({
       userId,

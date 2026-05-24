@@ -333,7 +333,7 @@ export const uploadUserAvatarByAdmin = async (req, res) => {
     if (user.avatar) await deleteImage(user.avatar);
 
     const folder = `user_profiles/${user._id}`;
-    const { secure_url } = await uploadStream(file.buffer, folder, "avatar");
+    const { secure_url } = await uploadStream(file.buffer, folder, "avatar", file);
     user.avatar = secure_url;
     await user.save();
 
@@ -384,7 +384,7 @@ export const uploadUserCoverByAdmin = async (req, res) => {
     if (user.cover) await deleteImage(user.cover);
 
     const folder = `user_covers/${user._id}`;
-    const { secure_url } = await uploadStream(file.buffer, folder, "cover");
+    const { secure_url } = await uploadStream(file.buffer, folder, "cover", file);
     user.cover = secure_url;
     await user.save();
 
