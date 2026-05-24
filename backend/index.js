@@ -12,6 +12,7 @@ import noteRoutes from "./routes/note.route.js";
 import ImageRoutes from "./routes/Image.route.js";
 import searchRoutes from "./routes/search.route.js";
 import sitemapRoutes from "./routes/sitemap.route.js";
+import llmsRoutes from "./routes/llms.route.js";
 import adminRouter from "./routes/admin.route.js";
 import githubRoutes from "./routes/github.route.js";
 
@@ -116,6 +117,7 @@ app.all("/api/*", (req, res) => {
 });
 
 app.use("/", sitemapRoutes);
+app.use("/", llmsRoutes);
 
 
 // Serve frontend in production
