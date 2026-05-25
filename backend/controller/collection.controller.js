@@ -185,6 +185,7 @@ const getCollectionsAggregatePipeline = (
     visibility: 1,
     createdAt: 1,
     updatedAt: 1,
+    seo: 1,
   };
 
   if (includeNoteCollaborators) {
@@ -450,6 +451,7 @@ export const getCollectionBySlug = async (req, res) => {
           contentUpdatedAt: 1,
           userId: 1,
           collaborators: 1,
+          seo: 1,
         }
       )
         .sort({ createdAt: -1 })
