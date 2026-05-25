@@ -2,52 +2,95 @@ import * as cheerio from "cheerio";
 
 /**
  * Converts a note's HTML content back into clean, readable Markdown for LLMs.
+ * Supports: LaTeX (block $$, inline $), tables, images, code blocks, headings,
+ *           bold, italic, lists, blockquotes, links, and horizontal rules.
+ *
  * @param {string} html - HTML content of a note
  * @returns {string} Clean Markdown
  */
 export function htmlToMarkdown(html) {
   if (!html || typeof html !== "string") return "";
 
-  // Load HTML using cheerio
   const $ = cheerio.load(html);
 
-  // 1. Convert headers
+  // ── 0. Block LaTeX math  →  $$...$$ ────────────────────────────────────────
+  $("[data-type='block-math']").each(function () {
+    const latex = $(this).attr("data-latex") || "";
+    $(this).replaceWith(`\n\n$$${latex}$$\n\n`);
+  });
+
+  // ── 0b. Inline LaTeX math  →  $...$ ────────────────────────────────────────
+  $("[data-type='inline-math']").each(function () {
+    const latex = $(this).attr("data-latex") || "";
+    $(this).replaceWith(`$${latex}$`);
+  });
+
+  // ── 1. Headings ─────────────────────────────────────────────────────────────
   $("h1, h2, h3, h4, h5, h6").each(function () {
     const level = parseInt(this.tagName.substring(1), 10);
     const prefix = "#".repeat(level);
     $(this).replaceWith(`\n\n${prefix} ${$(this).text().trim()}\n\n`);
   });
 
-  // 2. Convert strong / bold
+  // ── 2. Images  →  ![alt](src) ───────────────────────────────────────────────
+  $("img").each(function () {
+    const src = $(this).attr("src") || "";
+    const alt = $(this).attr("alt") || "";
+    $(this).replaceWith(src ? `\n\n![${alt}](${src})\n\n` : "");
+  });
+
+  // ── 3. Horizontal rules ─────────────────────────────────────────────────────
+  $("hr").each(function () {
+    $(this).replaceWith("\n\n---\n\n");
+  });
+
+  // ── 4. Bold ─────────────────────────────────────────────────────────────────
   $("strong, b").each(function () {
     $(this).replaceWith(`**${$(this).text().trim()}**`);
   });
 
-  // 3. Convert emphasis / italic
+  // ── 5. Italic ───────────────────────────────────────────────────────────────
   $("em, i").each(function () {
     $(this).replaceWith(`*${$(this).text().trim()}*`);
   });
 
-  // 4. Convert block code blocks first to prevent inner code conversions
+  // ── 6. Tables (before paragraphs so cell <p> tags are intact) ───────────────
+  $("table").each(function () {
+    const rows = $(this).find("tr");
+    const lines = [];
+    rows.each(function (i) {
+      const cells = $(this)
+        .find("th, td")
+        .map(function () {
+          return $(this).text().trim().replace(/\|/g, "\\|");
+        })
+        .get();
+      if (!cells.length) return;
+      lines.push(`| ${cells.join(" | ")} |`);
+      if (i === 0) {
+        lines.push(`| ${cells.map(() => "---").join(" | ")} |`);
+      }
+    });
+    $(this).replaceWith(lines.length ? `\n\n${lines.join("\n")}\n\n` : "");
+  });
+
+  // ── 7. Code blocks (pre) ────────────────────────────────────────────────────
   $("pre").each(function () {
     const codeBlock = $(this).find("code");
     const code = codeBlock.length ? codeBlock.text() : $(this).text();
-    
-    // Find language from class (e.g. language-javascript)
     let lang = "";
     const cls = codeBlock.attr("class") || $(this).attr("class") || "";
     const match = cls.match(/language-(\w+)/);
     if (match) lang = match[1];
-
     $(this).replaceWith(`\n\n\`\`\`${lang}\n${code.trim()}\n\`\`\`\n\n`);
   });
 
-  // 5. Convert inline code (that weren't inside <pre>)
+  // ── 8. Inline code ──────────────────────────────────────────────────────────
   $("code").each(function () {
     $(this).replaceWith(`\`${$(this).text()}\``);
   });
 
-  // 6. Convert lists (ul)
+  // ── 9. Unordered lists ──────────────────────────────────────────────────────
   $("ul").each(function () {
     let listItems = "";
     $(this).find("> li").each(function () {
@@ -56,7 +99,7 @@ export function htmlToMarkdown(html) {
     $(this).replaceWith(`\n\n${listItems}\n\n`);
   });
 
-  // 7. Convert ordered lists (ol)
+  // ── 10. Ordered lists ───────────────────────────────────────────────────────
   $("ol").each(function () {
     let listItems = "";
     let i = 1;
@@ -66,37 +109,36 @@ export function htmlToMarkdown(html) {
     $(this).replaceWith(`\n\n${listItems}\n\n`);
   });
 
-  // 8. Convert blockquotes
+  // ── 11. Blockquotes ─────────────────────────────────────────────────────────
   $("blockquote").each(function () {
-    const lines = $(this).text().trim().split("\n").map(l => `> ${l}`).join("\n");
+    const lines = $(this)
+      .text()
+      .trim()
+      .split("\n")
+      .map((l) => `> ${l}`)
+      .join("\n");
     $(this).replaceWith(`\n\n${lines}\n\n`);
   });
 
-  // 9. Convert links
+  // ── 12. Links ───────────────────────────────────────────────────────────────
   $("a").each(function () {
     const href = $(this).attr("href") || "";
     const text = $(this).text().trim();
-    if (href) {
-      $(this).replaceWith(`[${text}](${href})`);
-    } else {
-      $(this).replaceWith(text);
-    }
+    $(this).replaceWith(href ? `[${text}](${href})` : text);
   });
 
-  // 10. Convert paragraphs
+  // ── 13. Paragraphs ──────────────────────────────────────────────────────────
   $("p").each(function () {
-    $(this).replaceWith(`\n\n${$(this).text().trim()}\n\n`);
+    const text = $(this).text().trim();
+    $(this).replaceWith(text ? `\n\n${text}\n\n` : "");
   });
 
-  // 11. Handle line breaks
+  // ── 14. Line breaks ─────────────────────────────────────────────────────────
   $("br").replaceWith("\n");
 
-  // Get the final converted body text
+  // ── Cleanup ─────────────────────────────────────────────────────────────────
   let text = $.text();
-
-  // Normalize newlines and clean up excess spacing
   text = text.replace(/\r\n/g, "\n");
-  text = text.replace(/\n{3,}/g, "\n\n"); // Collapse 3+ newlines to double newlines
-  
+  text = text.replace(/\n{3,}/g, "\n\n");
   return text.trim();
 }
