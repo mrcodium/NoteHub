@@ -253,9 +253,6 @@ export const updateContent = async (req, res) => {
     if (oldSlug && oldSlug !== note.slug) {
       await invalidateNoteCache(null, username, collectionSlug, oldSlug);
     }
-    if (oldSeoSlug) {
-      await invalidateNoteCache(null, username, collectionSlug, oldSeoSlug);
-    }
     await invalidateFeedsAndSearch();
 
     return res.status(200).json({
