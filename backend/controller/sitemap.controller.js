@@ -5,7 +5,7 @@ import { getCache, setCache, delCache } from "../services/cache.service.js";
 
 const FALLBACK_SITE_URL =
   process.env.SITE_URL || "https://notehub-38kp.onrender.com";
-const SITEMAP_CACHE_KEY = "sitemap:template";
+const SITEMAP_CACHE_KEY = "sitemap:template:v2";
 const CACHE_TTL_SEC = 60 * 60; // 1 hour
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -67,9 +67,10 @@ async function saveTemplateToCache(template) {
 
 async function buildSitemapTemplate() {
   const P = "__SITE_URL__";
+  const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
 
   /* USERS */
-  const users = await User.find({}).select("_id userName updatedAt").lean();
+  const users = await User.find(activeUser).select("_id userName updatedAt").lean();
   const userMap = new Map(users.map((u) => [u._id.toString(), u.userName]));
 
   const userUrls = users.map((u) =>
