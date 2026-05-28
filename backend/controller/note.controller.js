@@ -191,7 +191,7 @@ export const deleteNote = async (req, res) => {
 };
 
 export const updateContent = async (req, res) => {
-  const { content, noteId } = req.body;
+  const { content, noteId, slug, seo } = req.body;
   const { user } = req;
 
   if (!noteId || content === undefined) {
@@ -218,7 +218,6 @@ export const updateContent = async (req, res) => {
     }
 
     const oldSlug = note.slug;
-    const oldSeoSlug = note.seo?.slug;
 
     note.content = content;
     if (slug !== undefined) note.slug = slug;
