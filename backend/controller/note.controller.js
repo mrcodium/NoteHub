@@ -76,6 +76,8 @@ export const createNote = async (req, res) => {
     content = "",
     visibility = "public",
     collaborators,
+    slug,
+    seo,
   } = req.body;
   const { user } = req;
 
@@ -215,7 +217,24 @@ export const updateContent = async (req, res) => {
       });
     }
 
+    const oldSlug = note.slug;
+    const oldSeoSlug = note.seo?.slug;
+
     note.content = content;
+    if (slug !== undefined) note.slug = slug;
+    if (seo !== undefined) {
+      note.seo = {
+        title: seo.title ?? (note.seo && note.seo.title) ?? "",
+        description: seo.description ?? (note.seo && note.seo.description) ?? "",
+        keywords: Array.isArray(seo.keywords)
+          ? seo.keywords.map((k) => k.trim()).filter(Boolean)
+          : (note.seo && Array.isArray(note.seo.keywords) ? note.seo.keywords : []),
+        image: {
+          url: (seo.image && seo.image.url) ?? (note.seo && note.seo.image && note.seo.image.url) ?? "",
+          alt: (seo.image && seo.image.alt) ?? (note.seo && note.seo.image && note.seo.image.alt) ?? "",
+        },
+      };
+    }
     note.contentUpdatedAt = new Date();
     await note.save(); // ✅ pre("save") hook runs cleanly, no populated refs to confuse Mongoose
 
@@ -232,6 +251,12 @@ export const updateContent = async (req, res) => {
     const noteSlug = note.slug;
 
     await invalidateNoteCache(note._id, username, collectionSlug, noteSlug);
+    if (oldSlug && oldSlug !== note.slug) {
+      await invalidateNoteCache(null, username, collectionSlug, oldSlug);
+    }
+    if (oldSeoSlug) {
+      await invalidateNoteCache(null, username, collectionSlug, oldSeoSlug);
+    }
     await invalidateFeedsAndSearch();
 
     return res.status(200).json({
@@ -348,12 +373,7 @@ export const getNoteBySlug = async (req, res) => {
                         $expr: {
                           $and: [
                             { $eq: ["$collectionId", "$$collectionId"] },
-                            {
-                              $or: [
-                                { $eq: ["$slug", noteSlug.toLowerCase()] },
-                                { $eq: ["$seo.slug", noteSlug.toLowerCase()] },
-                              ]
-                            }
+                            { $eq: ["$slug", noteSlug.toLowerCase()] }
                           ],
                         },
                       },
@@ -808,7 +828,6 @@ export const updateNote = async (req, res) => {
     await note.populate("userId", "userName");
     await note.populate("collectionId", "slug");
     const oldSlug = note.slug;
-    const oldSeoSlug = note.seo?.slug;
     const username = note.userId.userName;
     const collectionSlug = note.collectionId.slug;
 
@@ -819,7 +838,6 @@ export const updateNote = async (req, res) => {
     if (collaborators !== undefined) note.collaborators = collaborators;
     if (seo !== undefined) {
       note.seo = {
-        slug: seo.slug !== undefined ? seo.slug.trim().toLowerCase() : (note.seo && note.seo.slug) ?? "",
         title: seo.title ?? (note.seo && note.seo.title) ?? "",
         description: seo.description ?? (note.seo && note.seo.description) ?? "",
         keywords: Array.isArray(seo.keywords)
@@ -843,12 +861,6 @@ export const updateNote = async (req, res) => {
     await invalidateNoteCache(note._id, username, collectionSlug, oldSlug);
     if (oldSlug !== note.slug) {
       await invalidateNoteCache(null, username, collectionSlug, note.slug);
-    }
-    if (oldSeoSlug && oldSeoSlug !== note.seo?.slug) {
-      await invalidateNoteCache(null, username, collectionSlug, oldSeoSlug);
-    }
-    if (note.seo?.slug) {
-      await invalidateNoteCache(null, username, collectionSlug, note.seo.slug);
     }
     await invalidateCollectionCache(username, collectionSlug);
     await invalidateFeedsAndSearch();

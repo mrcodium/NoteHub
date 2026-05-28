@@ -52,10 +52,6 @@ const noteSchema = new mongoose.Schema(
     },
 
     seo: {
-      slug: {
-        type: String,
-        default: "",
-      },
       title: {
         type: String,
         default: "",
