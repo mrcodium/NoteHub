@@ -1,6 +1,7 @@
 import express from "express";
 import { protectRoute, adminOnly } from "../middleware/protectRoute.middleware.js";
 import { handlefileUpload } from "../middleware/multer.middleware.js";
+import linkGraphRoutes from "./linkGraph.route.js";
 import { 
   getAllUsers, 
   getUser, 
@@ -22,6 +23,8 @@ const router = express.Router();
 
 // All routes below require login + admin role
 router.use(protectRoute, adminOnly);
+
+router.use("/", linkGraphRoutes);
 
 router.get("/blogs", getAllBlogs);
 router.get("/users", getAllUsers);
