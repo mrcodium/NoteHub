@@ -49,6 +49,7 @@ const nodeSchema = new mongoose.Schema(
     // Flags
     isOrphan: { type: Boolean, default: false },    // no incoming links
     isDeadEnd: { type: Boolean, default: false },   // no outgoing links
+    isIsolated: { type: Boolean, default: false },   // no incomming + outgoing links
     hasBrokenLinks: { type: Boolean, default: false }, // links to non-existent notes
     hasHttp: { type: Boolean, default: false },     // contains plain http:// links
   },

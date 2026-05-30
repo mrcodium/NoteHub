@@ -191,6 +191,7 @@ export async function buildGraph(notes, onProgress) {
       outgoingCount:  out,
       isOrphan:       inc === 0,
       isDeadEnd:      out === 0,
+      isIsolated:     inc === 0 && out === 0,
       hasBrokenLinks,
       hasHttp:        httpNotes.has(id),
     });
