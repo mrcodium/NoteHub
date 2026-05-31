@@ -1,14 +1,23 @@
 import User from "../model/user.model.js";
 import Note from "../model/note.model.js";
 import { handleDbError } from "../utils/dbError.js";
-import { getUserSessions as getSessions, deleteSession, deleteAllUserSessions } from "../utils/sessionStore.js";
+import {
+  getUserSessions as getSessions,
+  deleteSession,
+  deleteAllUserSessions,
+} from "../utils/sessionStore.js";
 import bcrypt from "bcryptjs";
 import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
-import { escape, isEmail, isLength, normalizeEmail } from "../utils/validator.js";
+import {
+  escape,
+  isEmail,
+  isLength,
+  normalizeEmail,
+} from "../utils/validator.js";
 
 // GET /api/admin/users
 export const getAllUsers = async (req, res) => {
-  console.log('getall users');
+  console.log("getall users");
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -110,7 +119,9 @@ export const getUser = async (req, res) => {
 
     const user = await User.findById(userId).select("-password");
     if (!user || user.isDeleted) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     res.status(200).json({ success: true, user });
@@ -125,29 +136,41 @@ export const getUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { fullName, userName, bio, socials, role, isBanned, skills } = req.body;
+    const { fullName, userName, bio, socials, role, isBanned, skills } =
+      req.body;
 
     const user = await User.findById(userId);
     if (!user || user.isDeleted) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     // Username uniqueness check before staging
     if (userName !== undefined) {
       const trimmed = userName.trim();
-      const exists = await User.exists({ userName: trimmed, _id: { $ne: userId }, isDeleted: { $ne: true } });
+      const exists = await User.exists({
+        userName: trimmed,
+        _id: { $ne: userId },
+        isDeleted: { $ne: true },
+      });
       if (exists) {
-        return res.status(409).json({ success: false, message: "Username is already taken." });
+        return res
+          .status(409)
+          .json({ success: false, message: "Username is already taken." });
       }
       user.userName = trimmed;
     }
 
     if (fullName !== undefined) user.fullName = fullName.trim();
     if (bio !== undefined) user.bio = bio.trim();
-    if (socials !== undefined) user.socials = socials.map((s) => ({ url: s.url.trim() }));
+    if (socials !== undefined)
+      user.socials = socials.map((s) => ({ url: s.url.trim() }));
     if (skills !== undefined) {
       if (!Array.isArray(skills)) {
-        return res.status(400).json({ success: false, message: "Skills must be an array." });
+        return res
+          .status(400)
+          .json({ success: false, message: "Skills must be an array." });
       }
       user.skills = skills
         .filter((s) => typeof s === "string")
@@ -157,7 +180,12 @@ export const updateUser = async (req, res) => {
     }
     if (role !== undefined) {
       if (userId === req.user._id.toString()) {
-        return res.status(403).json({ success: false, message: "Administrators cannot change their own roles." });
+        return res
+          .status(403)
+          .json({
+            success: false,
+            message: "Administrators cannot change their own roles.",
+          });
       }
       user.role = role;
     }
@@ -167,7 +195,7 @@ export const updateUser = async (req, res) => {
 
     // Audit log
     console.log(
-      `[ADMIN ACTION] ${req.user.userName} updated profile of ${user.userName} (${user._id})`
+      `[ADMIN ACTION] ${req.user.userName} updated profile of ${user.userName} (${user._id})`,
     );
 
     const { password, ...userWithoutPassword } = user.toObject();
@@ -189,11 +217,15 @@ export const batchUpdateUsers = async (req, res) => {
     const { userIds, action, role } = req.body;
 
     if (!Array.isArray(userIds) || userIds.length === 0) {
-      return res.status(400).json({ success: false, message: "No users selected." });
+      return res
+        .status(400)
+        .json({ success: false, message: "No users selected." });
     }
 
     if (!["delete", "ban", "unban", "assignRole"].includes(action)) {
-      return res.status(400).json({ success: false, message: "Invalid action." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid action." });
     }
 
     let updateQuery = {};
@@ -201,28 +233,43 @@ export const batchUpdateUsers = async (req, res) => {
     if (action === "unban") updateQuery = { isBanned: false };
     if (action === "assignRole") {
       if (!["user", "admin"].includes(role)) {
-        return res.status(400).json({ success: false, message: "Invalid role." });
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid role." });
       }
       updateQuery = { role };
     }
 
-    const filteredUserIds = userIds.filter((id) => id !== req.user._id.toString());
+    const filteredUserIds = userIds.filter(
+      (id) => id !== req.user._id.toString(),
+    );
 
     if (action === "delete") {
       if (filteredUserIds.length > 0) {
-        await User.updateMany({ _id: { $in: filteredUserIds } }, { $set: { isDeleted: true } });
+        await User.updateMany(
+          { _id: { $in: filteredUserIds } },
+          { $set: { isDeleted: true } },
+        );
       }
     } else {
       if (filteredUserIds.length > 0) {
-        await User.updateMany({ _id: { $in: filteredUserIds } }, { $set: updateQuery });
+        await User.updateMany(
+          { _id: { $in: filteredUserIds } },
+          { $set: updateQuery },
+        );
       }
     }
 
     console.log(
-      `[ADMIN ACTION] ${req.user.userName} performed batch ${action} on ${userIds.length} users`
+      `[ADMIN ACTION] ${req.user.userName} performed batch ${action} on ${userIds.length} users`,
     );
 
-    res.status(200).json({ success: true, message: `Batch ${action} completed successfully.` });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: `Batch ${action} completed successfully.`,
+      });
   } catch (error) {
     console.error("Error in admin.batchUpdateUsers:", error);
     const { status, message } = handleDbError(error);
@@ -236,11 +283,13 @@ export const getUserSessionsByAdmin = async (req, res) => {
     const { userId } = req.params;
     const user = await User.findById(userId);
     if (!user || user.isDeleted) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
     const sessions = await getSessions(userId);
-    
-    const formattedSessions = sessions.map(s => ({
+
+    const formattedSessions = sessions.map((s) => ({
       sessionId: s.sessionId,
       deviceName: s.deviceName,
       ip: s.ip,
@@ -263,10 +312,14 @@ export const terminateUserSessionByAdmin = async (req, res) => {
     const { userId, sessionId } = req.params;
     const user = await User.findById(userId);
     if (!user || user.isDeleted) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
     await deleteSession(userId, sessionId);
-    res.status(200).json({ success: true, message: "Session terminated successfully." });
+    res
+      .status(200)
+      .json({ success: true, message: "Session terminated successfully." });
   } catch (error) {
     console.error("Error in admin.terminateUserSessionByAdmin:", error);
     const { status, message } = handleDbError(error);
@@ -280,10 +333,17 @@ export const terminateAllUserSessionsByAdmin = async (req, res) => {
     const { userId } = req.params;
     const user = await User.findById(userId);
     if (!user || user.isDeleted) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
     await deleteAllUserSessions(userId);
-    res.status(200).json({ success: true, message: "All sessions terminated successfully." });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "All sessions terminated successfully.",
+      });
   } catch (error) {
     console.error("Error in admin.terminateAllUserSessionsByAdmin:", error);
     const { status, message } = handleDbError(error);
@@ -299,11 +359,18 @@ export const updateUserPasswordByAdmin = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user || user.isDeleted) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     if (!password || password.length < 6) {
-      return res.status(400).json({ success: false, message: "Password must be at least 6 characters long." });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Password must be at least 6 characters long.",
+        });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -312,7 +379,9 @@ export const updateUserPasswordByAdmin = async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.status(200).json({ success: true, message: "Password updated successfully." });
+    res
+      .status(200)
+      .json({ success: true, message: "Password updated successfully." });
   } catch (error) {
     console.error("Error in admin.updateUserPasswordByAdmin:", error);
     const { status, message } = handleDbError(error);
@@ -327,20 +396,39 @@ export const uploadUserAvatarByAdmin = async (req, res) => {
     const file = req.file;
 
     const user = await User.findById(userId);
-    if (!user || user.isDeleted) return res.status(404).json({ success: false, message: "User not found." });
-    if (!file) return res.status(400).json({ success: false, message: "No file uploaded." });
+    if (!user || user.isDeleted)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    if (!file)
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded." });
 
     if (user.avatar) await deleteImage(user.avatar);
 
     const folder = `user_profiles/${user._id}`;
-    const { secure_url } = await uploadStream(file.buffer, folder, "avatar", file);
+    const { secure_url } = await uploadStream(
+      file.buffer,
+      folder,
+      "avatar",
+      file,
+    );
     user.avatar = secure_url;
     await user.save();
 
-    console.log(`[ADMIN ACTION] ${req.user.userName} updated avatar of ${user.userName} (${user._id})`);
+    console.log(
+      `[ADMIN ACTION] ${req.user.userName} updated avatar of ${user.userName} (${user._id})`,
+    );
 
     const { password, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({ success: true, user: userWithoutPassword, message: "Avatar updated successfully." });
+    res
+      .status(200)
+      .json({
+        success: true,
+        user: userWithoutPassword,
+        message: "Avatar updated successfully.",
+      });
   } catch (error) {
     console.error("Error in admin.uploadUserAvatarByAdmin:", error);
     const { status, message } = handleDbError(error);
@@ -353,17 +441,31 @@ export const removeUserAvatarByAdmin = async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
-    if (!user || user.isDeleted) return res.status(404).json({ success: false, message: "User not found." });
-    if (!user.avatar) return res.status(400).json({ success: false, message: "No avatar to remove." });
+    if (!user || user.isDeleted)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    if (!user.avatar)
+      return res
+        .status(400)
+        .json({ success: false, message: "No avatar to remove." });
 
     await deleteImage(user.avatar);
     user.avatar = null;
     await user.save();
 
-    console.log(`[ADMIN ACTION] ${req.user.userName} removed avatar of ${user.userName} (${user._id})`);
+    console.log(
+      `[ADMIN ACTION] ${req.user.userName} removed avatar of ${user.userName} (${user._id})`,
+    );
 
     const { password, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({ success: true, user: userWithoutPassword, message: "Avatar removed successfully." });
+    res
+      .status(200)
+      .json({
+        success: true,
+        user: userWithoutPassword,
+        message: "Avatar removed successfully.",
+      });
   } catch (error) {
     console.error("Error in admin.removeUserAvatarByAdmin:", error);
     const { status, message } = handleDbError(error);
@@ -378,20 +480,39 @@ export const uploadUserCoverByAdmin = async (req, res) => {
     const file = req.file;
 
     const user = await User.findById(userId);
-    if (!user || user.isDeleted) return res.status(404).json({ success: false, message: "User not found." });
-    if (!file) return res.status(400).json({ success: false, message: "No file uploaded." });
+    if (!user || user.isDeleted)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    if (!file)
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded." });
 
     if (user.cover) await deleteImage(user.cover);
 
     const folder = `user_covers/${user._id}`;
-    const { secure_url } = await uploadStream(file.buffer, folder, "cover", file);
+    const { secure_url } = await uploadStream(
+      file.buffer,
+      folder,
+      "cover",
+      file,
+    );
     user.cover = secure_url;
     await user.save();
 
-    console.log(`[ADMIN ACTION] ${req.user.userName} updated cover of ${user.userName} (${user._id})`);
+    console.log(
+      `[ADMIN ACTION] ${req.user.userName} updated cover of ${user.userName} (${user._id})`,
+    );
 
     const { password, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({ success: true, user: userWithoutPassword, message: "Cover updated successfully." });
+    res
+      .status(200)
+      .json({
+        success: true,
+        user: userWithoutPassword,
+        message: "Cover updated successfully.",
+      });
   } catch (error) {
     console.error("Error in admin.uploadUserCoverByAdmin:", error);
     const { status, message } = handleDbError(error);
@@ -404,17 +525,31 @@ export const removeUserCoverByAdmin = async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
-    if (!user || user.isDeleted) return res.status(404).json({ success: false, message: "User not found." });
-    if (!user.cover) return res.status(400).json({ success: false, message: "No cover to remove." });
+    if (!user || user.isDeleted)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    if (!user.cover)
+      return res
+        .status(400)
+        .json({ success: false, message: "No cover to remove." });
 
     await deleteImage(user.cover);
     user.cover = null;
     await user.save();
 
-    console.log(`[ADMIN ACTION] ${req.user.userName} removed cover of ${user.userName} (${user._id})`);
+    console.log(
+      `[ADMIN ACTION] ${req.user.userName} removed cover of ${user.userName} (${user._id})`,
+    );
 
     const { password, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({ success: true, user: userWithoutPassword, message: "Cover removed successfully." });
+    res
+      .status(200)
+      .json({
+        success: true,
+        user: userWithoutPassword,
+        message: "Cover removed successfully.",
+      });
   } catch (error) {
     console.error("Error in admin.removeUserCoverByAdmin:", error);
     const { status, message } = handleDbError(error);
@@ -425,7 +560,8 @@ export const removeUserCoverByAdmin = async (req, res) => {
 // POST /api/admin/users
 export const createUser = async (req, res) => {
   try {
-    let { fullName, userName, email, password, bio, socials, skills } = req.body;
+    let { fullName, userName, email, password, bio, socials, skills } =
+      req.body;
 
     fullName = fullName?.trim();
     userName = userName?.trim()?.toLowerCase();
@@ -433,28 +569,47 @@ export const createUser = async (req, res) => {
     password = password?.trim();
 
     if (!fullName || !userName || !email || !password) {
-      return res.status(400).json({ success: false, message: "Required fields missing." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Required fields missing." });
     }
 
     if (!isEmail(email)) {
-      return res.status(400).json({ success: false, message: "Invalid email format." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email format." });
     }
 
     if (!isLength(password, { min: 6 })) {
-      return res.status(400).json({ success: false, message: "Password must be at least 6 characters." });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Password must be at least 6 characters.",
+        });
     }
 
     const normalizedEmail = normalizeEmail(email);
 
     // Uniqueness checks
-    const existingEmail = await User.findOne({ email: normalizedEmail, isDeleted: { $ne: true } });
+    const existingEmail = await User.findOne({
+      email: normalizedEmail,
+      isDeleted: { $ne: true },
+    });
     if (existingEmail) {
-      return res.status(409).json({ success: false, message: "Email already registered." });
+      return res
+        .status(409)
+        .json({ success: false, message: "Email already registered." });
     }
 
-    const existingUserName = await User.findOne({ userName, isDeleted: { $ne: true } });
+    const existingUserName = await User.findOne({
+      userName,
+      isDeleted: { $ne: true },
+    });
     if (existingUserName) {
-      return res.status(409).json({ success: false, message: "Username already taken." });
+      return res
+        .status(409)
+        .json({ success: false, message: "Username already taken." });
     }
 
     // Hash password
@@ -492,7 +647,9 @@ export const createUser = async (req, res) => {
 
     const { password: _, ...userWithoutPassword } = newUser.toObject();
 
-    console.log(`[ADMIN ACTION] ${req.user.userName} created new user: ${userName} (${newUser._id})`);
+    console.log(
+      `[ADMIN ACTION] ${req.user.userName} created new user: ${userName} (${newUser._id})`,
+    );
 
     res.status(201).json({
       success: true,
@@ -510,70 +667,184 @@ export const createUser = async (req, res) => {
 export const getAllBlogs = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
-    const search = req.query.search?.trim() || "";
-    const healthFilter = req.query.health || "all"; // 'good' (score >= 80), 'warning' (score >= 50 && score < 80), 'critical' (score < 50), 'all'
     const skip = (page - 1) * limit;
+    // prevent limit <= 0 and >= 100
+    const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 20)); 
 
-    const filter = {};
+    const search = req.query.search?.trim() || "";
+    const healthFilter = req.query.health || "all";
 
+    const match = {};
+
+    // Search
     if (search) {
-      filter.$or = [
+      match.$or = [
         { name: { $regex: search, $options: "i" } },
         { "seo.title": { $regex: search, $options: "i" } },
       ];
     }
 
+    // Health filter
     if (healthFilter === "good") {
-      filter["seo.score"] = { $gte: 80 };
+      match["seo.score"] = { $gte: 80 };
     } else if (healthFilter === "warning") {
-      filter["seo.score"] = { $gte: 50, $lt: 80 };
+      match["seo.score"] = { $gte: 50, $lt: 80 };
     } else if (healthFilter === "critical") {
-      filter["seo.score"] = { $lt: 50 };
+      match["seo.score"] = { $lt: 50 };
     }
 
     const sortBy = req.query.sortBy || "updated";
     const sortDirection = req.query.sortDirection || "desc";
-
-    let sortOption = {};
     const order = sortDirection === "asc" ? 1 : -1;
 
-    if (sortBy === "seo" || sortBy === "seoScore") {
-      sortOption["seo.score"] = order;
-      sortOption["updatedAt"] = -1; // Stable secondary sort
-    } else if (sortBy === "created" || sortBy === "date" || sortBy === "createdAt") {
-      sortOption["createdAt"] = order;
-    } else if (sortBy === "updated" || sortBy === "updatedAt") {
-      sortOption["updatedAt"] = order;
-    } else {
-      sortOption["updatedAt"] = -1;
+    let sort = { updatedAt: -1 };
+
+    switch (sortBy) {
+      case "seo":
+      case "seoScore":
+        sort = {
+          "seo.score": order,
+          updatedAt: -1, // stable sort
+        };
+        break;
+
+      case "created":
+      case "date":
+      case "createdAt":
+        sort = {
+          createdAt: order,
+        };
+        break;
+
+      case "updated":
+      case "updatedAt":
+        sort = {
+          updatedAt: order,
+        };
+        break;
+
+      case "name":
+        sort = {
+          name: order,
+        };
+        break;
+
+      default:
+        sort = {
+          updatedAt: -1,
+        };
     }
 
-    const total = await Note.countDocuments(filter);
+    const [result] = await Note.aggregate([
+      {
+        $match: match,
+      },
 
-    const blogs = await Note.find(filter)
-      .populate("userId", "userName fullName email avatar")
-      .populate("collectionId", "name slug")
-      .sort(sortOption)
-      .skip(skip)
-      .limit(limit);
+      // IMPORTANT: Sort before pagination
+      {
+        $sort: sort,
+      },
 
-    res.status(200).json({
+      {
+        $facet: {
+          blogs: [
+            { $skip: skip },
+            { $limit: limit },
+
+            {
+              $lookup: {
+                from: "collections",
+                localField: "collectionId",
+                foreignField: "_id",
+                as: "collection",
+              },
+            },
+
+            {
+              $lookup: {
+                from: "users",
+                localField: "userId",
+                foreignField: "_id",
+                as: "user",
+              },
+            },
+
+            {
+              $unwind: {
+                path: "$collection",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+
+            {
+              $unwind: {
+                path: "$user",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                slug: 1,
+                visibility: 1,
+                contentUpdatedAt: 1,
+                createdAt: 1,
+                updatedAt: 1,
+
+                seoScore: "$seo.score",
+
+                collectionId: {
+                  _id: "$collection._id",
+                  name: "$collection.name",
+                  slug: "$collection.slug",
+                },
+
+                userId: {
+                  _id: "$user._id",
+                  fullName: "$user.fullName",
+                  email: "$user.email",
+                  userName: "$user.userName",
+                  avatar: "$user.avatar",
+                },
+              },
+            },
+          ],
+
+          totalCount: [
+            {
+              $count: "count",
+            },
+          ],
+        },
+      },
+    ]);
+
+    const blogs = result?.blogs || [];
+    const total = result?.totalCount?.[0]?.count || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    return res.status(200).json({
       success: true,
       blogs,
       pagination: {
         totalItems: total,
         currentPage: page,
         itemsPerPage: limit,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
+        totalPages,
+        hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
       },
     });
   } catch (error) {
     console.error("Error in admin.getAllBlogs:", error);
+
     const { status, message } = handleDbError(error);
-    return res.status(status).json({ success: false, message });
+
+    return res.status(status).json({
+      success: false,
+      message,
+    });
   }
 };
-

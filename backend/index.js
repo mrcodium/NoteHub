@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import "./queues/campaign.queue.js";
 import express from "express";
 import connectToDb from "./utils/connectToDb.js";
 import cookieParser from "cookie-parser";
@@ -15,6 +16,7 @@ import sitemapRoutes from "./routes/sitemap.route.js";
 import llmsRoutes from "./routes/llms.route.js";
 import adminRouter from "./routes/admin.route.js";
 import githubRoutes from "./routes/github.route.js";
+import mailerRoutes from "./routes/mailer.route.js";
 
 
 import "./model/Image.model.js";
@@ -60,6 +62,7 @@ app.use("/api/collection", collectionRoutes);
 app.use("/api/note", noteRoutes);
 app.use("/api/images", ImageRoutes);
 app.use("/api/admin", adminRouter);
+app.use("/api/mailer", mailerRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {
