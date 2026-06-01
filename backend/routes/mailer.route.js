@@ -13,15 +13,12 @@ import {
   sendCampaign,
   getCampaignJobs,
   deleteCampaign,
-  getUsers,
   campaignProgress,
   getCampaignById,
 } from "../controller/mailer.controller.js";
 
 const router = express.Router();
 
-// users
-router.get("/users", getUsers);
 
 // contacts
 router.get("/contacts", getContacts);

@@ -239,33 +239,3 @@ export const deleteCampaign = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
-// ─── USERS (for contact builder) ─────────────────────────────
-
-export const getUsers = async (req, res) => {
-  try {
-    const { search = "", page = 1, limit = 20 } = req.query;
-    const query = {
-      isDeleted: false,
-      isBanned: false,
-      ...(search && {
-        $or: [
-          { fullName: { $regex: search, $options: "i" } },
-          { userName: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
-        ],
-      }),
-    };
-
-    const users = await User.find(query)
-      .select("fullName userName email avatar")
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
-
-    const total = await User.countDocuments(query);
-    res.json({ success: true, users, total });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
