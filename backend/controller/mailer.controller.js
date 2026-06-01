@@ -165,36 +165,46 @@ export const campaignProgress = async (req, res) => {
   const tick = async () => {
     try {
       const campaign = await Campaign.findById(id).select("status stats");
-      if (!campaign) {
-        send({ error: "Not found" });
-        return true; // stop
-      }
+      if (!campaign) { send({ error: "Not found" }); return true; }
 
       const { stats, status } = campaign;
 
-      // if still marked sending but all jobs processed — finalize it
-      if (status === "sending" && stats.total > 0) {
-        const processed = stats.sent + stats.failed;
-        if (processed >= stats.total) {
-          const finalStatus = stats.failed === stats.total ? "failed" : "done";
-          await Campaign.findByIdAndUpdate(id, { status: finalStatus });
-          send({ status: finalStatus, stats });
-          return true; // stop
-        }
+      // count actual job states from DB — source of truth
+      const [sentCount, failedCount] = await Promise.all([
+        CampaignJob.countDocuments({ campaignId: id, status: "sent" }),
+        CampaignJob.countDocuments({ campaignId: id, status: "failed" }),
+      ]);
+
+      const processedStats = {
+        total: stats.total,
+        sent: sentCount,
+        failed: failedCount,
+      };
+
+      send({ status, stats: processedStats });
+
+      // finalize if all jobs processed
+      if (
+        stats.total > 0 &&
+        sentCount + failedCount >= stats.total
+      ) {
+        const finalStatus = failedCount === stats.total ? "failed" : "done";
+        await Campaign.findByIdAndUpdate(id, {
+          status: finalStatus,
+          "stats.sent": sentCount,
+          "stats.failed": failedCount,
+        });
+        send({ status: finalStatus, stats: processedStats });
+        return true;
       }
 
-      send({ status, stats });
-
-      // stop streaming on terminal state
       if (status === "done" || status === "failed") return true;
-
       return false;
     } catch {
-      return true; // stop on error
+      return true;
     }
   };
 
-  // run immediately then every 1.5s
   const done = await tick();
   if (done) { res.end(); return; }
 
@@ -206,9 +216,7 @@ export const campaignProgress = async (req, res) => {
     }
   }, 1500);
 
-  req.on("close", () => {
-    clearInterval(interval);
-  });
+  req.on("close", () => { clearInterval(interval); });
 };
 
 export const getCampaignJobs = async (req, res) => {

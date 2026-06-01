@@ -666,10 +666,10 @@ export const createUser = async (req, res) => {
 // GET /api/admin/blogs
 export const getAllBlogs = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const skip = (page - 1) * limit;
     // prevent limit <= 0 and >= 100
     const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 20)); 
+    const page = Number(req.query.page) || 1;
+    const skip = (page - 1) * limit;
 
     const search = req.query.search?.trim() || "";
     const healthFilter = req.query.health || "all";
