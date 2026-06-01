@@ -1,13 +1,10 @@
-import { Queue, Worker, QueueEvents } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import { bullRedis } from "../config/bullmq.config.js";
-import { buildContext, sendBrevoEmail } from "../services/mailer.service.js";
+import { sendBrevoEmail } from "../services/mailer.service.js";
 import Campaign from "../model/campaign.model.js";
 import CampaignJob from "../model/campaignJob.model.js";
-import Contact from "../model/contact.model.js";
-import Template from "../model/template.model.js";
-import User from "../model/user.model.js";
 import { Liquid } from "liquidjs";
-import IORedis from "ioredis"
+import IORedis from "ioredis";
 
 const liquidEngine = new Liquid({ strictFilters: false, strictVariables: false });
 
@@ -33,82 +30,85 @@ export const sendQueue = new Queue("campaign-send", {
   },
 });
 
-// ─── QueueEvents (for SSE progress) ──────────────────────────
-
-export const sendQueueEvents = new QueueEvents("campaign-send", {
-  connection: new IORedis({
-    host: bullRedis.options.host,
-    port: bullRedis.options.port,
-    password: bullRedis.options.password,
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false,
-  }),
-});
-
 // ─── Dispatch Worker ──────────────────────────────────────────
-// One job per campaign → fans out to N send jobs
+// Fans out one send-job per recipient email.
+// If extraJson is a per-recipient array, emails are derived from it
+// (frontend already does this, but worker stays consistent).
 
 export const dispatchWorker = new Worker(
   "campaign-dispatch",
   async (job) => {
     const { campaignId } = job.data;
 
-    const campaign = await Campaign.findById(campaignId)
-      .populate("contactId")
-      .populate("templateId");
-
+    const campaign = await Campaign.findById(campaignId);
     if (!campaign) throw new Error(`Campaign ${campaignId} not found`);
 
-    const { contactId: contact, templateId: template, extraJson } = campaign;
+    const { htmlBody, subject, extraJson, emails } = campaign;
 
-    const users = await User.find({
-      _id: { $in: contact.userIds },
-      isDeleted: false,
-      isBanned: false,
-    }).select("fullName userName email avatar bio skills");
+    // Derive authoritative email list
+    let recipientEmails = emails ?? [];
+    let isPerRecipient = false;
 
-    if (users.length === 0) {
+    if (Array.isArray(extraJson) && extraJson.length > 0) {
+      const derived = [
+        ...new Set(
+          extraJson
+            .map((e) => (typeof e.email === "string" ? e.email.trim().toLowerCase() : null))
+            .filter(Boolean)
+        ),
+      ];
+      if (derived.length > 0) {
+        recipientEmails = derived;
+        isPerRecipient = true;
+      }
+    }
+
+    if (recipientEmails.length === 0) {
       await Campaign.findByIdAndUpdate(campaignId, {
         status: "failed",
         "stats.total": 0,
       });
-      throw new Error("No valid users in contact group");
+      throw new Error("No valid recipients for campaign");
     }
 
-    // mark campaign sending
+    // Mark campaign as sending
     await Campaign.findByIdAndUpdate(campaignId, {
       status: "sending",
       sentAt: new Date(),
-      "stats.total": users.length,
+      "stats.total": recipientEmails.length,
       "stats.sent": 0,
       "stats.failed": 0,
     });
 
-    // create pending CampaignJob docs
+    // Create pending CampaignJob docs
     const jobDocs = await CampaignJob.insertMany(
-      users.map((user) => ({
+      recipientEmails.map((email) => ({
         campaignId: campaign._id,
-        userId: user._id,
-        email: user.email,
+        email,
         status: "pending",
       }))
     );
 
-    // fan out to send queue
+    // Fan out to send queue
     await sendQueue.addBulk(
-      users.map((user, i) => ({
+      recipientEmails.map((email, i) => ({
         name: "send-email",
         data: {
           campaignId: campaignId.toString(),
           campaignJobId: jobDocs[i]._id.toString(),
-          userId: user._id.toString(),
-          templateId: template._id.toString(),
-          extraJson,
+          email,
+          subject,
+          htmlBody,
+          extraJson: isPerRecipient
+            ? extraJson.find(
+                (e) => typeof e.email === "string" && e.email.trim().toLowerCase() === email
+              ) ?? {}
+            : extraJson ?? {},
         },
       }))
     );
 
-    console.log(`✅ Dispatched ${users.length} send jobs for campaign ${campaignId}`);
+    console.log(`✅ Dispatched ${recipientEmails.length} send jobs for campaign ${campaignId}`);
   },
   {
     connection: bullRedis,
@@ -117,55 +117,73 @@ export const dispatchWorker = new Worker(
 );
 
 // ─── Send Worker ──────────────────────────────────────────────
-// One job per recipient → render liquid + send via Brevo
+// Renders liquid + sends via Brevo.
+// Marks campaign done/failed when all jobs are processed — no SSE dependency.
 
 export const sendWorker = new Worker(
   "campaign-send",
   async (job) => {
-    const { campaignId, campaignJobId, userId, templateId, extraJson } = job.data;
+    const { campaignId, campaignJobId, email, subject, htmlBody, extraJson } = job.data;
 
-    const [user, template] = await Promise.all([
-      User.findById(userId).select("fullName userName email avatar bio skills"),
-      Template.findById(templateId),
-    ]);
+    // Build liquid context — extra only, no user lookup
+    const context = { extra: extraJson ?? {} };
 
-    if (!user || !template) throw new Error("User or template not found");
-
-    // build liquid context
-    let extra = extraJson ?? {};
-    if (template.mode === "per_recipient" && Array.isArray(extraJson)) {
-      extra = extraJson.find((e) => e.userId === userId) ?? {};
-    }
-
-    const context = buildContext(user, extra);
-
-    const subjectSource = template.subject;
-    const renderedSubject = await liquidEngine.parseAndRender(subjectSource, context);
-    const renderedHtml = await liquidEngine.parseAndRender(template.htmlBody, context);
+    const renderedSubject = await liquidEngine.parseAndRender(subject, context);
+    const renderedHtml = await liquidEngine.parseAndRender(htmlBody, context);
 
     const brevoRes = await sendBrevoEmail({
-      to: user.email,
+      to: email,
       subject: renderedSubject,
       html: renderedHtml,
     });
 
-    // mark job sent
+    // Mark job sent
     await CampaignJob.findByIdAndUpdate(campaignJobId, {
       status: "sent",
       brevoMessageId: brevoRes.messageId || null,
       processedAt: new Date(),
     });
 
-    // increment campaign sent count atomically
+    // Atomically increment sent count
     await Campaign.findByIdAndUpdate(campaignId, {
       $inc: { "stats.sent": 1 },
     });
+
+    // Check if all jobs are done — finalize campaign
+    await tryFinalizeCampaign(campaignId);
   },
   {
     connection: bullRedis,
-    concurrency: 5, // 5 emails at a time — safe for Brevo rate limits
+    concurrency: 5,
   }
 );
+
+// ─── Finalize helper ──────────────────────────────────────────
+// Called after every completed or failed job.
+// Uses findOneAndUpdate with a condition so only one worker wins the race.
+
+async function tryFinalizeCampaign(campaignId) {
+  const campaign = await Campaign.findById(campaignId).select("stats status");
+  if (!campaign) return;
+  if (campaign.status === "done" || campaign.status === "failed") return;
+
+  const { total, sent, failed } = campaign.stats;
+  if (total === 0) return;
+  if (sent + failed < total) return;
+
+  const finalStatus = failed === total ? "failed" : "done";
+
+  // Atomic conditional update — prevents double-write if two workers finish simultaneously
+  await Campaign.findOneAndUpdate(
+    {
+      _id: campaignId,
+      status: "sending", // only update if still in sending state
+    },
+    { status: finalStatus }
+  );
+
+  console.log(`✅ Campaign ${campaignId} finalized as "${finalStatus}"`);
+}
 
 // ─── Send Worker failure handler ──────────────────────────────
 
@@ -173,24 +191,26 @@ sendWorker.on("failed", async (job, err) => {
   if (!job) return;
   const { campaignJobId, campaignId } = job.data;
 
-  await CampaignJob.findByIdAndUpdate(campaignJobId, {
-    status: "failed",
-    error: err.message,
-    processedAt: new Date(),
-  });
+  // Only update if this was the final attempt (no more retries)
+  if (job.attemptsMade >= (job.opts?.attempts ?? 3)) {
+    await CampaignJob.findByIdAndUpdate(campaignJobId, {
+      status: "failed",
+      error: err.message,
+      processedAt: new Date(),
+    });
 
-  await Campaign.findByIdAndUpdate(campaignId, {
-    $inc: { "stats.failed": 1 },
-  });
+    await Campaign.findByIdAndUpdate(campaignId, {
+      $inc: { "stats.failed": 1 },
+    });
 
-  console.error(`❌ Send job failed for campaign ${campaignId}:`, err.message);
+    // Check finalization after failure too
+    await tryFinalizeCampaign(campaignId);
+  }
+
+  console.error(`❌ Send job failed for campaign ${campaignId} (attempt ${job.attemptsMade}):`, err.message);
 });
 
-// ─── Mark campaign done when all send jobs finish ─────────────
-
-sendWorker.on("completed", async () => {
-  // no-op here — we check in the SSE/progress endpoint
-});
+// ─── Dispatch Worker failure handler ─────────────────────────
 
 dispatchWorker.on("failed", async (job, err) => {
   if (!job) return;

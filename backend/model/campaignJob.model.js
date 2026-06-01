@@ -7,11 +7,6 @@ const campaignJobSchema = new mongoose.Schema(
       ref: "Campaign",
       required: true,
     },
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     email: {
       type: String,
       required: true,

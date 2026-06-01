@@ -1,8 +1,7 @@
-import Contact from "../model/contact.model.js";
-import Template from "../model/template.model.js";
 import Campaign from "../model/campaign.model.js";
 import CampaignJob from "../model/campaignJob.model.js";
-import User from "../model/user.model.js";
+import Contact from "../model/contact.model.js";
+import Template from "../model/template.model.js";
 import { dispatchQueue } from "../queues/campaign.queue.js";
 
 // ─── CONTACTS ────────────────────────────────────────────────
@@ -18,8 +17,8 @@ export const getContacts = async (req, res) => {
 
 export const createContact = async (req, res) => {
   try {
-    const { label, userIds, description } = req.body;
-    const contact = await Contact.create({ label, userIds, description });
+    const { label, emails, description } = req.body;
+    const contact = await Contact.create({ label, emails, description });
     res.status(201).json({ success: true, contact });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -87,10 +86,7 @@ export const deleteTemplate = async (req, res) => {
 
 export const getCampaigns = async (req, res) => {
   try {
-    const campaigns = await Campaign.find()
-      .populate("templateId", "name subject")
-      .populate("contactId", "label")
-      .sort({ createdAt: -1 });
+    const campaigns = await Campaign.find().sort({ createdAt: -1 });
     res.json({ success: true, campaigns });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -99,13 +95,9 @@ export const getCampaigns = async (req, res) => {
 
 export const getCampaignById = async (req, res) => {
   try {
-    const campaign = await Campaign.findById(req.params.id)
-      .populate("templateId", "name subject htmlBody mode")
-      .populate("contactId", "label userIds description");
+    const campaign = await Campaign.findById(req.params.id);
     if (!campaign)
-      return res
-        .status(404)
-        .json({ success: false, message: "Campaign not found" });
+      return res.status(404).json({ success: false, message: "Campaign not found" });
     res.json({ success: true, campaign });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -114,14 +106,38 @@ export const getCampaignById = async (req, res) => {
 
 export const createCampaign = async (req, res) => {
   try {
-    const { name, templateId, contactId, extraJson, subject } = req.body;
+    const { name, subject, htmlBody, emails, extraJson } = req.body;
+
+    if (!name?.trim()) return res.status(400).json({ success: false, message: "Name is required" });
+    if (!subject?.trim()) return res.status(400).json({ success: false, message: "Subject is required" });
+    if (!htmlBody?.trim()) return res.status(400).json({ success: false, message: "HTML body is required" });
+
+    // Derive final email list — per-recipient array takes priority
+    let resolvedEmails = Array.isArray(emails) ? emails : [];
+    if (Array.isArray(extraJson) && extraJson.length > 0) {
+      const derived = [
+        ...new Set(
+          extraJson
+            .map((e) => (typeof e.email === "string" ? e.email.trim().toLowerCase() : null))
+            .filter(Boolean)
+        ),
+      ];
+      if (derived.length > 0) resolvedEmails = derived;
+    }
+
+    if (resolvedEmails.length === 0) {
+      return res.status(400).json({ success: false, message: "At least one recipient is required" });
+    }
+
     const campaign = await Campaign.create({
-      name,
-      templateId,
-      contactId,
-      extraJson: extraJson || {},
-      subject: subject || "",
+      name: name.trim(),
+      subject: subject.trim(),
+      htmlBody,
+      emails: resolvedEmails,
+      extraJson: extraJson ?? {},
+      status: "draft",
     });
+
     res.status(201).json({ success: true, campaign });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -138,7 +154,6 @@ export const sendCampaign = async (req, res) => {
     if (campaign.status === "done")
       return res.status(400).json({ success: false, message: "Campaign already sent" });
 
-    // add to dispatch queue — returns immediately
     await dispatchQueue.add("dispatch", { campaignId: campaign._id.toString() });
 
     res.json({ success: true, message: "Campaign queued" });
@@ -147,7 +162,8 @@ export const sendCampaign = async (req, res) => {
   }
 };
 
-// ─── SSE: real-time campaign progress ────────────────────────
+// ─── SSE: real-time campaign progress (pure reader) ──────────
+// Status is set by the worker — this just streams whatever the DB says.
 
 export const campaignProgress = async (req, res) => {
   const { id } = req.params;
@@ -158,48 +174,20 @@ export const campaignProgress = async (req, res) => {
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
-  const send = (data) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const send = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
   const tick = async () => {
     try {
       const campaign = await Campaign.findById(id).select("status stats");
-      if (!campaign) { send({ error: "Not found" }); return true; }
-
-      const { stats, status } = campaign;
-
-      // count actual job states from DB — source of truth
-      const [sentCount, failedCount] = await Promise.all([
-        CampaignJob.countDocuments({ campaignId: id, status: "sent" }),
-        CampaignJob.countDocuments({ campaignId: id, status: "failed" }),
-      ]);
-
-      const processedStats = {
-        total: stats.total,
-        sent: sentCount,
-        failed: failedCount,
-      };
-
-      send({ status, stats: processedStats });
-
-      // finalize if all jobs processed
-      if (
-        stats.total > 0 &&
-        sentCount + failedCount >= stats.total
-      ) {
-        const finalStatus = failedCount === stats.total ? "failed" : "done";
-        await Campaign.findByIdAndUpdate(id, {
-          status: finalStatus,
-          "stats.sent": sentCount,
-          "stats.failed": failedCount,
-        });
-        send({ status: finalStatus, stats: processedStats });
+      if (!campaign) {
+        send({ error: "Not found" });
         return true;
       }
 
-      if (status === "done" || status === "failed") return true;
-      return false;
+      send({ status: campaign.status, stats: campaign.stats });
+
+      // Stop streaming once terminal state is reached
+      return campaign.status === "done" || campaign.status === "failed";
     } catch {
       return true;
     }
@@ -216,14 +204,12 @@ export const campaignProgress = async (req, res) => {
     }
   }, 1500);
 
-  req.on("close", () => { clearInterval(interval); });
+  req.on("close", () => clearInterval(interval));
 };
 
 export const getCampaignJobs = async (req, res) => {
   try {
-    const jobs = await CampaignJob.find({ campaignId: req.params.id })
-      .populate("userId", "fullName userName email avatar")
-      .sort({ createdAt: 1 });
+    const jobs = await CampaignJob.find({ campaignId: req.params.id }).sort({ createdAt: 1 });
     res.json({ success: true, jobs });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

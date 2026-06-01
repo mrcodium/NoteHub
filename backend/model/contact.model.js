@@ -8,10 +8,12 @@ const contactSchema = new mongoose.Schema(
       trim: true,
       unique: true,
     },
-    userIds: [
+    emails: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        type: String,
+        trim: true,
+        lowercase: true,
+        match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email address"],
       },
     ],
     description: {
