@@ -20,6 +20,7 @@ export const ENV = {
   JWT_EXPIRY: required("JWT_EXPIRY"),
   JWT_ISSUER: required("JWT_ISSUER"),
   JWT_AUDIENCE: required("JWT_AUDIENCE"),
+  UNSUBSCRIBE_JWT_SECRET: required("UNSUBSCRIBE_JWT_SECRET"),
 
   MONGODB_URI: required("MONGODB_URI"),
   REDIS_HOST: required("REDIS_HOST"),

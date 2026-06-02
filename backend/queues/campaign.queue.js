@@ -3,8 +3,10 @@ import { bullRedis } from "../config/bullmq.config.js";
 import { sendBrevoEmail } from "../services/mailer.service.js";
 import Campaign from "../model/campaign.model.js";
 import CampaignJob from "../model/campaignJob.model.js";
+import SuppressedEmail from "../model/suppressedEmail.model.js";
 import { Liquid } from "liquidjs";
-import IORedis from "ioredis";
+import jwt from "jsonwebtoken";
+import { ENV } from "../config/env.js";
 
 const liquidEngine = new Liquid({ strictFilters: false, strictVariables: false });
 
@@ -30,10 +32,31 @@ export const sendQueue = new Queue("campaign-send", {
   },
 });
 
+// ─── Helpers ──────────────────────────────────────────────────
+
+/**
+ * Generate a signed JWT unsubscribe token for a recipient.
+ * Stateless — no DB write. Verified on click.
+ */
+function generateUnsubscribeToken(email, campaignId) {
+  return jwt.sign(
+    { email, campaignId: campaignId.toString() },
+    ENV.UNSUBSCRIBE_JWT_SECRET,
+    { expiresIn: "1y" }
+  );
+}
+
+/**
+ * Build the full unsubscribe URL injected into every email's liquid context.
+ */
+function buildUnsubscribeUrl(email, campaignId) {
+  const token = generateUnsubscribeToken(email, campaignId);
+  return `${ENV.FRONTEND_URL}/unsubscribe?token=${token}`;
+}
+
 // ─── Dispatch Worker ──────────────────────────────────────────
 // Fans out one send-job per recipient email.
-// If extraJson is a per-recipient array, emails are derived from it
-// (frontend already does this, but worker stays consistent).
+// Suppressed emails are skipped (CampaignJob created with status "skipped").
 
 export const dispatchWorker = new Worker(
   "campaign-dispatch",
@@ -71,18 +94,50 @@ export const dispatchWorker = new Worker(
       throw new Error("No valid recipients for campaign");
     }
 
+    // ── Suppression check ──────────────────────────────────────
+    // Bulk fetch all suppressed emails in one query
+    const suppressed = await SuppressedEmail.find({
+      email: { $in: recipientEmails },
+    }).select("email");
+
+    const suppressedSet = new Set(suppressed.map((s) => s.email));
+
+    const activeEmails = recipientEmails.filter((e) => !suppressedSet.has(e));
+    const skippedEmails = recipientEmails.filter((e) => suppressedSet.has(e));
+
     // Mark campaign as sending
     await Campaign.findByIdAndUpdate(campaignId, {
       status: "sending",
       sentAt: new Date(),
+      // total = active + skipped; skipped counts toward processed immediately
       "stats.total": recipientEmails.length,
       "stats.sent": 0,
       "stats.failed": 0,
+      "stats.skipped": skippedEmails.length,
     });
 
-    // Create pending CampaignJob docs
+    // Create "skipped" CampaignJob docs for suppressed emails
+    if (skippedEmails.length > 0) {
+      await CampaignJob.insertMany(
+        skippedEmails.map((email) => ({
+          campaignId: campaign._id,
+          email,
+          status: "skipped",
+          processedAt: new Date(),
+        }))
+      );
+    }
+
+    // If everyone was suppressed, finalize immediately
+    if (activeEmails.length === 0) {
+      await Campaign.findByIdAndUpdate(campaignId, { status: "done" });
+      console.log(`✅ Campaign ${campaignId} — all recipients suppressed, marked done`);
+      return;
+    }
+
+    // Create pending CampaignJob docs for active recipients
     const jobDocs = await CampaignJob.insertMany(
-      recipientEmails.map((email) => ({
+      activeEmails.map((email) => ({
         campaignId: campaign._id,
         email,
         status: "pending",
@@ -91,7 +146,7 @@ export const dispatchWorker = new Worker(
 
     // Fan out to send queue
     await sendQueue.addBulk(
-      recipientEmails.map((email, i) => ({
+      activeEmails.map((email, i) => ({
         name: "send-email",
         data: {
           campaignId: campaignId.toString(),
@@ -108,7 +163,10 @@ export const dispatchWorker = new Worker(
       }))
     );
 
-    console.log(`✅ Dispatched ${recipientEmails.length} send jobs for campaign ${campaignId}`);
+    console.log(
+      `✅ Dispatched ${activeEmails.length} send jobs for campaign ${campaignId}` +
+      (skippedEmails.length > 0 ? ` (${skippedEmails.length} suppressed, skipped)` : "")
+    );
   },
   {
     connection: bullRedis,
@@ -117,16 +175,18 @@ export const dispatchWorker = new Worker(
 );
 
 // ─── Send Worker ──────────────────────────────────────────────
-// Renders liquid + sends via Brevo.
-// Marks campaign done/failed when all jobs are processed — no SSE dependency.
+// Renders liquid (including unsubscribe_url) + sends via Brevo.
 
 export const sendWorker = new Worker(
   "campaign-send",
   async (job) => {
     const { campaignId, campaignJobId, email, subject, htmlBody, extraJson } = job.data;
 
-    // Build liquid context — extra only, no user lookup
-    const context = { extra: extraJson ?? {} };
+    // Build liquid context — inject unsubscribe_url automatically
+    const context = {
+      extra: extraJson ?? {},
+      unsubscribe_url: buildUnsubscribeUrl(email, campaignId),
+    };
 
     const renderedSubject = await liquidEngine.parseAndRender(subject, context);
     const renderedHtml = await liquidEngine.parseAndRender(htmlBody, context);
@@ -149,7 +209,6 @@ export const sendWorker = new Worker(
       $inc: { "stats.sent": 1 },
     });
 
-    // Check if all jobs are done — finalize campaign
     await tryFinalizeCampaign(campaignId);
   },
   {
@@ -159,26 +218,21 @@ export const sendWorker = new Worker(
 );
 
 // ─── Finalize helper ──────────────────────────────────────────
-// Called after every completed or failed job.
-// Uses findOneAndUpdate with a condition so only one worker wins the race.
+// Finalizes when sent + failed + skipped === total.
 
 async function tryFinalizeCampaign(campaignId) {
   const campaign = await Campaign.findById(campaignId).select("stats status");
   if (!campaign) return;
   if (campaign.status === "done" || campaign.status === "failed") return;
 
-  const { total, sent, failed } = campaign.stats;
+  const { total, sent, failed, skipped = 0 } = campaign.stats;
   if (total === 0) return;
-  if (sent + failed < total) return;
+  if (sent + failed + skipped < total) return;
 
-  const finalStatus = failed === total ? "failed" : "done";
+  const finalStatus = failed > 0 && sent === 0 ? "failed" : "done";
 
-  // Atomic conditional update — prevents double-write if two workers finish simultaneously
   await Campaign.findOneAndUpdate(
-    {
-      _id: campaignId,
-      status: "sending", // only update if still in sending state
-    },
+    { _id: campaignId, status: "sending" },
     { status: finalStatus }
   );
 
@@ -191,7 +245,6 @@ sendWorker.on("failed", async (job, err) => {
   if (!job) return;
   const { campaignJobId, campaignId } = job.data;
 
-  // Only update if this was the final attempt (no more retries)
   if (job.attemptsMade >= (job.opts?.attempts ?? 3)) {
     await CampaignJob.findByIdAndUpdate(campaignJobId, {
       status: "failed",
@@ -203,7 +256,6 @@ sendWorker.on("failed", async (job, err) => {
       $inc: { "stats.failed": 1 },
     });
 
-    // Check finalization after failure too
     await tryFinalizeCampaign(campaignId);
   }
 
