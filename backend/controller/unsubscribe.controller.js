@@ -78,6 +78,7 @@ export const getSuppressedEmails = async (req, res) => {
 
     const [data, total] = await Promise.all([
       SuppressedEmail.find(filter)
+        .populate("campaignId", "name subject")
         .sort({ createdAt: -1 })
         .skip((+page - 1) * +limit)
         .limit(+limit)
