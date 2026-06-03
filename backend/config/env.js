@@ -14,6 +14,7 @@ export const ENV = {
   PORT: process.env.PORT || 8000,
   NODE_ENV: process.env.NODE_ENV || "development",
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+  BACKEND_URL: process.env.BACKEND_URL || "http://localhost:5000",
 
 
   JWT_SECRET: required("JWT_SECRET"),
