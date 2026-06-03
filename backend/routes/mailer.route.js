@@ -15,10 +15,14 @@ import {
   deleteCampaign,
   campaignProgress,
   getCampaignById,
+  duplicateAndSendCampaign,
 } from "../controller/mailer.controller.js";
+import { deleteSuppressedEmail, getSuppressedEmailByEmail, getSuppressedEmails } from "../controller/unsubscribe.controller.js";
+import { adminOnly, protectRoute } from "../middleware/protectRoute.middleware.js";
 
 const router = express.Router();
 
+router.use(protectRoute, adminOnly);
 
 // contacts
 router.get("/contacts", getContacts);
@@ -32,6 +36,12 @@ router.post("/templates", createTemplate);
 router.put("/templates/:id", updateTemplate);
 router.delete("/templates/:id", deleteTemplate);
 
+// suppression list
+router.get("/suppressed-emails", getSuppressedEmails);
+router.get("/suppressed-emails/:email", getSuppressedEmailByEmail); 
+router.delete("/suppressed-emails", deleteSuppressedEmail);
+
+
 // campaigns
 router.get("/campaigns", getCampaigns);
 router.get("/campaigns/:id", getCampaignById);
@@ -40,5 +50,6 @@ router.post("/campaigns/:id/send", sendCampaign);
 router.get("/campaigns/:id/jobs", getCampaignJobs);
 router.get("/campaigns/:id/progress", campaignProgress); // SSE
 router.delete("/campaigns/:id", deleteCampaign);
+router.post("/campaigns/:id/duplicate", duplicateAndSendCampaign);
 
 export default router;

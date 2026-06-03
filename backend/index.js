@@ -24,6 +24,7 @@ import path from "path";
 import { ENV } from "./config/env.js";
 import { connectRedis } from "./config/redis.js";
 import { requestLogger, captureResponse } from "./middleware/logger.js";
+import { handleUnsubscribe } from "./controller/unsubscribe.controller.js";
 
 config();
 const PORT = ENV.PORT;
@@ -63,6 +64,8 @@ app.use("/api/note", noteRoutes);
 app.use("/api/images", ImageRoutes);
 app.use("/api/admin", adminRouter);
 app.use("/api/mailer", mailerRoutes);
+app.get("/unsubscribe", handleUnsubscribe);
+
 
 app.get("/api/health", async (req, res) => {
   try {

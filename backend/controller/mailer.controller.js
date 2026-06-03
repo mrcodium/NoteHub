@@ -225,3 +225,29 @@ export const deleteCampaign = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const duplicateAndSendCampaign = async (req, res) => {
+  try {
+    const original = await Campaign.findById(req.params.id);
+    if (!original)
+      return res.status(404).json({ success: false, message: "Campaign not found" });
+
+    const campaign = await Campaign.create({
+      name: `${original.name} (Resend)`,
+      subject: original.subject,
+      htmlBody: original.htmlBody,
+      emails: original.emails,
+      extraJson: original.extraJson,
+      status: "draft",
+    });
+
+    await dispatchQueue.add("dispatch", { campaignId: campaign._id.toString() });
+
+    campaign.status = "sending";
+    await campaign.save();
+
+    res.status(201).json({ success: true, campaign });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

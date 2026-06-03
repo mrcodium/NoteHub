@@ -51,7 +51,7 @@ function generateUnsubscribeToken(email, campaignId) {
  */
 function buildUnsubscribeUrl(email, campaignId) {
   const token = generateUnsubscribeToken(email, campaignId);
-  return `${ENV.FRONTEND_URL}/unsubscribe?token=${token}`;
+  return `${ENV.BACKEND_URL}/unsubscribe?token=${token}`;
 }
 
 // ─── Dispatch Worker ──────────────────────────────────────────
@@ -177,6 +177,17 @@ export const dispatchWorker = new Worker(
 // ─── Send Worker ──────────────────────────────────────────────
 // Renders liquid (including unsubscribe_url) + sends via Brevo.
 
+export const TEMPLATE_GLOBALS = {
+  logo:       "https://res.cloudinary.com/dhtxrpqna/image/upload/v1770061775/notehub_2_xgrpqt.png",
+  github:     "https://img.icons8.com/?size=100&id=12599&format=png&color=a1a1a1",
+  linkedin:   "https://img.icons8.com/?size=100&id=8808&format=png&color=a1a1a1",
+  youtube:    "https://img.icons8.com/?size=100&id=37326&format=png&color=a1a1a1",
+  x:          "https://img.icons8.com/?size=100&id=phOKFKYpe00C&format=png&color=a1a1a1",
+  twitter:    "https://img.icons8.com/?size=100&id=phOKFKYpe00C&format=png&color=a1a1a1",
+  instagram:  "https://img.icons8.com/?size=100&id=32309&format=png&color=a1a1a1",
+  facebook:   "https://img.icons8.com/?size=100&id=118467&format=png&color=a1a1a1",
+};
+
 export const sendWorker = new Worker(
   "campaign-send",
   async (job) => {
@@ -184,6 +195,7 @@ export const sendWorker = new Worker(
 
     // Build liquid context — inject unsubscribe_url automatically
     const context = {
+      ...TEMPLATE_GLOBALS,
       extra: extraJson ?? {},
       unsubscribe_url: buildUnsubscribeUrl(email, campaignId),
     };
