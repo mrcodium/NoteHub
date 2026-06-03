@@ -12,6 +12,7 @@ const campaignSchema = new mongoose.Schema(
     stats:     {
       total:  { type: Number, default: 0 },
       sent:   { type: Number, default: 0 },
+      skipped:   { type: Number, default: 0 },
       failed: { type: Number, default: 0 },
     },
   },
