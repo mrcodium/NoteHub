@@ -43,6 +43,8 @@ const Security = lazy(() => import("./pages/Settings/Security"));
 const Photos = lazy(() => import("./pages/Settings/Photos"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
+const ContactPage = lazy(() => import("./pages/ContactPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -121,6 +123,8 @@ function App() {
               <Route path="/forgot-password" element={<ForgetPasswordPage />} />
               <Route path="/oauth/callback" element={<OAuthCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
 
               {/* Dashboard with public routes this route have a layout wrapped inside sidebarinset */}
               <Route path="/" element={<Dashboard />}>

@@ -70,17 +70,13 @@ async function buildSitemapTemplate() {
   const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
 
   /* USERS */
-  const users = await User.find(activeUser).select("_id userName updatedAt").lean();
+  const users = await User.find(activeUser)
+    .select("_id userName updatedAt")
+    .lean();
   const userMap = new Map(users.map((u) => [u._id.toString(), u.userName]));
 
   const userUrls = users.map((u) =>
-    buildUrl(
-      P,
-      `/${u.userName}`,
-      toDateString(u.updatedAt),
-      "weekly",
-      "0.6",
-    ),
+    buildUrl(P, `/${u.userName}`, toDateString(u.updatedAt), "weekly", "0.6"),
   );
 
   /* COLLECTIONS */
@@ -140,6 +136,16 @@ async function buildSitemapTemplate() {
     <loc>${P}</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <url>
+      <loc>${P}/contact</loc>
+      <changefreq>monthly</changefreq>
+      <priority>0.5</priority>
+    </url>
+  </url>
+    <url>
+    <loc>${P}/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>${P}/login</loc>

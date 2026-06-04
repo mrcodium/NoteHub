@@ -1,6 +1,6 @@
 import React from "react";
 
-const GithubIcon = () => {
+const GithubIcon = ({className}) => {
   return (
     <svg
       width="98"
@@ -8,6 +8,7 @@ const GithubIcon = () => {
       viewBox="0 0 98 96"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
+      className={className}
     >
       <g clipPath="url(#clip0_23_2)">
         <path

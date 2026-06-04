@@ -1,6 +1,6 @@
 import React from "react";
 
-const LinkedinIcon = () => {
+const LinkedinIcon = ({className}) => {
   return (
     <svg
       width="24"
@@ -8,6 +8,7 @@ const LinkedinIcon = () => {
       viewBox="0 0 24 24"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
+      className={className}
     >
       <g clipPath="url(#clip0_27_2)">
         <path
