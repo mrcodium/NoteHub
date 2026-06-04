@@ -686,9 +686,9 @@ export const getAllBlogs = async (req, res) => {
 
     // Health filter
     if (healthFilter === "good") {
-      match["seo.score"] = { $gte: 80 };
+      match["seo.score"] = { $gte: 90 };
     } else if (healthFilter === "warning") {
-      match["seo.score"] = { $gte: 50, $lt: 80 };
+      match["seo.score"] = { $gte: 50, $lt: 90 };
     } else if (healthFilter === "critical") {
       match["seo.score"] = { $lt: 50 };
     }
