@@ -246,7 +246,9 @@ export const contactTemplate = ({
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
                             <tr>
                                 <td style="background-color:#252525;border-radius:8px;padding:14px 20px;">
-                                    <table role="presentation" cellpadding="0" cellspacing="0">
+
+                                    <!-- Row 1: Icon + Reason -->
+                                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:${safeSubject ? '12px' : '0'};">
                                         <tr>
                                             <td style="padding-right:12px;vertical-align:middle;">
                                                 <img src="${reason_icon}" alt="${reason_label}" width="32" height="32" style="display:block;">
@@ -255,17 +257,20 @@ export const contactTemplate = ({
                                                 <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;">Reason</p>
                                                 <p style="margin:2px 0 0;font-size:14px;color:#ffffff;font-weight:600;">${reason_label}</p>
                                             </td>
-                                            ${
-                                              safeSubject
-                                                ? `
-                                            <td style="padding-left:24px;border-left:1px solid #333;margin-left:24px;vertical-align:middle;">
-                                                <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;">Subject</p>
-                                                <p style="margin:2px 0 0;font-size:14px;color:#d0d0d0;">${safeSubject}</p>
-                                            </td>`
-                                                : ""
-                                            }
                                         </tr>
                                     </table>
+
+                                    <!-- Row 2: Subject (conditional) -->
+                                    ${safeSubject ? `
+                                    <table role="presentation" cellpadding="0" cellspacing="0" style="border-top:1px solid #333;padding-top:12px;width:100%;">
+                                        <tr>
+                                            <td style="vertical-align:middle;">
+                                                <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;">Subject</p>
+                                                <p style="margin:2px 0 0;font-size:14px;color:#d0d0d0;">${safeSubject}</p>
+                                            </td>
+                                        </tr>
+                                    </table>` : ""}
+
                                 </td>
                             </tr>
                         </table>
