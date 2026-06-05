@@ -78,18 +78,49 @@ export const sendContactEmail = async (req, res) => {
       submittedAt,
     });
 
+    const text = `
+New Contact Form Submission
+
+From: ${name}
+Email: ${email}
+Reason: ${reason}
+Subject: ${subject || "N/A"}
+
+Message:
+${message}
+
+--------------------------------
+
+Submitted At: ${submittedAt}
+IP Address: ${ip}
+Browser: ${userAgent}
+`;
+
     await sendEmail({
       email: ENV.CONTACT_EMAIL,
       subject: `[${reason}] Contact Form Submission from ${name}`,
-      text: "",
+      text,
       html,
     });
 
+const confirmationText = `
+Hello ${name},
+
+Thank you for contacting NoteHub.
+
+We've successfully received your message regarding "${reason}".
+
+Our team will review it and get back to you as soon as possible.
+
+Best regards,
+Abhijeet
+NoteHub
+`;
     // User Confirmation Email
     await sendEmail({
       email,
       subject: "We've received your message — NoteHub",
-      text: "",
+      text: confirmationText,
       html: contactConfirmationTemplate({
         from_name: name,
         reason,
