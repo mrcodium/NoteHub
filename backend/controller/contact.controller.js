@@ -1,4 +1,5 @@
 import { ENV } from "../config/env.js";
+import { confirmationEmailQueue } from "../queues/confirmationEmail.queue.js";
 import {
   contactConfirmationTemplate,
   contactTemplate,
@@ -103,29 +104,18 @@ Browser: ${userAgent}
       html,
     });
 
-const confirmationText = `
-Hello ${name},
-
-Thank you for contacting NoteHub.
-
-We've successfully received your message regarding "${reason}".
-
-Our team will review it and get back to you as soon as possible.
-
-Best regards,
-Abhijeet
-NoteHub
-`;
-    // User Confirmation Email
-    await sendEmail({
-      email,
-      subject: "We've received your message — NoteHub",
-      text: confirmationText,
-      html: contactConfirmationTemplate({
-        from_name: name,
+    confirmationEmailQueue.add(
+      "contact-confirmation",
+      {
+        email,
+        name,
         reason,
-      }),
-    });
+        message,
+      },
+      {
+        jobId: `contact-confirmation-${Date.now()}-${email}`,
+      },
+    );
 
     return res.status(200).json({
       success: true,

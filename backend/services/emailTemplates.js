@@ -157,35 +157,35 @@ export const contactTemplate = ({
       timeStyle: "short",
     });
 
-
   const CONTACT_REASONS = {
     default: {
       label: "General Enquiry",
-      icon: "https://img.icons8.com/?size=100&id=VhoPIeUVX2mw&format=png&color=000000",
+      icon: "https://img.icons8.com/?size=100&id=VhoPIeUVX2mw&format=png&color=808080",
     },
     general: {
       label: "General Enquiry",
-      icon: "https://img.icons8.com/?size=100&id=VhoPIeUVX2mw&format=png&color=000000",
+      icon: "https://img.icons8.com/?size=100&id=VhoPIeUVX2mw&format=png&color=808080",
     },
     bug: {
       label: "Report a Bug",
-      icon: "https://img.icons8.com/?size=100&id=9227&format=png&color=000000",
+      icon: "https://img.icons8.com/?size=100&id=9227&format=png&color=808080",
     },
     feature: {
       label: "Feature Request",
-      icon: "https://img.icons8.com/?size=100&id=85887&format=png&color=000000",
+      icon: "https://img.icons8.com/?size=100&id=85887&format=png&color=808080",
     },
     content: {
       label: "Content / Notes",
-      icon: "https://img.icons8.com/?size=100&id=fpAVFn3MN108&format=png&color=000000",
+      icon: "https://img.icons8.com/?size=100&id=fpAVFn3MN108&format=png&color=808080",
     },
     support: {
       label: "Account Support",
-      icon: "https://img.icons8.com/?size=100&id=98973&format=png&color=000000",
+      icon: "https://img.icons8.com/?size=100&id=98973&format=png&color=808080",
     },
   };
 
-  const {label : reason_label, icon: reason_icon} = CONTACT_REASONS[reason?.toLowerCase()] || CONTACT_REASONS["default"];
+  const { label: reason_label, icon: reason_icon } =
+    CONTACT_REASONS[reason?.toLowerCase()] || CONTACT_REASONS["default"];
 
   return `
 <!DOCTYPE html>
@@ -249,7 +249,7 @@ export const contactTemplate = ({
                                     <table role="presentation" cellpadding="0" cellspacing="0">
                                         <tr>
                                             <td style="padding-right:12px;vertical-align:middle;">
-                                                <img src="${reason_icon}" alt="${reason_label}" width="32" height="32" style="display:block;filter:invert(1);opacity:0.85;">
+                                                <img src="${reason_icon}" alt="${reason_label}" width="32" height="32" style="display:block;">
                                             </td>
                                             <td style="vertical-align:middle;">
                                                 <p style="margin:0;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;">Reason</p>
@@ -351,8 +351,37 @@ export const contactTemplate = ({
 // ─────────────────────────────────────────────────────────────────────────────
 export const contactConfirmationTemplate = ({ from_name, reason, message }) => {
   const safeName = escapeHtml(from_name);
-  const safeReason = escapeHtml(reason);
   const safeMessage = escapeHtml(message).replace(/\n/g, "<br>");
+
+  const CONTACT_REASONS = {
+    default: {
+      label: "General Enquiry",
+      icon: "https://img.icons8.com/?size=100&id=VhoPIeUVX2mw&format=png&color=808080",
+    },
+    general: {
+      label: "General Enquiry",
+      icon: "https://img.icons8.com/?size=100&id=VhoPIeUVX2mw&format=png&color=808080",
+    },
+    bug: {
+      label: "Report a Bug",
+      icon: "https://img.icons8.com/?size=100&id=9227&format=png&color=808080",
+    },
+    feature: {
+      label: "Feature Request",
+      icon: "https://img.icons8.com/?size=100&id=85887&format=png&color=808080",
+    },
+    content: {
+      label: "Content / Notes",
+      icon: "https://img.icons8.com/?size=100&id=fpAVFn3MN108&format=png&color=808080",
+    },
+    support: {
+      label: "Account Support",
+      icon: "https://img.icons8.com/?size=100&id=98973&format=png&color=808080",
+    },
+  };
+
+  const { label: reason_label, icon: reason_icon } =
+    CONTACT_REASONS[reason?.toLowerCase()] || CONTACT_REASONS["default"];
 
   return `
 <!DOCTYPE html>
@@ -391,7 +420,7 @@ export const contactConfirmationTemplate = ({ from_name, reason, message }) => {
                             Hi <strong style="color:#ffffff;">${safeName}</strong>,
                         </p>
                         <p style="margin:0 0 25px;color:#e0e0e0;font-size:15px;line-height:1.7;">
-                            Thanks for reaching out to NoteHub. We've received your message regarding <strong style="color:#ffffff;">${safeReason}</strong> and will get back to you as soon as possible.
+                            Thanks for reaching out to NoteHub. We've received your message regarding <strong style="color:#ffffff;">${reason_label}</strong> and will get back to you as soon as possible.
                         </p>
 
                         <!-- Message recap -->
