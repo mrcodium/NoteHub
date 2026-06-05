@@ -1,6 +1,6 @@
 import { ENV } from "../config/env.js";
 
-export const sendEmail = async (email, subject, text, html) => {
+export const sendEmail = async ({email, subject, text, html}) => {
   try {
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",

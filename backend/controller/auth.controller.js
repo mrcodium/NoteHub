@@ -219,7 +219,7 @@ export const googleLogin = async (req, res) => {
     });
 
     const tokens = await tokenResponse.json();
-
+    console.log(tokens);
     if (!tokenResponse.ok) {
       return res.status(400).json({ message: "Invalid authorization code." });
     }

@@ -34,6 +34,7 @@ export const ENV = {
 
   BREVO_API_KEY: required("BREVO_API_KEY"),
   EMAIL_SENDER: required("EMAIL_SENDER"),
+  CONTACT_EMAIL: required("CONTACT_EMAIL"),
 
   GOOGLE_CLIENT_ID: required("GOOGLE_CLIENT_ID"),
   GOOGLE_CLIENT_SECRET: required("GOOGLE_CLIENT_SECRET"),
