@@ -46,8 +46,8 @@ export const getContacts = async (req, res) => {
 
 export const createContact = async (req, res) => {
   try {
-    const { label, emails, description } = req.body;
-    const contact = await Contact.create({ label, emails, description });
+    const { label, emails } = req.body;
+    const contact = await Contact.create({ label, emails });
     res.status(201).json({ success: true, contact });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -60,6 +60,55 @@ export const deleteContact = async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// controllers/mailer.controller.js
+export const updateContact = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { label, emails } = req.body;
+
+    const contact = await Contact.findById(id);
+    if (!contact) {
+      return res.status(404).json({ message: "Contact group not found" });
+    }
+
+    if (label !== undefined) {
+      if (!label.trim()) {
+        return res.status(400).json({ message: "Label cannot be empty" });
+      }
+      contact.label = label.trim();
+    }
+
+    if (emails !== undefined) {
+      if (!Array.isArray(emails) || emails.length === 0) {
+        return res.status(400).json({ message: "At least one email is required" });
+      }
+
+      // Sanitize and deduplicate
+      const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const cleaned = [
+        ...new Set(
+          emails
+            .map((e) => e.trim().toLowerCase())
+            .filter((e) => EMAIL_REGEX.test(e))
+        ),
+      ];
+
+      if (cleaned.length === 0) {
+        return res.status(400).json({ message: "No valid emails provided" });
+      }
+
+      contact.emails = cleaned;
+    }
+
+    await contact.save();
+
+    res.status(200).json({ message: "Contact group updated", contact });
+  } catch (error) {
+    console.error("updateContact error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

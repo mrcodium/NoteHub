@@ -166,7 +166,7 @@ export const getAllUsers = async (req, res) => {
 
     const [users, totalUsers] = await Promise.all([
       User.find(query)
-        .select("-password")
+        .select("avatar createdAt email fullName isBanned isDeleted role userName")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
