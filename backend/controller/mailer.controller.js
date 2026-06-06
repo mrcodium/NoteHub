@@ -162,50 +162,6 @@ export const sendCampaign = async (req, res) => {
   }
 };
 
-// ─── SSE: real-time campaign progress (pure reader) ──────────
-// Status is set by the worker — this just streams whatever the DB says.
-
-export const campaignProgress = async (req, res) => {
-  const { id } = req.params;
-
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no");
-  res.flushHeaders();
-
-  const send = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
-
-  const tick = async () => {
-    try {
-      const campaign = await Campaign.findById(id).select("status stats");
-      if (!campaign) {
-        send({ error: "Not found" });
-        return true;
-      }
-
-      send({ status: campaign.status, stats: campaign.stats });
-
-      // Stop streaming once terminal state is reached
-      return campaign.status === "done" || campaign.status === "failed";
-    } catch {
-      return true;
-    }
-  };
-
-  const done = await tick();
-  if (done) { res.end(); return; }
-
-  const interval = setInterval(async () => {
-    const done = await tick();
-    if (done) {
-      clearInterval(interval);
-      res.end();
-    }
-  }, 1500);
-
-  req.on("close", () => clearInterval(interval));
-};
 
 export const getCampaignJobs = async (req, res) => {
   try {

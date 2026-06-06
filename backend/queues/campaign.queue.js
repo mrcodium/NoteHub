@@ -7,8 +7,12 @@ import SuppressedEmail from "../model/suppressedEmail.model.js";
 import { Liquid } from "liquidjs";
 import jwt from "jsonwebtoken";
 import { ENV } from "../config/env.js";
+import { getIO } from "../utils/socket.js";
 
-const liquidEngine = new Liquid({ strictFilters: false, strictVariables: false });
+const liquidEngine = new Liquid({
+  strictFilters: false,
+  strictVariables: false,
+});
 
 // ─── Queues ───────────────────────────────────────────────────
 
@@ -42,7 +46,7 @@ function generateUnsubscribeToken(email, campaignId) {
   return jwt.sign(
     { email, campaignId: campaignId.toString() },
     ENV.UNSUBSCRIBE_JWT_SECRET,
-    { expiresIn: "1y" }
+    { expiresIn: "1y" },
   );
 }
 
@@ -76,8 +80,10 @@ export const dispatchWorker = new Worker(
       const derived = [
         ...new Set(
           extraJson
-            .map((e) => (typeof e.email === "string" ? e.email.trim().toLowerCase() : null))
-            .filter(Boolean)
+            .map((e) =>
+              typeof e.email === "string" ? e.email.trim().toLowerCase() : null,
+            )
+            .filter(Boolean),
         ),
       ];
       if (derived.length > 0) {
@@ -118,20 +124,44 @@ export const dispatchWorker = new Worker(
 
     // Create "skipped" CampaignJob docs for suppressed emails
     if (skippedEmails.length > 0) {
-      await CampaignJob.insertMany(
+      const skippedDocs = await CampaignJob.insertMany(
         skippedEmails.map((email) => ({
           campaignId: campaign._id,
           email,
           status: "skipped",
           processedAt: new Date(),
-        }))
+        })),
       );
+
+      skippedDocs.forEach((doc) => {
+        getIO()?.to(campaignId.toString()).emit("campaign:job", {
+          _id: doc._id.toString(),
+          email: doc.email,
+          status: "skipped",
+          processedAt: doc.processedAt,
+        });
+      });
     }
 
     // If everyone was suppressed, finalize immediately
     if (activeEmails.length === 0) {
       await Campaign.findByIdAndUpdate(campaignId, { status: "done" });
-      console.log(`✅ Campaign ${campaignId} — all recipients suppressed, marked done`);
+
+      getIO()
+        ?.to(campaignId.toString())
+        .emit("campaign:done", {
+          stats: {
+            total: recipientEmails.length,
+            skipped: skippedEmails.length,
+            sent: 0,
+            failed: 0,
+          },
+          status: "done",
+        });
+
+      console.log(
+        `✅ Campaign ${campaignId} — all recipients suppressed, marked done`,
+      );
       return;
     }
 
@@ -141,7 +171,7 @@ export const dispatchWorker = new Worker(
         campaignId: campaign._id,
         email,
         status: "pending",
-      }))
+      })),
     );
 
     // Fan out to send queue
@@ -155,43 +185,51 @@ export const dispatchWorker = new Worker(
           subject,
           htmlBody,
           extraJson: isPerRecipient
-            ? extraJson.find(
-                (e) => typeof e.email === "string" && e.email.trim().toLowerCase() === email
-              ) ?? {}
-            : extraJson ?? {},
+            ? (extraJson.find(
+                (e) =>
+                  typeof e.email === "string" &&
+                  e.email.trim().toLowerCase() === email,
+              ) ?? {})
+            : (extraJson ?? {}),
         },
-      }))
+      })),
     );
 
     console.log(
       `✅ Dispatched ${activeEmails.length} send jobs for campaign ${campaignId}` +
-      (skippedEmails.length > 0 ? ` (${skippedEmails.length} suppressed, skipped)` : "")
+        (skippedEmails.length > 0
+          ? ` (${skippedEmails.length} suppressed, skipped)`
+          : ""),
     );
   },
   {
     connection: bullRedis,
     concurrency: 1,
-  }
+  },
 );
 
 // ─── Send Worker ──────────────────────────────────────────────
 // Renders liquid (including unsubscribe_url) + sends via Brevo.
 
 export const TEMPLATE_GLOBALS = {
-  logo:       "https://res.cloudinary.com/dhtxrpqna/image/upload/v1770061775/notehub_2_xgrpqt.png",
-  github:     "https://img.icons8.com/?size=100&id=12599&format=png&color=a1a1a1",
-  linkedin:   "https://img.icons8.com/?size=100&id=8808&format=png&color=a1a1a1",
-  youtube:    "https://img.icons8.com/?size=100&id=37326&format=png&color=a1a1a1",
-  x:          "https://img.icons8.com/?size=100&id=phOKFKYpe00C&format=png&color=a1a1a1",
-  twitter:    "https://img.icons8.com/?size=100&id=phOKFKYpe00C&format=png&color=a1a1a1",
-  instagram:  "https://img.icons8.com/?size=100&id=32309&format=png&color=a1a1a1",
-  facebook:   "https://img.icons8.com/?size=100&id=118467&format=png&color=a1a1a1",
+  logo: "https://res.cloudinary.com/dhtxrpqna/image/upload/v1770061775/notehub_2_xgrpqt.png",
+  github: "https://img.icons8.com/?size=100&id=12599&format=png&color=a1a1a1",
+  linkedin: "https://img.icons8.com/?size=100&id=8808&format=png&color=a1a1a1",
+  youtube: "https://img.icons8.com/?size=100&id=37326&format=png&color=a1a1a1",
+  x: "https://img.icons8.com/?size=100&id=phOKFKYpe00C&format=png&color=a1a1a1",
+  twitter:
+    "https://img.icons8.com/?size=100&id=phOKFKYpe00C&format=png&color=a1a1a1",
+  instagram:
+    "https://img.icons8.com/?size=100&id=32309&format=png&color=a1a1a1",
+  facebook:
+    "https://img.icons8.com/?size=100&id=118467&format=png&color=a1a1a1",
 };
 
 export const sendWorker = new Worker(
   "campaign-send",
   async (job) => {
-    const { campaignId, campaignJobId, email, subject, htmlBody, extraJson } = job.data;
+    const { campaignId, campaignJobId, email, subject, htmlBody, extraJson } =
+      job.data;
 
     // Build liquid context — inject unsubscribe_url automatically
     const context = {
@@ -216,6 +254,16 @@ export const sendWorker = new Worker(
       processedAt: new Date(),
     });
 
+    getIO()
+      ?.to(campaignId.toString())
+      .emit("campaign:job", {
+        _id: campaignJobId,
+        email,
+        status: "sent",
+        brevoMessageId: brevoRes.messageId || null,
+        processedAt: new Date(),
+      });
+
     // Atomically increment sent count
     await Campaign.findByIdAndUpdate(campaignId, {
       $inc: { "stats.sent": 1 },
@@ -226,7 +274,7 @@ export const sendWorker = new Worker(
   {
     connection: bullRedis,
     concurrency: 5,
-  }
+  },
 );
 
 // ─── Finalize helper ──────────────────────────────────────────
@@ -239,14 +287,25 @@ async function tryFinalizeCampaign(campaignId) {
 
   const { total, sent, failed, skipped = 0 } = campaign.stats;
   if (total === 0) return;
+
+  // Emit live progress on every call
+  getIO()?.to(campaignId.toString()).emit("campaign:progress", {
+    stats: campaign.stats,
+  });
+
   if (sent + failed + skipped < total) return;
 
   const finalStatus = failed > 0 && sent === 0 ? "failed" : "done";
 
   await Campaign.findOneAndUpdate(
     { _id: campaignId, status: "sending" },
-    { status: finalStatus }
+    { status: finalStatus },
   );
+
+  getIO()?.to(campaignId.toString()).emit("campaign:done", {
+    stats: campaign.stats,
+    status: finalStatus,
+  });
 
   console.log(`✅ Campaign ${campaignId} finalized as "${finalStatus}"`);
 }
@@ -264,6 +323,14 @@ sendWorker.on("failed", async (job, err) => {
       processedAt: new Date(),
     });
 
+    getIO()?.to(campaignId.toString()).emit("campaign:job", {
+      _id: campaignJobId,
+      email: job.data.email,
+      status: "failed",
+      error: err.message,
+      processedAt: new Date(),
+    });
+
     await Campaign.findByIdAndUpdate(campaignId, {
       $inc: { "stats.failed": 1 },
     });
@@ -271,7 +338,10 @@ sendWorker.on("failed", async (job, err) => {
     await tryFinalizeCampaign(campaignId);
   }
 
-  console.error(`❌ Send job failed for campaign ${campaignId} (attempt ${job.attemptsMade}):`, err.message);
+  console.error(
+    `❌ Send job failed for campaign ${campaignId} (attempt ${job.attemptsMade}):`,
+    err.message,
+  );
 });
 
 // ─── Dispatch Worker failure handler ─────────────────────────

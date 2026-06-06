@@ -1,6 +1,8 @@
 import { config } from "dotenv";
 import "./queues/campaign.queue.js";
 import express from "express";
+import { createServer } from "http";
+import { initIO } from "./utils/socket.js";
 import connectToDb from "./utils/connectToDb.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -32,6 +34,8 @@ const PORT = ENV.PORT;
 const __dirname = path.resolve();
 
 const app = express();
+const httpServer = createServer(app);
+initIO(httpServer);
 
 if (process.env.NODE_ENV !== "production") {
   app.use(captureResponse);
@@ -138,7 +142,7 @@ if (ENV.NODE_ENV === "production") {
 }
 
 
-app.listen(PORT, async () => {
+httpServer.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   await connectToDb();
   await connectRedis();

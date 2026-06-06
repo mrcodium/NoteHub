@@ -13,7 +13,6 @@ import {
   sendCampaign,
   getCampaignJobs,
   deleteCampaign,
-  campaignProgress,
   getCampaignById,
   duplicateAndSendCampaign,
 } from "../controller/mailer.controller.js";
@@ -48,7 +47,6 @@ router.get("/campaigns/:id", getCampaignById);
 router.post("/campaigns", createCampaign);
 router.post("/campaigns/:id/send", sendCampaign);
 router.get("/campaigns/:id/jobs", getCampaignJobs);
-router.get("/campaigns/:id/progress", campaignProgress); // SSE
 router.delete("/campaigns/:id", deleteCampaign);
 router.post("/campaigns/:id/duplicate", duplicateAndSendCampaign);
 
