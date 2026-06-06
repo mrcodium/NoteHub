@@ -2,14 +2,43 @@ import Campaign from "../model/campaign.model.js";
 import CampaignJob from "../model/campaignJob.model.js";
 import Contact from "../model/contact.model.js";
 import Template from "../model/template.model.js";
-import { dispatchQueue } from "../queues/campaign.queue.js";
+import { dispatchQueue, sendQueue } from "../queues/campaign.queue.js";
+
+// ─── Pagination helper ────────────────────────────────────────
+
+function getPagination(query) {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
+  const skip = (page - 1) * limit;
+  return { page, limit, skip };
+}
+
+function paginationMeta(total, page, limit) {
+  const totalPages = Math.ceil(total / limit);
+  return {
+    totalItems: total,
+    currentPage: page,
+    itemsPerPage: limit,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+  };
+}
 
 // ─── CONTACTS ────────────────────────────────────────────────
 
 export const getContacts = async (req, res) => {
   try {
-    const contacts = await Contact.find().sort({ createdAt: -1 });
-    res.json({ success: true, contacts });
+    const { page, limit, skip } = getPagination(req.query);
+    const [contacts, total] = await Promise.all([
+      Contact.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Contact.countDocuments(),
+    ]);
+    res.json({
+      success: true,
+      contacts,
+      pagination: paginationMeta(total, page, limit),
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -38,8 +67,16 @@ export const deleteContact = async (req, res) => {
 
 export const getTemplates = async (req, res) => {
   try {
-    const templates = await Template.find().sort({ createdAt: -1 });
-    res.json({ success: true, templates });
+    const { page, limit, skip } = getPagination(req.query);
+    const [templates, total] = await Promise.all([
+      Template.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Template.countDocuments(),
+    ]);
+    res.json({
+      success: true,
+      templates,
+      pagination: paginationMeta(total, page, limit),
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -57,7 +94,13 @@ export const getTemplateById = async (req, res) => {
 export const createTemplate = async (req, res) => {
   try {
     const { name, subject, htmlBody, previewText, mode } = req.body;
-    const template = await Template.create({ name, subject, htmlBody, previewText, mode });
+    const template = await Template.create({
+      name,
+      subject,
+      htmlBody,
+      previewText,
+      mode,
+    });
     res.status(201).json({ success: true, template });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -66,7 +109,9 @@ export const createTemplate = async (req, res) => {
 
 export const updateTemplate = async (req, res) => {
   try {
-    const template = await Template.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const template = await Template.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
     res.json({ success: true, template });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -86,8 +131,16 @@ export const deleteTemplate = async (req, res) => {
 
 export const getCampaigns = async (req, res) => {
   try {
-    const campaigns = await Campaign.find().sort({ createdAt: -1 });
-    res.json({ success: true, campaigns });
+    const { page, limit, skip } = getPagination(req.query);
+    const [campaigns, total] = await Promise.all([
+      Campaign.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Campaign.countDocuments(),
+    ]);
+    res.json({
+      success: true,
+      campaigns,
+      pagination: paginationMeta(total, page, limit),
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -97,7 +150,9 @@ export const getCampaignById = async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id);
     if (!campaign)
-      return res.status(404).json({ success: false, message: "Campaign not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Campaign not found" });
     res.json({ success: true, campaign });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -108,9 +163,18 @@ export const createCampaign = async (req, res) => {
   try {
     const { name, subject, htmlBody, emails, extraJson } = req.body;
 
-    if (!name?.trim()) return res.status(400).json({ success: false, message: "Name is required" });
-    if (!subject?.trim()) return res.status(400).json({ success: false, message: "Subject is required" });
-    if (!htmlBody?.trim()) return res.status(400).json({ success: false, message: "HTML body is required" });
+    if (!name?.trim())
+      return res
+        .status(400)
+        .json({ success: false, message: "Name is required" });
+    if (!subject?.trim())
+      return res
+        .status(400)
+        .json({ success: false, message: "Subject is required" });
+    if (!htmlBody?.trim())
+      return res
+        .status(400)
+        .json({ success: false, message: "HTML body is required" });
 
     // Derive final email list — per-recipient array takes priority
     let resolvedEmails = Array.isArray(emails) ? emails : [];
@@ -118,15 +182,22 @@ export const createCampaign = async (req, res) => {
       const derived = [
         ...new Set(
           extraJson
-            .map((e) => (typeof e.email === "string" ? e.email.trim().toLowerCase() : null))
-            .filter(Boolean)
+            .map((e) =>
+              typeof e.email === "string" ? e.email.trim().toLowerCase() : null,
+            )
+            .filter(Boolean),
         ),
       ];
       if (derived.length > 0) resolvedEmails = derived;
     }
 
     if (resolvedEmails.length === 0) {
-      return res.status(400).json({ success: false, message: "At least one recipient is required" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "At least one recipient is required",
+        });
     }
 
     const campaign = await Campaign.create({
@@ -148,13 +219,21 @@ export const sendCampaign = async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id);
     if (!campaign)
-      return res.status(404).json({ success: false, message: "Campaign not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Campaign not found" });
     if (campaign.status === "sending")
-      return res.status(400).json({ success: false, message: "Campaign already sending" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Campaign already sending" });
     if (campaign.status === "done")
-      return res.status(400).json({ success: false, message: "Campaign already sent" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Campaign already sent" });
 
-    await dispatchQueue.add("dispatch", { campaignId: campaign._id.toString() });
+    await dispatchQueue.add("dispatch", {
+      campaignId: campaign._id.toString(),
+    });
 
     res.json({ success: true, message: "Campaign queued" });
   } catch (err) {
@@ -162,11 +241,19 @@ export const sendCampaign = async (req, res) => {
   }
 };
 
-
 export const getCampaignJobs = async (req, res) => {
   try {
-    const jobs = await CampaignJob.find({ campaignId: req.params.id }).sort({ createdAt: 1 });
-    res.json({ success: true, jobs });
+    const { page, limit, skip } = getPagination(req.query);
+    const filter = { campaignId: req.params.id };
+    const [jobs, total] = await Promise.all([
+      CampaignJob.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limit),
+      CampaignJob.countDocuments(filter),
+    ]);
+    res.json({
+      success: true,
+      jobs,
+      pagination: paginationMeta(total, page, limit),
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -186,7 +273,9 @@ export const duplicateAndSendCampaign = async (req, res) => {
   try {
     const original = await Campaign.findById(req.params.id);
     if (!original)
-      return res.status(404).json({ success: false, message: "Campaign not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Campaign not found" });
 
     const campaign = await Campaign.create({
       name: `${original.name} (Resend)`,
@@ -197,12 +286,78 @@ export const duplicateAndSendCampaign = async (req, res) => {
       status: "draft",
     });
 
-    await dispatchQueue.add("dispatch", { campaignId: campaign._id.toString() });
+    await dispatchQueue.add("dispatch", {
+      campaignId: campaign._id.toString(),
+    });
 
     campaign.status = "sending";
     await campaign.save();
 
     res.status(201).json({ success: true, campaign });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const retryFailedJobs = async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id);
+    if (!campaign)
+      return res
+        .status(404)
+        .json({ success: false, message: "Campaign not found" });
+    if (campaign.status === "sending")
+      return res
+        .status(400)
+        .json({ success: false, message: "Campaign is already sending" });
+
+    const failedJobs = await CampaignJob.find({
+      campaignId: campaign._id,
+      status: "failed",
+    });
+
+    if (failedJobs.length === 0)
+      return res
+        .status(400)
+        .json({ success: false, message: "No failed jobs to retry" });
+
+    // Reset failed jobs back to pending
+    await CampaignJob.updateMany(
+      { campaignId: campaign._id, status: "failed" },
+      { $set: { status: "pending", error: null, processedAt: null } },
+    );
+
+    // Adjust campaign stats: move failed count back, keep total intact
+    await Campaign.findByIdAndUpdate(campaign._id, {
+      status: "sending",
+      $inc: { "stats.failed": -failedJobs.length },
+    });
+
+    // Re-queue only the failed jobs into sendQueue
+    await sendQueue.addBulk(
+      failedJobs.map((job) => ({
+        name: "send-email",
+        data: {
+          campaignId: campaign._id.toString(),
+          campaignJobId: job._id.toString(),
+          email: job.email,
+          subject: campaign.subject,
+          htmlBody: campaign.htmlBody,
+          extraJson: Array.isArray(campaign.extraJson)
+            ? (campaign.extraJson.find(
+                (e) =>
+                  typeof e.email === "string" &&
+                  e.email.trim().toLowerCase() === job.email,
+              ) ?? {})
+            : (campaign.extraJson ?? {}),
+        },
+      })),
+    );
+
+    res.json({
+      success: true,
+      message: `Retrying ${failedJobs.length} failed jobs`,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
