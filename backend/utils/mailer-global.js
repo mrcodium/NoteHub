@@ -20,7 +20,7 @@ export const TEMPLATE_GLOBALS = {
                     <table cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
                       <tr>
                         <td style="vertical-align:middle;padding-right:7px;">
-                          <img src="{{ logo }}" width="22" height="22" alt="Notehub" style="display:block;border:0;" />
+                          <img src="https://res.cloudinary.com/dhtxrpqna/image/upload/v1770061775/notehub_2_xgrpqt.png" width="22" height="22" alt="Notehub" style="display:block;border:0;" />
                         </td>
                         <td style="vertical-align:middle;">
                           <span style="color:#ffffff;font-size:16px;font-weight:700;letter-spacing:-0.3px;">Notehub</span>
@@ -40,7 +40,7 @@ export const TEMPLATE_GLOBALS = {
                         <td style="padding-right:6px;">
                           <a href="https://github.com/abhijeetSinghRajput"
                             style="display:inline-block;width:28px;height:28px;border:1px solid #3a3a3a;border-radius:7px;text-align:center;text-decoration:none;vertical-align:middle;">
-                            <img src="{{ github }}" width="14" height="14" alt="GitHub"
+                            <img src="https://img.icons8.com/?size=100&id=12599&format=png&color=a1a1a1" width="14" height="14" alt="GitHub"
                     style="display:block;margin:7px auto 0;border:0;" />
                           </a>
                         </td>
@@ -48,7 +48,7 @@ export const TEMPLATE_GLOBALS = {
                         <td style="padding-right:6px;">
                           <a href="https://www.linkedin.com/in/abhijeet-singh-rajput1/"
                             style="display:inline-block;width:28px;height:28px;border:1px solid #3a3a3a;border-radius:7px;text-align:center;text-decoration:none;vertical-align:middle;">
-                            <img src="{{ linkedin }}" width="14" height="14" alt="LinkedIn"
+                            <img src="https://img.icons8.com/?size=100&id=8808&format=png&color=a1a1a1" width="14" height="14" alt="LinkedIn"
                     style="display:block;margin:7px auto 0;border:0;" />
                           </a>
                         </td>
@@ -56,7 +56,7 @@ export const TEMPLATE_GLOBALS = {
                         <td style="padding-right:6px;">
                           <a href="https://www.youtube.com/@mrcodium"
                             style="display:inline-block;width:28px;height:28px;border:1px solid #3a3a3a;border-radius:7px;text-align:center;text-decoration:none;vertical-align:middle;">
-                            <img src="{{ youtube }}" width="14" height="14" alt="YouTube"
+                            <img src="https://img.icons8.com/?size=100&id=37326&format=png&color=a1a1a1" width="14" height="14" alt="YouTube"
                     style="display:block;margin:7px auto 0;border:0;" />
                           </a>
                         </td>
@@ -64,7 +64,7 @@ export const TEMPLATE_GLOBALS = {
                         <td style="padding-right:6px;">
                           <a href="https://x.com/abhijeet62008"
                             style="display:inline-block;width:28px;height:28px;border:1px solid #3a3a3a;border-radius:7px;text-align:center;text-decoration:none;vertical-align:middle;">
-                            <img src="{{ x }}" width="14" height="14" alt="X"
+                            <img src="https://img.icons8.com/?size=100&id=phOKFKYpe00C&format=png&color=a1a1a1" width="14" height="14" alt="X"
                     style="display:block;margin:7px auto 0;border:0;" />
                           </a>
                         </td>
@@ -72,7 +72,7 @@ export const TEMPLATE_GLOBALS = {
                         <td>
                           <a href="https://www.instagram.com/abhijeet62008"
                             style="display:inline-block;width:28px;height:28px;border:1px solid #3a3a3a;border-radius:7px;text-align:center;text-decoration:none;vertical-align:middle;">
-                            <img src="{{ instagram }}" width="14" height="14" alt="Instagram"
+                            <img src="https://img.icons8.com/?size=100&id=32309&format=png&color=a1a1a1" width="14" height="14" alt="Instagram"
                     style="display:block;margin:7px auto 0;border:0;" />
                           </a>
                         </td>
@@ -128,20 +128,6 @@ export const TEMPLATE_GLOBALS = {
                   <td style="border-top:1px solid #2a2a2a;font-size:0;line-height:0;">&nbsp;</td>
                 </tr>
               </table>
-
-              <!-- Footer bottom bar -->
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="vertical-align:middle;">
-                    <p style="margin:0;font-size:11px;color:#737373;">&#169; 2025 Notehub. All rights reserved.</p>
-                  </td>
-                  <td align="right" style="vertical-align:middle;">
-                    <a href="{{ unsubscribe_url }}"
-                      style="font-size:11px;color:#737373;text-decoration:underline;">Unsubscribe</a>
-                  </td>
-                </tr>
-              </table>
-
             </td>
           </tr>`
 };
