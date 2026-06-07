@@ -41,7 +41,7 @@ async function processEvent(event) {
   if (!messageId) return;
 
   if (!["opened", "unique_opened", "clicked"].includes(type)) return;
-
+  console.log(event);
   const job = await CampaignJob.findOne({ brevoMessageId: messageId });
   if (!job) {
     console.warn(`⚠️ No CampaignJob found for messageId: ${messageId}`);
