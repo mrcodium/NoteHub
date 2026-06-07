@@ -19,6 +19,7 @@ import llmsRoutes from "./routes/llms.route.js";
 import adminRouter from "./routes/admin.route.js";
 import githubRoutes from "./routes/github.route.js";
 import mailerRoutes from "./routes/mailer.route.js";
+import brevoWebhookRoutes from "./routes/brevoWebhook.route.js";
 
 
 import "./model/Image.model.js";
@@ -71,6 +72,7 @@ app.use("/api/admin", adminRouter);
 app.use("/api/mailer", mailerRoutes);
 app.post("/api/contact", sendContactEmail);
 app.get("/unsubscribe", handleUnsubscribe);
+app.use("/", brevoWebhookRoutes);
 
 
 app.get("/api/health", async (req, res) => {
