@@ -15,6 +15,42 @@ const liquidEngine = new Liquid({
   strictVariables: false,
 });
 
+// ─── Campaign Cache ───────────────────────────────────────────
+// Keyed by campaignId string.
+// Stores { htmlBody, subject, extraJson, extraMap }
+// extraMap: Map<email, perRecipientData> for O(1) lookup (per-recipient mode)
+// Cleared after campaign finalizes to avoid memory leaks.
+
+const campaignCache = new Map();
+
+function getCachedCampaign(campaignId) {
+  return campaignCache.get(campaignId.toString()) ?? null;
+}
+
+function setCampaignCache(campaignId, campaign, isPerRecipient) {
+  const extraMap = new Map();
+
+  if (isPerRecipient && Array.isArray(campaign.extraJson)) {
+    for (const entry of campaign.extraJson) {
+      if (typeof entry.email === "string") {
+        extraMap.set(entry.email.trim().toLowerCase(), entry);
+      }
+    }
+  }
+
+  campaignCache.set(campaignId.toString(), {
+    htmlBody: campaign.htmlBody,
+    subject: campaign.subject,
+    extraJson: campaign.extraJson,
+    isPerRecipient,
+    extraMap,
+  });
+}
+
+function clearCampaignCache(campaignId) {
+  campaignCache.delete(campaignId.toString());
+}
+
 // ─── Queues ───────────────────────────────────────────────────
 
 export const dispatchQueue = new Queue("campaign-dispatch", {
@@ -22,8 +58,8 @@ export const dispatchQueue = new Queue("campaign-dispatch", {
   defaultJobOptions: {
     attempts: 2,
     backoff: { type: "exponential", delay: 3000 },
-    removeOnComplete: 100,
-    removeOnFail: 200,
+    removeOnComplete: true,
+    removeOnFail: 100,
   },
 });
 
@@ -32,17 +68,13 @@ export const sendQueue = new Queue("campaign-send", {
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: "exponential", delay: 5000 },
-    removeOnComplete: 500,
-    removeOnFail: 500,
+    removeOnComplete: true,
+    removeOnFail: 100,
   },
 });
 
 // ─── Helpers ──────────────────────────────────────────────────
 
-/**
- * Generate a signed JWT unsubscribe token for a recipient.
- * Stateless — no DB write. Verified on click.
- */
 function generateUnsubscribeToken(email, campaignId) {
   return jwt.sign(
     { email, campaignId: campaignId.toString() },
@@ -51,9 +83,6 @@ function generateUnsubscribeToken(email, campaignId) {
   );
 }
 
-/**
- * Build the full unsubscribe URL injected into every email's liquid context.
- */
 function buildUnsubscribeUrl(email, campaignId) {
   const token = generateUnsubscribeToken(email, campaignId);
   return `${ENV.BACKEND_URL}/unsubscribe?token=${token}`;
@@ -61,7 +90,7 @@ function buildUnsubscribeUrl(email, campaignId) {
 
 // ─── Dispatch Worker ──────────────────────────────────────────
 // Fans out one send-job per recipient email.
-// Suppressed emails are skipped (CampaignJob created with status "skipped").
+// Populates campaign cache so sendWorker never hits MongoDB for campaign data.
 
 export const dispatchWorker = new Worker(
   "campaign-dispatch",
@@ -71,7 +100,7 @@ export const dispatchWorker = new Worker(
     const campaign = await Campaign.findById(campaignId);
     if (!campaign) throw new Error(`Campaign ${campaignId} not found`);
 
-    const { htmlBody, subject, extraJson, emails } = campaign;
+    const { extraJson, emails } = campaign;
 
     // Derive authoritative email list
     let recipientEmails = emails ?? [];
@@ -102,7 +131,6 @@ export const dispatchWorker = new Worker(
     }
 
     // ── Suppression check ──────────────────────────────────────
-    // Bulk fetch all suppressed emails in one query
     const suppressed = await SuppressedEmail.find({
       email: { $in: recipientEmails },
     }).select("email");
@@ -116,12 +144,16 @@ export const dispatchWorker = new Worker(
     await Campaign.findByIdAndUpdate(campaignId, {
       status: "sending",
       sentAt: new Date(),
-      // total = active + skipped; skipped counts toward processed immediately
       "stats.total": recipientEmails.length,
       "stats.sent": 0,
       "stats.failed": 0,
       "stats.skipped": skippedEmails.length,
     });
+
+    // ── Populate cache before fanning out ─────────────────────
+    // sendWorker jobs will be processed immediately after addBulk,
+    // so cache must be set before that call.
+    setCampaignCache(campaignId, campaign, isPerRecipient);
 
     // Create "skipped" CampaignJob docs for suppressed emails
     if (skippedEmails.length > 0) {
@@ -147,6 +179,7 @@ export const dispatchWorker = new Worker(
     // If everyone was suppressed, finalize immediately
     if (activeEmails.length === 0) {
       await Campaign.findByIdAndUpdate(campaignId, { status: "done" });
+      clearCampaignCache(campaignId);
 
       getIO()
         ?.to(campaignId.toString())
@@ -175,7 +208,7 @@ export const dispatchWorker = new Worker(
       })),
     );
 
-    // Fan out to send queue
+    // Fan out — tiny payloads only, no campaign data
     await sendQueue.addBulk(
       activeEmails.map((email, i) => ({
         name: "send-email",
@@ -183,15 +216,6 @@ export const dispatchWorker = new Worker(
           campaignId: campaignId.toString(),
           campaignJobId: jobDocs[i]._id.toString(),
           email,
-          subject,
-          htmlBody,
-          extraJson: isPerRecipient
-            ? (extraJson.find(
-                (e) =>
-                  typeof e.email === "string" &&
-                  e.email.trim().toLowerCase() === email,
-              ) ?? {})
-            : (extraJson ?? {}),
         },
       })),
     );
@@ -210,17 +234,43 @@ export const dispatchWorker = new Worker(
 );
 
 // ─── Send Worker ──────────────────────────────────────────────
-// Renders liquid (including unsubscribe_url) + sends via Brevo.
+// Reads campaign data from in-memory cache (set by dispatchWorker).
+// Falls back to MongoDB if cache miss (e.g. after server restart mid-campaign).
+
 export const sendWorker = new Worker(
   "campaign-send",
   async (job) => {
-    const { campaignId, campaignJobId, email, subject, htmlBody, extraJson } =
-      job.data;
+    const { campaignId, campaignJobId, email } = job.data;
 
-    // Build liquid context — inject unsubscribe_url automatically
+    // ── Resolve campaign data ──────────────────────────────────
+    let cached = getCachedCampaign(campaignId);
+
+    if (!cached) {
+      // Cache miss: server restarted mid-campaign, rebuild from DB
+      console.warn(
+        `⚠️ Cache miss for campaign ${campaignId}, fetching from DB`,
+      );
+      const campaign = await Campaign.findById(campaignId).lean();
+      if (!campaign) throw new Error(`Campaign ${campaignId} not found`);
+
+      const isPerRecipient =
+        Array.isArray(campaign.extraJson) && campaign.extraJson.length > 0;
+
+      setCampaignCache(campaignId, campaign, isPerRecipient);
+      cached = getCachedCampaign(campaignId);
+    }
+
+    const { htmlBody, subject, isPerRecipient, extraMap, extraJson } = cached;
+
+    // ── Resolve per-recipient or shared extraJson ──────────────
+    const extra = isPerRecipient
+      ? (extraMap.get(email) ?? {})
+      : (extraJson ?? {});
+
+    // ── Build liquid context ───────────────────────────────────
     const context = {
       ...TEMPLATE_GLOBALS,
-      extra: extraJson ?? {},
+      extra,
       unsubscribe_url: buildUnsubscribeUrl(email, campaignId),
     };
 
@@ -250,7 +300,6 @@ export const sendWorker = new Worker(
         processedAt: new Date(),
       });
 
-    // Atomically increment sent count
     await Campaign.findByIdAndUpdate(campaignId, {
       $inc: { "stats.sent": 1 },
     });
@@ -264,7 +313,6 @@ export const sendWorker = new Worker(
 );
 
 // ─── Finalize helper ──────────────────────────────────────────
-// Finalizes when sent + failed + skipped === total.
 
 async function tryFinalizeCampaign(campaignId) {
   const campaign = await Campaign.findById(campaignId).select("stats status");
@@ -274,7 +322,6 @@ async function tryFinalizeCampaign(campaignId) {
   const { total, sent, failed, skipped = 0 } = campaign.stats;
   if (total === 0) return;
 
-  // Emit live progress on every call
   getIO()?.to(campaignId.toString()).emit("campaign:progress", {
     stats: campaign.stats,
   });
@@ -288,6 +335,9 @@ async function tryFinalizeCampaign(campaignId) {
     { status: finalStatus },
   );
 
+  // ── Clear cache after campaign completes ───────────────────
+  clearCampaignCache(campaignId);
+
   getIO()?.to(campaignId.toString()).emit("campaign:done", {
     stats: campaign.stats,
     status: finalStatus,
@@ -300,7 +350,7 @@ async function tryFinalizeCampaign(campaignId) {
 
 sendWorker.on("failed", async (job, err) => {
   if (!job) return;
-  const { campaignJobId, campaignId } = job.data;
+  const { campaignJobId, campaignId, email } = job.data;
 
   if (job.attemptsMade >= (job.opts?.attempts ?? 3)) {
     await CampaignJob.findByIdAndUpdate(campaignJobId, {
@@ -311,7 +361,7 @@ sendWorker.on("failed", async (job, err) => {
 
     getIO()?.to(campaignId.toString()).emit("campaign:job", {
       _id: campaignJobId,
-      email: job.data.email,
+      email,
       status: "failed",
       error: err.message,
       processedAt: new Date(),
@@ -334,6 +384,7 @@ sendWorker.on("failed", async (job, err) => {
 
 dispatchWorker.on("failed", async (job, err) => {
   if (!job) return;
+  clearCampaignCache(job.data.campaignId);
   await Campaign.findByIdAndUpdate(job.data.campaignId, { status: "failed" });
   console.error("❌ Dispatch job failed:", err.message);
 });
