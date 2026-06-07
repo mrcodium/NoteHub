@@ -38,7 +38,7 @@ export const handleBrevoWebhook = async (req, res) => {
 
 async function processEvent(event) {
   const { event: type, "message-id": rawMessageId } = event;
-
+  console.log(event);
   if (!rawMessageId) return;
 
   // Brevo wraps message-id in angle brackets: <202606070841...@smtp-relay.mailin.fr>
