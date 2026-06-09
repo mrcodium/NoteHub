@@ -1,6 +1,7 @@
+import { ENV } from "../config/env.js";
 import jwt from "jsonwebtoken";
 import SuppressedEmail from "../model/suppressedEmail.model.js";
-import { ENV } from "../config/env.js";
+import { getPagination, paginationMeta } from "../utils/pagination.js";
 
 // ─── GET /unsubscribe?token=... ───────────────────────────────
 export const handleUnsubscribe = async (req, res) => {
@@ -73,20 +74,24 @@ export const handleUnsubscribe = async (req, res) => {
 // ─── GET /api/suppressed-emails ───────────────────────────────
 export const getSuppressedEmails = async (req, res) => {
   try {
-    const { campaign, page = 1, limit = 50 } = req.query;
+    const { campaign } = req.query;
+    const { page, limit, skip } = getPagination(req.query);
     const filter = campaign ? { campaignId: campaign } : {};
 
     const [data, total] = await Promise.all([
       SuppressedEmail.find(filter)
         .populate("campaignId", "name subject")
         .sort({ createdAt: -1 })
-        .skip((+page - 1) * +limit)
-        .limit(+limit)
+        .skip(skip)
+        .limit(limit)
         .lean(),
       SuppressedEmail.countDocuments(filter),
     ]);
 
-    return res.json({ data, total, page: +page, limit: +limit });
+    return res.json({
+      data,
+      pagination: paginationMeta(total, page, limit),
+    });
   } catch (err) {
     return res
       .status(500)

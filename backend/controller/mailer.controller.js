@@ -3,27 +3,7 @@ import CampaignJob from "../model/campaignJob.model.js";
 import Contact from "../model/contact.model.js";
 import Template from "../model/template.model.js";
 import { dispatchQueue, sendQueue } from "../queues/campaign.queue.js";
-
-// ─── Pagination helper ────────────────────────────────────────
-
-function getPagination(query) {
-  const page = Math.max(1, parseInt(query.page) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
-  const skip = (page - 1) * limit;
-  return { page, limit, skip };
-}
-
-function paginationMeta(total, page, limit) {
-  const totalPages = Math.ceil(total / limit);
-  return {
-    totalItems: total,
-    currentPage: page,
-    itemsPerPage: limit,
-    totalPages,
-    hasNextPage: page < totalPages,
-    hasPreviousPage: page > 1,
-  };
-}
+import { getPagination, paginationMeta } from "../utils/pagination.js";
 
 // ─── CONTACTS ────────────────────────────────────────────────
 
