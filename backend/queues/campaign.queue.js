@@ -41,6 +41,7 @@ function setCampaignCache(campaignId, campaign, isPerRecipient) {
   campaignCache.set(campaignId.toString(), {
     htmlBody: campaign.htmlBody,
     subject: campaign.subject,
+    previewText: campaign.previewText,
     extraJson: campaign.extraJson,
     isPerRecipient,
     extraMap,
@@ -260,7 +261,14 @@ export const sendWorker = new Worker(
       cached = getCachedCampaign(campaignId);
     }
 
-    const { htmlBody, subject, isPerRecipient, extraMap, extraJson } = cached;
+    const {
+      htmlBody,
+      subject,
+      previewText,
+      isPerRecipient,
+      extraMap,
+      extraJson,
+    } = cached;
 
     // ── Resolve per-recipient or shared extraJson ──────────────
     const extra = isPerRecipient
@@ -276,11 +284,16 @@ export const sendWorker = new Worker(
 
     const renderedSubject = await liquidEngine.parseAndRender(subject, context);
     const renderedHtml = await liquidEngine.parseAndRender(htmlBody, context);
+    const renderedPreviewText = await liquidEngine.parseAndRender(
+      previewText || "",
+      context,
+    );
 
     const brevoRes = await sendBrevoEmail({
       to: email,
       subject: renderedSubject,
       html: renderedHtml,
+      previewText: renderedPreviewText,
     });
 
     // Mark job sent

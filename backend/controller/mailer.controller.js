@@ -190,7 +190,7 @@ export const getCampaignById = async (req, res) => {
 
 export const createCampaign = async (req, res) => {
   try {
-    const { name, subject, htmlBody, emails, extraJson } = req.body;
+    const { name, subject, htmlBody, previewText, emails, extraJson } = req.body;
 
     if (!name?.trim())
       return res
@@ -233,6 +233,7 @@ export const createCampaign = async (req, res) => {
       name: name.trim(),
       subject: subject.trim(),
       htmlBody,
+      previewText,
       emails: resolvedEmails,
       extraJson: extraJson ?? {},
       status: "draft",
@@ -310,6 +311,7 @@ export const duplicateAndSendCampaign = async (req, res) => {
       name: `${original.name} (Resend)`,
       subject: original.subject,
       htmlBody: original.htmlBody,
+      previewText: original?.previewText || "", 
       emails: original.emails,
       extraJson: original.extraJson,
       status: "draft",
