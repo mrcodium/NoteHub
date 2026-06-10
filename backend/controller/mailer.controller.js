@@ -63,7 +63,9 @@ export const updateContact = async (req, res) => {
 
     if (emails !== undefined) {
       if (!Array.isArray(emails) || emails.length === 0) {
-        return res.status(400).json({ message: "At least one email is required" });
+        return res
+          .status(400)
+          .json({ message: "At least one email is required" });
       }
 
       // Sanitize and deduplicate
@@ -72,7 +74,7 @@ export const updateContact = async (req, res) => {
         ...new Set(
           emails
             .map((e) => e.trim().toLowerCase())
-            .filter((e) => EMAIL_REGEX.test(e))
+            .filter((e) => EMAIL_REGEX.test(e)),
         ),
       ];
 
@@ -98,7 +100,11 @@ export const getTemplates = async (req, res) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
     const [templates, total] = await Promise.all([
-      Template.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Template.find()
+        .select("name subject previewText mode createdAt updatedAt")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       Template.countDocuments(),
     ]);
     res.json({
@@ -162,7 +168,11 @@ export const getCampaigns = async (req, res) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
     const [campaigns, total] = await Promise.all([
-      Campaign.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Campaign.find()
+        .select("-emails -htmlBody -subject -previewText")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       Campaign.countDocuments(),
     ]);
     res.json({
@@ -170,6 +180,16 @@ export const getCampaigns = async (req, res) => {
       campaigns,
       pagination: paginationMeta(total, page, limit),
     });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getCampaignEmails = async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id).select("emails");
+    if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
+    res.json({ success: true, emails: campaign.emails });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -190,7 +210,8 @@ export const getCampaignById = async (req, res) => {
 
 export const createCampaign = async (req, res) => {
   try {
-    const { name, subject, htmlBody, previewText, emails, extraJson } = req.body;
+    const { name, subject, htmlBody, previewText, emails, extraJson } =
+      req.body;
 
     if (!name?.trim())
       return res
@@ -221,12 +242,10 @@ export const createCampaign = async (req, res) => {
     }
 
     if (resolvedEmails.length === 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "At least one recipient is required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "At least one recipient is required",
+      });
     }
 
     const campaign = await Campaign.create({
@@ -311,7 +330,7 @@ export const duplicateAndSendCampaign = async (req, res) => {
       name: `${original.name} (Resend)`,
       subject: original.subject,
       htmlBody: original.htmlBody,
-      previewText: original?.previewText || "", 
+      previewText: original?.previewText || "",
       emails: original.emails,
       extraJson: original.extraJson,
       status: "draft",

@@ -17,6 +17,7 @@ import {
   duplicateAndSendCampaign,
   retryFailedJobs,
   updateContact,
+  getCampaignEmails,
 } from "../controller/mailer.controller.js";
 import { deleteSuppressedEmail, getSuppressedEmailByEmail, getSuppressedEmails } from "../controller/unsubscribe.controller.js";
 import { adminOnly, protectRoute } from "../middleware/protectRoute.middleware.js";
@@ -47,6 +48,7 @@ router.delete("/suppressed-emails", deleteSuppressedEmail);
 // campaigns
 router.get("/campaigns", getCampaigns);
 router.get("/campaigns/:id", getCampaignById);
+router.get("/campaigns/:id/emails", getCampaignEmails);
 router.post("/campaigns", createCampaign);
 router.post("/campaigns/:id/send", sendCampaign);
 router.post("/campaigns/:id/retry-failed", retryFailedJobs);
