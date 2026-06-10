@@ -3,7 +3,9 @@ import CampaignJob from "../model/campaignJob.model.js";
 import Contact from "../model/contact.model.js";
 import Template from "../model/template.model.js";
 import { dispatchQueue, sendQueue } from "../queues/campaign.queue.js";
+import { uploadStream } from "../services/cloudinary.service.js";
 import { getPagination, paginationMeta } from "../utils/pagination.js";
+import { handleDbError } from "../utils/dbError.js";
 
 // ─── CONTACTS ────────────────────────────────────────────────
 
@@ -101,7 +103,7 @@ export const getTemplates = async (req, res) => {
     const { page, limit, skip } = getPagination(req.query);
     const [templates, total] = await Promise.all([
       Template.find()
-        .select("name subject previewText mode createdAt updatedAt")
+        .select("-htmlBody")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -159,6 +161,39 @@ export const deleteTemplate = async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const uploadTemplatePreview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const file = req.file;
+
+    if (!file) return res.status(400).json({ message: "No file uploaded" });
+
+    const template = await Template.findById(id);
+    if (!template) return res.status(404).json({ message: "Template not found" });
+
+    // Delete old preview if exists
+    if (template.previewImage) {
+      await deleteImage(template.previewImage);
+    }
+
+    const { secure_url } = await uploadStream(
+      file.buffer,
+      "notehub/template-previews",
+      "template_preview",
+      file
+    );
+
+    template.previewImage = secure_url;
+    await template.save();
+
+    return res.status(200).json({ previewUrl: secure_url });
+  } catch (error) {
+    console.error("Template preview upload error:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
   }
 };
 

@@ -21,6 +21,11 @@ const templateSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    previewImage: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     mode: {
       type: String,
       enum: ["shared", "per_recipient"],

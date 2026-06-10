@@ -18,9 +18,11 @@ import {
   retryFailedJobs,
   updateContact,
   getCampaignEmails,
+  uploadTemplatePreview,
 } from "../controller/mailer.controller.js";
 import { deleteSuppressedEmail, getSuppressedEmailByEmail, getSuppressedEmails } from "../controller/unsubscribe.controller.js";
 import { adminOnly, protectRoute } from "../middleware/protectRoute.middleware.js";
+import { handlefileUpload } from "../middleware/multer.middleware.js";
 
 const router = express.Router();
 
@@ -38,6 +40,7 @@ router.get("/templates/:id", getTemplateById);
 router.post("/templates", createTemplate);
 router.put("/templates/:id", updateTemplate);
 router.delete("/templates/:id", deleteTemplate);
+router.post("/templates/:id/preview", handlefileUpload("file"), uploadTemplatePreview);
 
 // suppression list
 router.get("/suppressed-emails", getSuppressedEmails);

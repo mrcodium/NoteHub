@@ -25,17 +25,33 @@ const UPLOAD_PRESETS = {
     quality: "auto",
     fetch_format: "auto",
   },
+  template_preview: {
+    quality: "auto:low",
+    fetch_format: "auto",
+    width: 600,
+    height: 800,
+    crop: "limit",
+  },
 };
 
-export const uploadStream = (buffer, folder = "default_folder", type = "default", fileMetadata = {}) => {
+export const uploadStream = (
+  buffer,
+  folder = "default_folder",
+  type = "default",
+  fileMetadata = {},
+) => {
   return new Promise((resolve, reject) => {
     const preset = UPLOAD_PRESETS[type] || UPLOAD_PRESETS.default;
 
-    const isSvg = fileMetadata.mimetype === "image/svg+xml" || 
-                  (fileMetadata.originalname && fileMetadata.originalname.toLowerCase().endsWith(".svg"));
+    const isSvg =
+      fileMetadata.mimetype === "image/svg+xml" ||
+      (fileMetadata.originalname &&
+        fileMetadata.originalname.toLowerCase().endsWith(".svg"));
 
-    const isGif = fileMetadata.mimetype === "image/gif" ||
-                  (fileMetadata.originalname && fileMetadata.originalname.toLowerCase().endsWith(".gif"));
+    const isGif =
+      fileMetadata.mimetype === "image/gif" ||
+      (fileMetadata.originalname &&
+        fileMetadata.originalname.toLowerCase().endsWith(".gif"));
 
     const uploadOptions = {
       folder,
@@ -61,7 +77,7 @@ export const uploadStream = (buffer, folder = "default_folder", type = "default"
           secure_url: result.secure_url,
           public_id: result.public_id,
         });
-      }
+      },
     );
 
     streamifier.createReadStream(buffer).pipe(stream);
