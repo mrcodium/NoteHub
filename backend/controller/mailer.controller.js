@@ -3,7 +3,7 @@ import CampaignJob from "../model/campaignJob.model.js";
 import Contact from "../model/contact.model.js";
 import Template from "../model/template.model.js";
 import { dispatchQueue, sendQueue } from "../queues/campaign.queue.js";
-import { uploadStream } from "../services/cloudinary.service.js";
+import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
 import { getPagination, paginationMeta } from "../utils/pagination.js";
 import { handleDbError } from "../utils/dbError.js";
 
