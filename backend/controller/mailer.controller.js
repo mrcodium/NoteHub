@@ -325,6 +325,73 @@ export const createCampaign = async (req, res) => {
   }
 };
 
+export const updateCampaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, subject, htmlBody, previewText, emails, extraJson } = req.body;
+
+    const campaign = await Campaign.findById(id);
+    if (!campaign)
+      return res.status(404).json({ success: false, message: "Campaign not found" });
+
+    if (campaign.status !== "draft")
+      return res.status(400).json({
+        success: false,
+        message: `Cannot update campaign with status "${campaign.status}"`,
+      });
+
+    if (name !== undefined) {
+      if (!name?.trim())
+        return res.status(400).json({ success: false, message: "Name is required" });
+      campaign.name = name.trim();
+    }
+
+    if (subject !== undefined) {
+      if (!subject?.trim())
+        return res.status(400).json({ success: false, message: "Subject is required" });
+      campaign.subject = subject.trim();
+    }
+
+    if (htmlBody !== undefined) {
+      if (!htmlBody?.trim())
+        return res.status(400).json({ success: false, message: "HTML body is required" });
+      campaign.htmlBody = htmlBody;
+    }
+
+    if (previewText !== undefined) campaign.previewText = previewText;
+
+    if (emails !== undefined || extraJson !== undefined) {
+      let resolvedEmails = Array.isArray(emails) ? emails : campaign.emails;
+      if (Array.isArray(extraJson) && extraJson.length > 0) {
+        const derived = [
+          ...new Set(
+            extraJson
+              .map((e) =>
+                typeof e.email === "string" ? e.email.trim().toLowerCase() : null,
+              )
+              .filter(Boolean),
+          ),
+        ];
+        if (derived.length > 0) resolvedEmails = derived;
+      }
+
+      if (resolvedEmails.length === 0)
+        return res.status(400).json({
+          success: false,
+          message: "At least one recipient is required",
+        });
+
+      campaign.emails = resolvedEmails;
+      if (extraJson !== undefined) campaign.extraJson = extraJson;
+    }
+
+    await campaign.save();
+    res.status(200).json({ success: true, campaign });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
 export const sendCampaign = async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id);
