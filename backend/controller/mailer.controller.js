@@ -179,7 +179,16 @@ export const updateTemplate = async (req, res) => {
 
 export const deleteTemplate = async (req, res) => {
   try {
-    await Template.findByIdAndDelete(req.params.id);
+    const template = await Template.findByIdAndDelete(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({ success: false, message: "Template not found" });
+    }
+
+    if (template.previewImage) {
+      await deleteImage(template.previewImage);
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
