@@ -13,7 +13,19 @@ export const getContacts = async (req, res) => {
   try {
     const { page, limit, skip } = getPagination(req.query);
     const [contacts, total] = await Promise.all([
-      Contact.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Contact.aggregate([
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $project: {
+            label: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            emailCount: { $size: "$emails" },
+          },
+        },
+      ]),
       Contact.countDocuments(),
     ]);
     res.json({
@@ -21,6 +33,16 @@ export const getContacts = async (req, res) => {
       contacts,
       pagination: paginationMeta(total, page, limit),
     });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getContactEmails = async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id).select("emails");
+    if (!contact) return res.status(404).json({ success: false, message: "Not found" });
+    res.json({ success: true, emails: contact.emails });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -172,7 +194,8 @@ export const uploadTemplatePreview = async (req, res) => {
     if (!file) return res.status(400).json({ message: "No file uploaded" });
 
     const template = await Template.findById(id);
-    if (!template) return res.status(404).json({ message: "Template not found" });
+    if (!template)
+      return res.status(404).json({ message: "Template not found" });
 
     // Delete old preview if exists
     if (template.previewImage) {
@@ -183,7 +206,7 @@ export const uploadTemplatePreview = async (req, res) => {
       file.buffer,
       "notehub/template-previews",
       "template_preview",
-      file
+      file,
     );
 
     template.previewImage = secure_url;
@@ -223,7 +246,10 @@ export const getCampaigns = async (req, res) => {
 export const getCampaignEmails = async (req, res) => {
   try {
     const campaign = await Campaign.findById(req.params.id).select("emails");
-    if (!campaign) return res.status(404).json({ success: false, message: "Campaign not found" });
+    if (!campaign)
+      return res
+        .status(404)
+        .json({ success: false, message: "Campaign not found" });
     res.json({ success: true, emails: campaign.emails });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -353,7 +379,7 @@ export const deleteCampaign = async (req, res) => {
   }
 };
 
-export const duplicateAndSendCampaign = async (req, res) => {
+export const duplicateCampaign = async (req, res) => {
   try {
     const original = await Campaign.findById(req.params.id);
     if (!original)
@@ -362,7 +388,7 @@ export const duplicateAndSendCampaign = async (req, res) => {
         .json({ success: false, message: "Campaign not found" });
 
     const campaign = await Campaign.create({
-      name: `${original.name} (Resend)`,
+      name: `${original.name} (Copy)`,
       subject: original.subject,
       htmlBody: original.htmlBody,
       previewText: original?.previewText || "",
@@ -370,13 +396,6 @@ export const duplicateAndSendCampaign = async (req, res) => {
       extraJson: original.extraJson,
       status: "draft",
     });
-
-    await dispatchQueue.add("dispatch", {
-      campaignId: campaign._id.toString(),
-    });
-
-    campaign.status = "sending";
-    await campaign.save();
 
     res.status(201).json({ success: true, campaign });
   } catch (err) {

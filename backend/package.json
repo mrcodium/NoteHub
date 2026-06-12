@@ -22,6 +22,7 @@
     "express-rate-limit": "^7.5.0",
     "geoip-lite": "^2.0.2",
     "google-auth-library": "^10.1.0",
+    "googleapis": "^173.0.0",
     "ioredis": "^5.11.0",
     "jsonwebtoken": "^9.0.2",
     "liquidjs": "^10.27.0",
