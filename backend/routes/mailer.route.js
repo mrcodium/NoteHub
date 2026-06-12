@@ -33,7 +33,7 @@ router.get("/campaigns", mailer.getCampaigns);
 router.get("/campaigns/:id", mailer.getCampaignById);
 router.get("/campaigns/:id/emails", mailer.getCampaignEmails);
 router.post("/campaigns", mailer.createCampaign);
-router.put("/campaigns", mailer.updateCampaign);
+router.put("/campaigns/:id", mailer.updateCampaign);
 router.post("/campaigns/:id/send", mailer.sendCampaign);
 router.post("/campaigns/:id/retry-failed", mailer.retryFailedJobs);
 router.get("/campaigns/:id/jobs", mailer.getCampaignJobs);
