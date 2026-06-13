@@ -463,8 +463,27 @@ export const duplicateCampaign = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Campaign not found" });
 
+    // Strip any existing "(copy-n)" suffix to get the base name
+    const baseName = original.name.replace(/\s*\(copy-\d+\)$/i, "");
+
+    // Find existing copies of this base name to determine next number
+    const existingCopies = await Campaign.find({
+      name: { $regex: `^${baseName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s\\(copy-\\d+\\)$`, $options: "i" },
+    }).select("name");
+
+    let maxN = 0;
+    for (const c of existingCopies) {
+      const match = c.name.match(/\(copy-(\d+)\)$/i);
+      if (match) {
+        const n = parseInt(match[1], 10);
+        if (n > maxN) maxN = n;
+      }
+    }
+
+    const newName = `${baseName} (copy-${maxN + 1})`;
+
     const campaign = await Campaign.create({
-      name: `${original.name} (Copy)`,
+      name: newName,
       subject: original.subject,
       htmlBody: original.htmlBody,
       previewText: original?.previewText || "",
