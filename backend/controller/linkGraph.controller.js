@@ -10,6 +10,7 @@ import Note from "../model/note.model.js";
 import LinkGraphCrawl from "../model/linkGraph.model.js";
 import { buildGraph } from "../services/linkGraph.service.js";
 import { handleDbError } from "../utils/dbError.js";
+import { getPagination, paginationMeta } from "../utils/pagination.js";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -152,21 +153,28 @@ export const getLatestCrawl = async (req, res) => {
 };
 
 // ─── GET /api/admin/link-graph/history ────────────────────────────────────────
-
 export const getCrawlHistory = async (req, res) => {
   try {
-    const limit = Math.min(Number(req.query.limit) || 10, 50);
+    const { page, limit, skip } = getPagination(req.query);
 
-    const history = await LinkGraphCrawl.find(
-      {},
-      "_id status summary createdAt completedAt triggeredBy errorMessage",
-    )
-      .populate("triggeredBy", "userName fullName")
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
+    const [history, total] = await Promise.all([
+      LinkGraphCrawl.find(
+        {},
+        "_id status summary createdAt completedAt triggeredBy errorMessage",
+      )
+        .populate("triggeredBy", "userName fullName")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      LinkGraphCrawl.countDocuments(),
+    ]);
 
-    return res.status(200).json({ success: true, history });
+    return res.status(200).json({
+      success: true,
+      history,
+      pagination: paginationMeta(total, page, limit),
+    });
   } catch (error) {
     console.error("Error in linkGraph.getCrawlHistory:", error);
     const { status, message } = handleDbError(error);

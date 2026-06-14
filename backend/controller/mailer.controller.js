@@ -2,7 +2,7 @@ import Campaign from "../model/campaign.model.js";
 import CampaignJob from "../model/campaignJob.model.js";
 import Contact from "../model/contact.model.js";
 import Template from "../model/template.model.js";
-import { dispatchQueue, sendQueue } from "../queues/campaign.queue.js";
+import { dispatchQueue, sendQueue, setCampaignCache } from "../queues/campaign.queue.js";
 import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
 import { getPagination, paginationMeta } from "../utils/pagination.js";
 import { handleDbError } from "../utils/dbError.js";
@@ -229,6 +229,21 @@ export const uploadTemplatePreview = async (req, res) => {
   }
 };
 
+export const bulkDeleteTemplates = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0)
+      return res.status(400).json({ success: false, message: "No template IDs provided" });
+
+    const result = await Template.deleteMany({ _id: { $in: ids } });
+
+    res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // ─── CAMPAIGNS ───────────────────────────────────────────────
 
 export const getCampaigns = async (req, res) => {
@@ -428,18 +443,28 @@ export const sendCampaign = async (req, res) => {
 };
 
 export const getCampaignJobs = async (req, res) => {
+  const ALLOWED_SORT_FIELDS = new Set(["createdAt", "processedAt", "email", "openCount"]);
+
   try {
     const { page, limit, skip } = getPagination(req.query);
+    const { status, sortBy = "createdAt", sortOrder = "asc" } = req.query;
+
     const filter = { campaignId: req.params.id };
+    if (status) filter.status = status; // single value: "failed"
+    // multi-status: ?status=sent,failed → filter.status = { $in: ["sent", "failed"] }
+
+    const safeSort = ALLOWED_SORT_FIELDS.has(sortBy) ? sortBy : "createdAt";
+    const order = sortOrder === "desc" ? -1 : 1;
+
     const [jobs, total] = await Promise.all([
-      CampaignJob.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limit),
+      CampaignJob.find(filter)
+        .sort({ [safeSort]: order })
+        .skip(skip)
+        .limit(limit),
       CampaignJob.countDocuments(filter),
     ]);
-    res.json({
-      success: true,
-      jobs,
-      pagination: paginationMeta(total, page, limit),
-    });
+
+    res.json({ success: true, jobs, pagination: paginationMeta(total, page, limit) });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -556,6 +581,115 @@ export const retryFailedJobs = async (req, res) => {
     res.json({
       success: true,
       message: `Retrying ${failedJobs.length} failed jobs`,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ------------ Campaign BULK ACIONS
+export const bulkDeleteCampaigns = async (req, res) => {
+  try {
+    const { ids } = req.body; // array of campaign IDs
+
+    if (!Array.isArray(ids) || ids.length === 0)
+      return res.status(400).json({ success: false, message: "No campaign IDs provided" });
+
+    // Optional: prevent deleting campaigns currently sending
+    const sendingCampaigns = await Campaign.find({
+      _id: { $in: ids },
+      status: "sending",
+    }).select("_id");
+
+    if (sendingCampaigns.length > 0)
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete campaigns that are currently sending",
+      });
+
+    await Campaign.deleteMany({ _id: { $in: ids } });
+    await CampaignJob.deleteMany({ campaignId: { $in: ids } });
+
+    res.json({ success: true, deletedCount: ids.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
+export const bulkRetryFailedJobs = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0)
+      return res.status(400).json({ success: false, message: "No campaign IDs provided" });
+
+    // 1. Fetch all eligible campaigns in one go
+    const campaigns = await Campaign.find({
+      _id: { $in: ids },
+      status: "failed",
+    }).select("_id subject htmlBody previewText extraJson").lean();
+
+    if (campaigns.length === 0)
+      return res.status(400).json({ success: false, message: "No eligible campaigns" });
+
+    const campaignMap = new Map(campaigns.map((c) => [c._id.toString(), c]));
+    const eligibleIds = campaigns.map((c) => c._id);
+
+    // 2. Fetch all failed jobs across these campaigns in one query
+    const failedJobs = await CampaignJob.find({
+      campaignId: { $in: eligibleIds },
+      status: "failed",
+    }).select("_id campaignId email").lean();
+
+    if (failedJobs.length === 0)
+      return res.status(400).json({ success: false, message: "No failed jobs to retry" });
+
+    // 3. Group failed counts per campaign
+    const failedCountByCampaign = {};
+    for (const job of failedJobs) {
+      const cid = job.campaignId.toString();
+      failedCountByCampaign[cid] = (failedCountByCampaign[cid] || 0) + 1;
+    }
+
+    // 4. Bulk reset all failed jobs -> pending (single query)
+    await CampaignJob.updateMany(
+      { campaignId: { $in: eligibleIds }, status: "failed" },
+      { $set: { status: "pending", error: null, processedAt: null } },
+    );
+
+    // 5. Bulk update campaign stats + status (one bulkWrite instead of N updates)
+    const campaignBulkOps = Object.entries(failedCountByCampaign).map(([cid, count]) => ({
+      updateOne: {
+        filter: { _id: cid },
+        update: { $set: { status: "sending" }, $inc: { "stats.failed": -count } },
+      },
+    }));
+    await Campaign.bulkWrite(campaignBulkOps);
+
+    // 6. Warm campaign cache so sendWorker doesn't hit DB per job
+    for (const campaign of campaigns) {
+      const isPerRecipient =
+        Array.isArray(campaign.extraJson) && campaign.extraJson.length > 0;
+      setCampaignCache(campaign._id, campaign, isPerRecipient);
+    }
+
+    // 7. Build lightweight queue jobs (worker reads campaign data from cache)
+    const queueJobs = failedJobs.map((job) => ({
+      name: "send-email",
+      data: {
+        campaignId: job.campaignId.toString(),
+        campaignJobId: job._id.toString(),
+        email: job.email,
+      },
+    }));
+
+    await sendQueue.addBulk(queueJobs);
+
+    res.json({
+      success: true,
+      retriedCampaigns: campaigns.length,
+      retriedJobs: failedJobs.length,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

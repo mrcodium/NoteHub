@@ -23,11 +23,11 @@ const liquidEngine = new Liquid({
 
 const campaignCache = new Map();
 
-function getCachedCampaign(campaignId) {
+export function getCachedCampaign(campaignId) {
   return campaignCache.get(campaignId.toString()) ?? null;
 }
 
-function setCampaignCache(campaignId, campaign, isPerRecipient) {
+export function setCampaignCache(campaignId, campaign, isPerRecipient) {
   const extraMap = new Map();
 
   if (isPerRecipient && Array.isArray(campaign.extraJson)) {

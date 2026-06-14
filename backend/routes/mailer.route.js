@@ -22,6 +22,7 @@ router.post("/templates", mailer.createTemplate);
 router.put("/templates/:id", mailer.updateTemplate);
 router.delete("/templates/:id", mailer.deleteTemplate);
 router.post("/templates/:id/preview", handlefileUpload("file"), mailer.uploadTemplatePreview);
+router.post("/templates/bulk-delete", mailer.bulkDeleteTemplates);
 
 // suppression list
 router.get("/suppressed-emails", getSuppressedEmails);
@@ -39,5 +40,7 @@ router.post("/campaigns/:id/retry-failed", mailer.retryFailedJobs);
 router.get("/campaigns/:id/jobs", mailer.getCampaignJobs);
 router.delete("/campaigns/:id", mailer.deleteCampaign);
 router.post("/campaigns/:id/duplicate", mailer.duplicateCampaign);
+router.post("/campaigns/bulk-delete", mailer.bulkDeleteCampaigns);
+router.post("/campaigns/bulk-retry-failed", mailer.bulkRetryFailedJobs);
 
 export default router;
