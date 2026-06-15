@@ -251,7 +251,7 @@ export const getCampaigns = async (req, res) => {
     const { page, limit, skip } = getPagination(req.query);
     const [campaigns, total] = await Promise.all([
       Campaign.find()
-        .select("-emails -htmlBody -subject -previewText")
+        .select("-emails -htmlBody -subject -previewText -extraJson")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
