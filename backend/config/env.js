@@ -49,4 +49,5 @@ export const ENV = {
   REFRESH_TOKEN_EXPIRY_DAYS: parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "30", 10),
 
   ENCRYPTION_KEY: required("ENCRYPTION_KEY"),
+  GROQ_API_KEY: required("GROQ_API_KEY"),
 };

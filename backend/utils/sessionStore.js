@@ -1,5 +1,5 @@
 import redisClient from "../config/redis.js";
-import Session from "../model/session.model.js";
+import Session from "../models/session.model.js";
 import { ENV } from "../config/env.js";
 
 const SESSION_PREFIX = "session";

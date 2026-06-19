@@ -1,4 +1,4 @@
-import User from "../model/user.model.js";
+import User from "../models/user.model.js";
 import { verifyToken } from "../utils/jwt.js";
 import { updateLastActive } from "../utils/sessionStore.js";
 

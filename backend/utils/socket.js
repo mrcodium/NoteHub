@@ -1,6 +1,6 @@
 // utils/socket.js
 import { Server } from "socket.io";
-import Campaign from "../model/campaign.model.js";
+import Campaign from "../models/campaign.model.js";
 
 let io = null;
 

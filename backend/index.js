@@ -7,28 +7,38 @@ import connectToDb from "./utils/connectToDb.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-import authRoutes from "./routes/auth.route.js";
-import userRoutes from "./routes/user.route.js";
-import passwordRoutes from "./routes/password.route.js";
-import collectionRoutes from "./routes/collection.route.js";
-import noteRoutes from "./routes/note.route.js";
-import ImageRoutes from "./routes/Image.route.js";
-import searchRoutes from "./routes/search.route.js";
-import sitemapRoutes from "./routes/sitemap.route.js";
-import llmsRoutes from "./routes/llms.route.js";
-import adminRouter from "./routes/admin.route.js";
-import githubRoutes from "./routes/github.route.js";
-import mailerRoutes from "./routes/mailer.route.js";
-import brevoWebhookRoutes from "./routes/brevoWebhook.route.js";
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import passwordRoutes from "./routes/password.routes.js";
+import collectionRoutes from "./routes/collection.routes.js";
+import noteRoutes from "./routes/note.routes.js";
+import ImageRoutes from "./routes/Image.routes.js";
+import searchRoutes from "./routes/search.routes.js";
+import sitemapRoutes from "./routes/sitemap.routes.js";
+import llmsRoutes from "./routes/llms.routes.js";
+import adminRouter from "./routes/admin.routes.js";
+import githubRoutes from "./routes/github.routes.js";
+import mailerRoutes from "./routes/mailer.routes.js";
+import brevoWebhookRoutes from "./routes/brevoWebhook.routes.js";
 
 
-import "./model/Image.model.js";
+import "./models/Image.model.js";
 import path from "path";
 import { ENV } from "./config/env.js";
 import { connectRedis } from "./config/redis.js";
 import { requestLogger, captureResponse } from "./middleware/logger.js";
-import { handleUnsubscribe } from "./controller/unsubscribe.controller.js";
-import { sendContactEmail } from "./controller/contact.controller.js";
+import { handleUnsubscribe } from "./controllers/unsubscribe.controllers.js";
+import { sendContactEmail } from "./controllers/contact.controllers.js";
+import {
+  scheduleGscJobs,
+  startGscAnalyticsWorker,
+  startGscInspectionWorker,
+} from "./jobs/gsc.jobs.js";
+ 
+// Call once at startup
+scheduleGscJobs();
+startGscAnalyticsWorker();
+startGscInspectionWorker();
 
 config();
 const PORT = ENV.PORT;

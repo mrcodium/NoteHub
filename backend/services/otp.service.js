@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendEmail } from "./sendEmail.js";
 import { otpTemplate } from "./emailTemplates.js";
-import Otp from "../model/otp.model.js";
+import Otp from "../models/otp.model.js";
 
 export const sendOtp = async ({ email, purpose }) => {
   const existingOtp = await Otp.findOne({ email, purpose});

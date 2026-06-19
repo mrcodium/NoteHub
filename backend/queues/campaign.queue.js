@@ -1,9 +1,9 @@
 import { Queue, Worker } from "bullmq";
 import { bullRedis } from "../config/bullmq.config.js";
 import { sendBrevoEmail } from "../services/mailer.service.js";
-import Campaign from "../model/campaign.model.js";
-import CampaignJob from "../model/campaignJob.model.js";
-import SuppressedEmail from "../model/suppressedEmail.model.js";
+import Campaign from "../models/campaign.model.js";
+import CampaignJob from "../models/campaignJob.model.js";
+import SuppressedEmail from "../models/suppressedEmail.model.js";
 import { Liquid } from "liquidjs";
 import jwt from "jsonwebtoken";
 import { ENV } from "../config/env.js";

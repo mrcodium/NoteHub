@@ -3,8 +3,8 @@ dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
 
 import mongoose from "mongoose";
 import fs from "fs";
-import Note from "../../model/note.model.js";
-import SearchIndex from "../../model/searchIndex.model.js";
+import Note from "../../models/note.model.js";
+import SearchIndex from "../../models/searchIndex.model.js";
 import { extractKeywordFrequency } from "./textProcessor.js";
 
 async function reindex() {

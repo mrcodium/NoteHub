@@ -4,7 +4,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 
 import mongoose from "mongoose";
-import Note from "../model/note.model.js";
+import Note from "../models/note.model.js";
 import { calculateSEOScore } from "../services/seo.service.js";
 
 async function run() {

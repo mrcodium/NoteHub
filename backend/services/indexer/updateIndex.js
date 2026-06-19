@@ -1,5 +1,5 @@
 // indexer/updateIndex.js
-import SearchIndex from "../../model/searchIndex.model.js";
+import SearchIndex from "../../models/searchIndex.model.js";
 import { extractKeywordFrequency } from "./textProcessor.js";
 
 /**
