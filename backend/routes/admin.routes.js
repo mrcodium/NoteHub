@@ -3,6 +3,7 @@ import { protectRoute, adminOnly } from "../middleware/protectRoute.middleware.j
 import { handlefileUpload } from "../middleware/multer.middleware.js";
 import linkGraphRoutes from "./linkGraph.routes.js";
 import dbQueryRoutes from './aiquery.routes.js';
+import gscRoutes from './gsc.routes.js';
 import * as adminController from "../controllers/admin.controllers.js";
 
 const router = express.Router();
@@ -12,6 +13,7 @@ router.use(protectRoute, adminOnly);
 
 router.use("/", linkGraphRoutes);
 router.use('/query', dbQueryRoutes);
+router.use('/gsc', gscRoutes);
 
 router.get("/blogs/stats", adminController.getBlogStats);
 router.get("/blogs", adminController.getAllBlogs);

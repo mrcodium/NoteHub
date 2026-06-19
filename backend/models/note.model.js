@@ -118,6 +118,11 @@ const noteSchema = new mongoose.Schema(
       required: true,
     },
 
+    gsc: {
+      isIndexed:  { type: Boolean, default: false },
+      lastSynced: { type: Date,    default: null  },
+    },
+
     contentUpdatedAt: {
       type: Date,
       default: Date.now,
@@ -163,6 +168,8 @@ noteSchema.index({
   visibility: 1,
 });
 
+noteSchema.index({ "gsc.isIndexed": 1 });
+
 /* ===================== MIDDLEWARE ===================== */
 
 // Slug generator (MUST run before validation)
@@ -171,7 +178,7 @@ noteSchema.pre("validate", async function (next) {
   // 1. If slug is explicitly provided and not modified, skip
   // 2. If name is modified and slug is NOT explicitly modified, regenerate slug from name
   // 3. If slug is missing, generate from name
-  
+
   const slugModified = this.isModified("slug");
   const nameModified = this.isModified("name");
 
@@ -212,8 +219,12 @@ noteSchema.pre("save", function (next) {
     this.content = html; // persist heading IDs back to content
     this.tableOfContent = toc;
   }
-  
-  if (this.isModified("content") || this.isModified("seo") || this.isModified("name")) {
+
+  if (
+    this.isModified("content") ||
+    this.isModified("seo") ||
+    this.isModified("name")
+  ) {
     if (!this.seo) {
       this.seo = {};
     }
