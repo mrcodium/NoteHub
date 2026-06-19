@@ -1,57 +1,63 @@
-import mongoose, { Schema } from "mongoose";
+// models/NoteAnalytics.model.js
+// Compound unique key: (noteUsername, noteCollection, noteSlug)
+// This eliminates the slug-collision bug where two users with the same
+// noteSlug would overwrite each other's analytics.
+
+import mongoose from "mongoose";
+
+const { Schema, model, models } = mongoose;
 
 // ─── Sub-schemas ──────────────────────────────────────────────────────────────
 
-const TopQuerySchema = new Schema(
+const QueryRowSchema = new Schema(
   {
-    query:       { type: String, required: true },
+    query:       { type: String },
     clicks:      { type: Number, default: 0 },
     impressions: { type: Number, default: 0 },
-    ctr:         { type: Number, default: 0 },   // 0–1 float
-    position:    { type: Number, default: 0 },   // avg ranking position
+    ctr:         { type: Number, default: 0 },
+    position:    { type: Number, default: 0 },
   },
   { _id: false },
 );
 
-const GscSearchAnalyticsSchema = new Schema(
+const DeviceStatsSchema = new Schema(
+  {
+    clicks:      { type: Number, default: 0 },
+    impressions: { type: Number, default: 0 },
+  },
+  { _id: false },
+);
+
+const GscSchema = new Schema(
   {
     clicks:      { type: Number, default: 0 },
     impressions: { type: Number, default: 0 },
     ctr:         { type: Number, default: 0 },
     position:    { type: Number, default: 0 },
-    topQueries:  { type: [TopQuerySchema], default: [] },
-    // Device breakdown
+    topQueries:  { type: [QueryRowSchema], default: [] },
     devices: {
-      desktop: { clicks: { type: Number, default: 0 }, impressions: { type: Number, default: 0 } },
-      mobile:  { clicks: { type: Number, default: 0 }, impressions: { type: Number, default: 0 } },
-      tablet:  { clicks: { type: Number, default: 0 }, impressions: { type: Number, default: 0 } },
+      desktop: { type: DeviceStatsSchema, default: () => ({}) },
+      mobile:  { type: DeviceStatsSchema, default: () => ({}) },
+      tablet:  { type: DeviceStatsSchema, default: () => ({}) },
     },
-    syncedAt: { type: Date, default: null },
+    syncedAt: { type: Date },
   },
   { _id: false },
 );
 
 const InspectionSchema = new Schema(
   {
-    // "PASS" | "FAIL" | "NEUTRAL" | "VERDICT_UNSPECIFIED"
-    verdict:        { type: String, default: null },
-    // "INDEXED" | "NOT_INDEXED" | "COVERAGE_UNSPECIFIED"
-    indexingState:  { type: String, default: null },
-    // "ALLOWED" | "BLOCKED" | "ROBOTS_UNKNOWN"
-    robotsTxtState: { type: String, default: null },
-    // "SUCCESSFUL" | "SOFT_404" | "BLOCKED_ROBOTS_TXT" | …
-    pageFetchState: { type: String, default: null },
-    lastCrawlTime:  { type: Date, default: null },
-    // "MOBILE" | "DESKTOP" | null
-    crawledAs:      { type: String, default: null },
-    // "RICH_RESULTS" | "NO_RICH_RESULTS" | null
+    verdict:            { type: String, default: null }, // "PASS" | "FAIL" | "NEUTRAL" | null
+    indexingState:      { type: String, default: null },
+    robotsTxtState:     { type: String, default: null },
+    pageFetchState:     { type: String, default: null },
+    lastCrawlTime:      { type: Date,   default: null },
+    crawledAs:          { type: String, default: null },
+    googleCanonical:    { type: String, default: null },
+    userCanonical:      { type: String, default: null },
     richResultsVerdict: { type: String, default: null },
-    // "MOBILE_FRIENDLY" | "NOT_MOBILE_FRIENDLY" | null
-    mobileVerdict:  { type: String, default: null },
-    // canonical URLs as reported by Google
-    googleCanonical: { type: String, default: null },
-    userCanonical:   { type: String, default: null },
-    syncedAt: { type: Date, default: null },
+    mobileVerdict:      { type: String, default: null },
+    syncedAt:           { type: Date,   default: null },
   },
   { _id: false },
 );
@@ -60,57 +66,44 @@ const InspectionSchema = new Schema(
 
 const NoteAnalyticsSchema = new Schema(
   {
-    noteSlug: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-    },
-    noteId: {
-      type: Schema.Types.ObjectId,
-      ref: "Note",
-      default: null,
-    },
-    // Full URL so we don't reconstruct it every time
-    noteUrl: {
-      type: String,
-      required: true,
-    },
+    // ★ Three-part identity — unique together, never collide across users
+    noteUsername:   { type: String, required: true, index: true },
+    noteCollection: { type: String, required: true },
+    noteSlug:       { type: String, required: true },
 
-    gsc:        { type: GscSearchAnalyticsSchema, default: () => ({}) },
-    inspection: { type: InspectionSchema,         default: () => ({}) },
+    // Full URL as crawled by Google (source of truth from GSC)
+    noteUrl: { type: String, required: true },
 
-    // Track last time each sync job ran (separate from sub-doc syncedAt)
+    gsc:        { type: GscSchema,        default: () => ({}) },
+    inspection: { type: InspectionSchema, default: () => ({}) },
+
     lastAnalyticsSync:  { type: Date, default: null },
     lastInspectionSync: { type: Date, default: null },
   },
   {
-    timestamps: true, // createdAt, updatedAt
+    timestamps: true, // createdAt + updatedAt
   },
 );
 
-// ─── Indexes for admin queries ─────────────────────────────────────────────────
+// ─── Indexes ──────────────────────────────────────────────────────────────────
+
+// ★ Compound unique — prevents slug collisions between different users/collections
+NoteAnalyticsSchema.index(
+  { noteUsername: 1, noteCollection: 1, noteSlug: 1 },
+  { unique: true },
+);
+
+// Sort indexes for getCachedAnalytics
 NoteAnalyticsSchema.index({ "gsc.clicks":      -1 });
-NoteAnalyticsSchema.index({ "gsc.impressions":  -1 });
-NoteAnalyticsSchema.index({ "gsc.position":      1 });
-NoteAnalyticsSchema.index({ lastAnalyticsSync:   1 });
+NoteAnalyticsSchema.index({ "gsc.impressions": -1 });
+NoteAnalyticsSchema.index({ "gsc.position":     1 });
+NoteAnalyticsSchema.index({ "gsc.ctr":         -1 });
+
+// Gap queries
 NoteAnalyticsSchema.index({ lastInspectionSync:  1 });
 NoteAnalyticsSchema.index({ "inspection.verdict": 1 });
+NoteAnalyticsSchema.index({ "gsc.impressions": 1, "inspection.verdict": 1 });
 
-// ─── Virtuals ─────────────────────────────────────────────────────────────────
+// ─── Export ───────────────────────────────────────────────────────────────────
 
-// Quick helper: is this note indexed by Google?
-NoteAnalyticsSchema.virtual("isIndexed").get(function () {
-  return this.inspection?.verdict === "PASS";
-});
-
-// CTR as percentage string for display
-NoteAnalyticsSchema.virtual("ctrPercent").get(function () {
-  return this.gsc?.ctr != null
-    ? `${(this.gsc.ctr * 100).toFixed(2)}%`
-    : null;
-});
-
-NoteAnalyticsSchema.set("toJSON", { virtuals: true });
-
-export default mongoose.model("NoteAnalytics", NoteAnalyticsSchema);
+export default models.NoteAnalytics ?? model("NoteAnalytics", NoteAnalyticsSchema);

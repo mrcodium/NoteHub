@@ -648,17 +648,16 @@ export const createUser = async (req, res) => {
 // GET /api/admin/blogs
 export const getAllBlogs = async (req, res) => {
   try {
-    // prevent limit <= 0 and >= 100
     const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 20));
     const page = Number(req.query.page) || 1;
     const skip = (page - 1) * limit;
 
     const search = req.query.search?.trim() || "";
     const healthFilter = req.query.health || "all";
+    const indexFilter = req.query.indexed || "all"; // "all" | "indexed" | "not_indexed" | "unknown"
 
     const match = {};
 
-    // Search
     if (search) {
       match.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -666,7 +665,6 @@ export const getAllBlogs = async (req, res) => {
       ];
     }
 
-    // Health filter
     if (healthFilter === "good") {
       match["seo.score"] = { $gte: 90 };
     } else if (healthFilter === "warning") {
@@ -684,48 +682,35 @@ export const getAllBlogs = async (req, res) => {
     switch (sortBy) {
       case "seo":
       case "seoScore":
-        sort = {
-          "seo.score": order,
-          updatedAt: -1, // stable sort
-        };
+        sort = { "seo.score": order, updatedAt: -1 };
         break;
-
       case "created":
       case "date":
       case "createdAt":
-        sort = {
-          createdAt: order,
-        };
+        sort = { createdAt: order };
         break;
-
       case "updated":
       case "updatedAt":
-        sort = {
-          updatedAt: order,
-        };
+        sort = { updatedAt: order };
         break;
-
       case "name":
-        sort = {
-          name: order,
-        };
+        sort = { name: order };
         break;
-
       default:
-        sort = {
-          updatedAt: -1,
-        };
+        sort = { updatedAt: -1 };
     }
 
-    const [result] = await Note.aggregate([
-      {
-        $match: match,
-      },
+    // Build post-lookup match for indexed filter
+    // Applied after $lookup so we can filter on analytics.inspection.verdict
+    const indexedMatch =
+      indexFilter === "indexed"     ? { "analytics.inspection.verdict": "PASS"                        } :
+      indexFilter === "not_indexed" ? { "analytics.inspection.verdict": { $in: ["FAIL", "NEUTRAL"] }  } :
+      indexFilter === "unknown"     ? { "analytics.inspection.verdict": { $exists: false }             } :
+      null;
 
-      // IMPORTANT: Sort before pagination
-      {
-        $sort: sort,
-      },
+    const [result] = await Note.aggregate([
+      { $match: match },
+      { $sort: sort },
 
       {
         $facet: {
@@ -741,7 +726,6 @@ export const getAllBlogs = async (req, res) => {
                 as: "collection",
               },
             },
-
             {
               $lookup: {
                 from: "users",
@@ -751,19 +735,36 @@ export const getAllBlogs = async (req, res) => {
               },
             },
 
+            // ── GSC indexed status (single field, minimal fetch) ───────────
             {
-              $unwind: {
-                path: "$collection",
-                preserveNullAndEmptyArrays: true,
+              $lookup: {
+                from: "noteanalytics",
+                localField: "slug",
+                foreignField: "noteSlug",
+                as: "analytics",
+                pipeline: [
+                  {
+                    $project: {
+                      _id: 0,
+                      "inspection.verdict": 1,
+                    },
+                  },
+                ],
               },
             },
 
             {
-              $unwind: {
-                path: "$user",
-                preserveNullAndEmptyArrays: true,
-              },
+              $unwind: { path: "$collection", preserveNullAndEmptyArrays: true },
             },
+            {
+              $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $unwind: { path: "$analytics", preserveNullAndEmptyArrays: true },
+            },
+
+            // Apply indexed filter after lookup
+            ...(indexedMatch ? [{ $match: indexedMatch }] : []),
 
             {
               $project: {
@@ -790,15 +791,14 @@ export const getAllBlogs = async (req, res) => {
                   userName: "$user.userName",
                   avatar: "$user.avatar",
                 },
+
+                // null = never synced | "PASS" | "FAIL" | "NEUTRAL"
+                gscIndexed: { $ifNull: ["$analytics.inspection.verdict", null] },
               },
             },
           ],
 
-          totalCount: [
-            {
-              $count: "count",
-            },
-          ],
+          totalCount: [{ $count: "count" }],
         },
       },
     ]);
@@ -821,69 +821,69 @@ export const getAllBlogs = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in admin.getAllBlogs:", error);
-
     const { status, message } = handleDbError(error);
-
-    return res.status(status).json({
-      success: false,
-      message,
-    });
+    return res.status(status).json({ success: false, message });
   }
 };
 
+
 export const getBlogStats = async (req, res) => {
   try {
-    const match = {};
+    // ── SEO health stats (all notes) + GSC indexing stats (public only) ──
 
-    const [stats] = await Note.aggregate([
-      {
-        $match: match,
-      },
-
+    const [seoStats] = await Note.aggregate([
       {
         $group: {
           _id: null,
+          all:      { $sum: 1 },
+          good:     { $sum: { $cond: [{ $gte: ["$seo.score", 90] }, 1, 0] } },
+          warning:  { $sum: { $cond: [{ $and: [{ $gte: ["$seo.score", 50] }, { $lt: ["$seo.score", 90] }] }, 1, 0] } },
+          critical: { $sum: { $cond: [{ $lt:  ["$seo.score", 50] }, 1, 0] } },
+        },
+      },
+    ]);
 
-          all: {
-            $sum: 1,
+    // GSC indexing counts — public notes only, joined with NoteAnalytics
+    const [gscStats] = await Note.aggregate([
+      {
+        $match: { visibility: "public" },
+      },
+      {
+        $lookup: {
+          from: "noteanalytics",
+          localField: "slug",
+          foreignField: "noteSlug",
+          as: "analytics",
+          pipeline: [
+            { $project: { _id: 0, "inspection.verdict": 1 } },
+          ],
+        },
+      },
+      {
+        $unwind: { path: "$analytics", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $group: {
+          _id: null,
+          totalPublic: { $sum: 1 },
+          indexed: {
+            $sum: {
+              $cond: [{ $eq: ["$analytics.inspection.verdict", "PASS"] }, 1, 0],
+            },
           },
-
-          good: {
+          notIndexed: {
             $sum: {
               $cond: [
-                {
-                  $gte: ["$seo.score", 90],
-                },
+                { $in: ["$analytics.inspection.verdict", ["FAIL", "NEUTRAL"]] },
                 1,
                 0,
               ],
             },
           },
-
-          warning: {
+          // never synced = no analytics doc at all
+          unknown: {
             $sum: {
-              $cond: [
-                {
-                  $and: [
-                    { $gte: ["$seo.score", 50] },
-                    { $lt: ["$seo.score", 90] },
-                  ],
-                },
-                1,
-                0,
-              ],
-            },
-          },
-
-          critical: {
-            $sum: {
-              $cond: [
-                {
-                  $lt: ["$seo.score", 50],
-                },
-                1,
-                0,
-              ],
+              $cond: [{ $eq: ["$analytics", null] }, 1, 0],
             },
           },
         },
@@ -893,20 +893,23 @@ export const getBlogStats = async (req, res) => {
     return res.status(200).json({
       success: true,
       stats: {
-        all: stats?.all || 0,
-        good: stats?.good || 0,
-        warning: stats?.warning || 0,
-        critical: stats?.critical || 0,
+        // SEO health
+        all:      seoStats?.all      || 0,
+        good:     seoStats?.good     || 0,
+        warning:  seoStats?.warning  || 0,
+        critical: seoStats?.critical || 0,
+        // GSC indexing (public notes only)
+        gsc: {
+          totalPublic: gscStats?.totalPublic || 0,
+          indexed:     gscStats?.indexed     || 0,
+          notIndexed:  gscStats?.notIndexed  || 0,
+          unknown:     gscStats?.unknown     || 0,
+        },
       },
     });
   } catch (error) {
     console.error("Error in admin.getBlogStats:", error);
-
     const { status, message } = handleDbError(error);
-
-    return res.status(status).json({
-      success: false,
-      message,
-    });
+    return res.status(status).json({ success: false, message });
   }
 };

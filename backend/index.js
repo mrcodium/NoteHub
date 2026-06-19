@@ -29,16 +29,6 @@ import { connectRedis } from "./config/redis.js";
 import { requestLogger, captureResponse } from "./middleware/logger.js";
 import { handleUnsubscribe } from "./controllers/unsubscribe.controllers.js";
 import { sendContactEmail } from "./controllers/contact.controllers.js";
-import {
-  scheduleGscJobs,
-  startGscAnalyticsWorker,
-  startGscInspectionWorker,
-} from "./jobs/gsc.jobs.js";
- 
-// Call once at startup
-scheduleGscJobs();
-startGscAnalyticsWorker();
-startGscInspectionWorker();
 
 config();
 const PORT = ENV.PORT;
