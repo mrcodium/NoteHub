@@ -19,7 +19,6 @@ import { GSC_LAST_SYNCED_KEY } from "./gsc.controllers.js";
 
 // GET /api/admin/users
 export const getAllUsers = async (req, res) => {
-  console.log("getall users");
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -105,7 +104,6 @@ export const getAllUsers = async (req, res) => {
         hasPreviousPage: page > 1,
       },
     };
-    console.log(response);
     res.status(200).json(response);
   } catch (error) {
     console.error("Error in admin.getAllUsers:", error);

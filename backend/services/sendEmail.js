@@ -27,7 +27,6 @@ export const sendEmail = async ({email, subject, text, html}) => {
       console.error("❌ Brevo API error:", data);
       throw new Error("Email failed");
     }
-    console.log(data);
     return data;
   } catch (error) {
     console.error("❌ Email sending failed:", error);

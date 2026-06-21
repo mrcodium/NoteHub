@@ -139,8 +139,6 @@ export const githubCallback = async (req, res) => {
     };
 
     await user.save();
-    console.log(`GitHub connected for user ${user.userName} → @${githubUser.login}`);
-
     res.redirect(`${ENV.FRONTEND_URL}/${user.userName}?github=success`);
   } catch (error) {
     console.error("Error in githubCallback:", error);

@@ -139,7 +139,6 @@ async function run() {
   console.log(`  Dry run    : ${DRY_RUN}`);
   console.log("──────────────────────────────────────────\n");
 
-  console.log(mongoUri);
   await mongoose.connect(mongoUri);
   console.log("✓ Connected to MongoDB\n");
 
