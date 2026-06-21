@@ -123,6 +123,21 @@ export const signup = async (req, res) => {
   try {
     const normalizedEmail = normalizeEmail(email);
     const existingUser = await User.findOne({ email: normalizedEmail });
+
+    if (existingUser?.isDeleted) {
+      return res.status(403).json({
+        code: "ACCOUNT_DELETED",
+        message: "This account has been deleted.",
+      });
+    }
+
+    if (existingUser?.isBanned) {
+      return res.status(403).json({
+        code: "ACCOUNT_BANNED",
+        message: "This account has been suspended.",
+      });
+    }
+
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -278,6 +293,20 @@ export const googleLogin = async (req, res) => {
 
     let user = await User.findOne({ email: normalizedEmail });
 
+    if (user?.isDeleted) {
+      return res.status(403).json({
+        code: "ACCOUNT_DELETED",
+        message: "This account has been deleted.",
+      });
+    }
+
+    if (user?.isBanned) {
+      return res.status(403).json({
+        code: "ACCOUNT_BANNED",
+        message: "This account has been suspended.",
+      });
+    }
+
     if (!user) {
       user = await User.create({
         fullName: escape(fullName || ""),
@@ -368,6 +397,15 @@ export const refresh = async (req, res) => {
     if (!user) {
       clearAuthCookies(res);
       return res.status(401).json({ message: "User not found" });
+    }
+
+    if (user.isDeleted || user.isBanned) {
+      await deleteAllUserSessions(userId);
+      clearAuthCookies(res);
+
+      return res.status(403).json({
+        code: "ACCOUNT_DISABLED",
+      });
     }
 
     return await sendAuthResponse(req, res, user);
