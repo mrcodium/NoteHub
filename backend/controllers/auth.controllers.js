@@ -1,13 +1,32 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-import { clearAuthCookies, generateAccessToken, generateRefreshToken, hashToken, setAuthCookies } from "../utils/jwt.js";
-import { createSession, deleteSession, deleteAllSessionsExcept, deleteAllUserSessions, getUserSessions, getSession } from "../utils/sessionStore.js";
+import {
+  clearAuthCookies,
+  generateAccessToken,
+  generateRefreshToken,
+  hashToken,
+  setAuthCookies,
+} from "../utils/jwt.js";
+import {
+  createSession,
+  deleteSession,
+  deleteAllSessionsExcept,
+  deleteAllUserSessions,
+  getUserSessions,
+  getSession,
+} from "../utils/sessionStore.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
 import { OAuth2Client } from "google-auth-library";
 import { ENV } from "../config/env.js";
-import { escape, isEmail, isLength, normalizeEmail } from "../utils/validator.js";
+import {
+  escape,
+  isEmail,
+  isLength,
+  normalizeEmail,
+} from "../utils/validator.js";
 import { v4 as uuidv4 } from "uuid";
 import { UAParser } from "ua-parser-js";
+import { welcomeEmailQueue } from "../queues/welcomeEmail.queue.js";
 
 // Helper to get location from IP using ip-api with 2s timeout
 const getLocationFromIp = async (ip) => {
@@ -15,7 +34,9 @@ const getLocationFromIp = async (ip) => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
-    const response = await fetch(`http://ip-api.com/json/${ip}`, { signal: controller.signal });
+    const response = await fetch(`http://ip-api.com/json/${ip}`, {
+      signal: controller.signal,
+    });
     clearTimeout(timeoutId);
     if (!response.ok) return "Unknown Location";
     const data = await response.json();
@@ -31,15 +52,17 @@ const getLocationFromIp = async (ip) => {
 // common response functions
 const sendAuthResponse = async (req, res, user) => {
   const sessionId = uuidv4();
-  
+
   // Parse device info
   const parser = new UAParser(req.headers["user-agent"]);
   const browser = parser.getBrowser();
   const os = parser.getOS();
   const deviceName = `${browser.name || "Unknown Browser"} on ${os.name || "Unknown OS"}`;
-  
+
   // Get IP
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket?.remoteAddress;
+  const ip =
+    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    req.socket?.remoteAddress;
   const location = await getLocationFromIp(ip);
 
   const rawToken = generateRefreshToken();
@@ -56,8 +79,12 @@ const sendAuthResponse = async (req, res, user) => {
     location,
   });
 
-  const accessToken = generateAccessToken({ userId: user._id, sessionId, role: user.role });
-  
+  const accessToken = generateAccessToken({
+    userId: user._id,
+    sessionId,
+    role: user.role,
+  });
+
   setAuthCookies(res, accessToken, refreshToken);
 
   const { password, ...userWithoutPassword } = user.toObject();
@@ -119,6 +146,16 @@ export const signup = async (req, res) => {
       email: normalizedEmail,
       password: hashedPassword,
     });
+
+    // Fire-and-forget — queue failure must never block signup
+    welcomeEmailQueue
+      .add("send-welcome", {
+        email: newUser.email,
+        name: newUser.fullName,
+      })
+      .catch((err) =>
+        console.error("⚠️ Failed to enqueue welcome email:", err.message),
+      );
 
     return await sendAuthResponse(req, res, newUser);
   } catch (error) {
@@ -251,6 +288,16 @@ export const googleLogin = async (req, res) => {
         password: null,
         hasGoogleAuth: true,
       });
+
+      // Fire-and-forget — queue failure must never block signup
+      welcomeEmailQueue
+        .add("send-welcome", {
+          email: user.email,
+          name: user.fullName,
+        })
+        .catch((err) =>
+          console.error("⚠️ Failed to enqueue welcome email:", err.message),
+        );
     } else {
       if (!user.googleId) {
         user.googleId = googleId;
@@ -301,14 +348,18 @@ export const refresh = async (req, res) => {
       // Reuse detection: Wiping all sessions!
       await deleteAllUserSessions(userId);
       clearAuthCookies(res);
-      return res.status(401).json({ message: "Session invalid or revoked. All sessions terminated." });
+      return res.status(401).json({
+        message: "Session invalid or revoked. All sessions terminated.",
+      });
     }
 
     const expectedHash = hashToken(rawToken);
     if (sessionData.refreshTokenHash !== expectedHash) {
       await deleteAllUserSessions(userId);
       clearAuthCookies(res);
-      return res.status(401).json({ message: "Invalid token hash. All sessions terminated." });
+      return res
+        .status(401)
+        .json({ message: "Invalid token hash. All sessions terminated." });
     }
 
     // Rotate
@@ -337,9 +388,9 @@ export const getSessions = async (req, res) => {
     const currentSessionId = req.sessionId;
 
     const sessions = await getUserSessions(userId);
-    
+
     // Map to response format
-    const formattedSessions = sessions.map(s => ({
+    const formattedSessions = sessions.map((s) => ({
       sessionId: s.sessionId,
       deviceName: s.deviceName,
       ip: s.ip,
@@ -360,7 +411,7 @@ export const logoutOthers = async (req, res) => {
   try {
     const userId = req.user._id;
     const currentSessionId = req.sessionId;
-    
+
     await deleteAllSessionsExcept(userId, currentSessionId);
     return res.status(200).json({ message: "Logged out all other devices" });
   } catch (error) {
@@ -391,4 +442,3 @@ export const killSession = async (req, res) => {
     return res.status(500).json({ message: "Failed to terminate session" });
   }
 };
-
