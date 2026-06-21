@@ -29,8 +29,8 @@ export const welcomeEmailWorker = new Worker(
   async (job) => {
     const { email, name } = job.data;
 
-    // Fetch the welcome template from DB by slug (or _id — your call)
-    const template = await Template.findOne({ slug: "welcome" }).lean();
+    // Fetch the welcome template
+    const template = await Template.findById("6a37ac94a635ed550c9483aa").lean();
     if (!template) throw new Error("Welcome email template not found");
 
     const ctx = {
