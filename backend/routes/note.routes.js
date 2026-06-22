@@ -14,6 +14,7 @@ import {
     searchNotes,
     updateNote,
     checkSlugAvailability,
+    getRelatedNotes,
 } from "../controllers/note.controllers.js";
 import { requester } from "../middleware/requester.middleware.js";
 
@@ -23,6 +24,7 @@ const router = express.Router();
 router.get('/', requester, getPublicNotes);
 router.get('/search', requester, searchNotes);
 router.get('/:username/:collectionSlug/:noteSlug', requester, getNoteBySlug);
+router.get('/:username/:collectionSlug/:noteSlug/related', requester, getRelatedNotes);
 
 // protected routes 
 router.use(protectRoute);
