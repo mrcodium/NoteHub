@@ -716,7 +716,7 @@ export const getRelatedNotes = async (req, res) => {
       _id: { $in: ranked.map((r) => r.noteId) },
       visibility: "public",
     })
-      .select("title slug excerpt coverImage createdAt")
+      .select("name seo.title slug seo.description seo.image createdAt")
       .populate("collectionId", "slug") // needed to build the full URL
       .populate("userId", "userName avatar fullName")
       .lean();
@@ -727,7 +727,23 @@ export const getRelatedNotes = async (req, res) => {
       (a, b) => orderMap.get(a._id.toString()) - orderMap.get(b._id.toString()),
     );
 
-    return res.json({ success: true, notes });
+    // build fullPath from populated fields
+    const enriched = notes.map((n) => {
+      const userName = n.userId?.userName;
+      const cSlug = n.collectionId?.slug;
+      return {
+        _id: n._id,
+        title: n.seo?.title || n.name,
+        slug: n.slug,
+        excerpt: n.seo?.description || null,
+        coverImage: n.seo?.image?.url || null,
+        coverImageAlt: n.seo?.image?.alt || null,
+        createdAt: n.createdAt,
+        fullPath: userName && cSlug ? `${userName}/${cSlug}/${n.slug}` : null,
+      };
+    });
+
+    return res.json({ success: true, notes: enriched });
   } catch (error) {
     if (error.status) {
       return res.status(error.status).json({ message: error.message });
