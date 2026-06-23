@@ -644,7 +644,6 @@ export const getRelatedNotes = async (req, res) => {
     for (const edge of graph.edges) {
       const from = edge.from.toString();
       const to = edge.to.toString();
-      console.log(from);
 
       if (!outgoing.has(from)) outgoing.set(from, []);
       if (!incoming.has(to)) incoming.set(to, []);
@@ -717,7 +716,7 @@ export const getRelatedNotes = async (req, res) => {
       visibility: "public",
     })
       .select("name seo.title slug seo.description seo.image createdAt")
-      .populate("collectionId", "slug") // needed to build the full URL
+      .populate("collectionId", "slug name") // needed to build the full URL
       .populate("userId", "userName avatar fullName")
       .lean();
 
@@ -734,12 +733,19 @@ export const getRelatedNotes = async (req, res) => {
       return {
         _id: n._id,
         title: n.seo?.title || n.name,
+        name: n.name,
         slug: n.slug,
         excerpt: n.seo?.description || null,
         coverImage: n.seo?.image?.url || null,
         coverImageAlt: n.seo?.image?.alt || null,
         createdAt: n.createdAt,
         fullPath: userName && cSlug ? `${userName}/${cSlug}/${n.slug}` : null,
+        collectionName: n.collectionId?.name,
+        author: {
+          userName: n.userId?.userName ?? null,
+          fullName: n.userId?.fullName ?? null,
+          avatar: n.userId?.avatar ?? null,
+        },
       };
     });
 
