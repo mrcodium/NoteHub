@@ -726,29 +726,6 @@ export const getRelatedNotes = async (req, res) => {
       (a, b) => orderMap.get(a._id.toString()) - orderMap.get(b._id.toString()),
     );
 
-    // build fullPath from populated fields
-    const enriched = notes.map((n) => {
-      const userName = n.userId?.userName;
-      const cSlug = n.collectionId?.slug;
-      return {
-        _id: n._id,
-        title: n.seo?.title || n.name,
-        name: n.name,
-        slug: n.slug,
-        excerpt: n.seo?.description || null,
-        coverImage: n.seo?.image?.url || null,
-        coverImageAlt: n.seo?.image?.alt || null,
-        createdAt: n.createdAt,
-        fullPath: userName && cSlug ? `${userName}/${cSlug}/${n.slug}` : null,
-        collectionName: n.collectionId?.name,
-        author: {
-          userName: n.userId?.userName ?? null,
-          fullName: n.userId?.fullName ?? null,
-          avatar: n.userId?.avatar ?? null,
-        },
-      };
-    });
-
     return res.json({ success: true, notes });
   } catch (error) {
     if (error.status) {
