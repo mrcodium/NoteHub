@@ -749,7 +749,7 @@ export const getRelatedNotes = async (req, res) => {
       };
     });
 
-    return res.json({ success: true, notes: enriched });
+    return res.json({ success: true, notes });
   } catch (error) {
     if (error.status) {
       return res.status(error.status).json({ message: error.message });
