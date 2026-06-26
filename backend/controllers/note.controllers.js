@@ -872,6 +872,7 @@ export const getPublicNotes = async (req, res) => {
                     name: 1,
                     slug: 1,
                     visibility: 1,
+                    seo: 1,
                     contentUpdatedAt: 1,
                     createdAt: 1,
                     collaborators: 1,
