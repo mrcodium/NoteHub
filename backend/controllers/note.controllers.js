@@ -717,7 +717,7 @@ export const getRelatedNotes = async (req, res) => {
     })
       .select("name seo.title slug seo.description seo.image createdAt")
       .populate("collectionId", "slug name") // needed to build the full URL
-      .populate("userId", "userName avatar fullName")
+      .populate("userId", "userName avatar fullName role")
       .lean();
 
     // restore ranked order
