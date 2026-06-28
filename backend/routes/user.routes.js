@@ -14,6 +14,7 @@ import {
     requestEmailUpdateOtp,
     confirmEmailUpdate,
     updateProfile,
+    getUserPage,
 } from "../controllers/user.controllers.js";
 import { protectRoute } from "../middleware/protectRoute.middleware.js";
 import { handlefileUpload } from "../middleware/multer.middleware.js";
@@ -26,6 +27,7 @@ router.get("/check-email/:email", isEmailAvailable);
 router.get("/check-username/:userName", isUserNameAvailable);
 router.get("/me", protectRoute, checkAuth);
 router.get("/:identifier", getUser);
+router.get("/page/:userName", getUserPage);
 
 // protected routes
 router.use(protectRoute);

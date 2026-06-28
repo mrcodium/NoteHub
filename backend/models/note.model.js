@@ -137,6 +137,7 @@ const noteSchema = new mongoose.Schema(
 
 /* ===================== NOTE MODEL INDEXES ===================== */
 noteSchema.index({ collectionId: 1, slug: 1 }, { unique: true });
+noteSchema.index({ collectionId: 1, createdAt: -1 });
 
 noteSchema.index({
   collectionId: 1,
@@ -147,25 +148,25 @@ noteSchema.index({
 
 noteSchema.index({
   collectionId: 1,
-  slug: 1,
   visibility: 1,
+  slug: 1,
+});
+
+noteSchema.index({
+  collectionId: 1,
+  visibility: 1,
+  userId: 1,
+});
+
+noteSchema.index({
+  collectionId: 1,
+  visibility: 1,
+  collaborators: 1,
 });
 
 noteSchema.index({
   visibility: 1,
   contentUpdatedAt: -1,
-});
-
-noteSchema.index({
-  userId: 1,
-  visibility: 1,
-  collectionId: 1,
-});
-
-noteSchema.index({
-  collaborators: 1,
-  collectionId: 1,
-  visibility: 1,
 });
 
 noteSchema.index({ "gsc.isIndexed": 1 });

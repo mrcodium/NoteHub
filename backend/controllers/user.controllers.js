@@ -1,7 +1,14 @@
+import Collection from "../models/collection.model.js";
 import User from "../models/user.model.js";
 import { deleteImage, uploadStream } from "../services/cloudinary.service.js";
 import { sendOtp, validateOtp } from "../services/otp.service.js";
-import { isEmail, normalizeEmail, validateUsername } from "../utils/validator.js";
+import { handleDbError } from "../utils/dbError.js";
+import {
+  isEmail,
+  normalizeEmail,
+  validateUsername,
+} from "../utils/validator.js";
+import { CONTRIBUTIONS_QUERY, decrypt } from "./github.controllers.js";
 
 export const isEmailAvailable = async (req, res) => {
   try {
@@ -86,7 +93,10 @@ export const checkAuth = async (req, res) => {
     const safeGithub = github
       ? { username: github.username, connectedAt: github.connectedAt }
       : undefined;
-    res.status(200).json({ ...userWithoutPassword, ...(safeGithub && { github: safeGithub }) });
+    res.status(200).json({
+      ...userWithoutPassword,
+      ...(safeGithub && { github: safeGithub }),
+    });
   } catch (error) {
     console.error("Error in checkAuth controller: ", error);
     const { status, message } = handleDbError(error);
@@ -106,8 +116,7 @@ export const getUser = async (req, res) => {
 
     // try email path first
     const normalizedEmail = normalizeEmail(identifier);
-    const isEmailIdentifier =
-      normalizedEmail && isEmail(normalizedEmail);
+    const isEmailIdentifier = normalizedEmail && isEmail(normalizedEmail);
 
     let query;
 
@@ -119,7 +128,9 @@ export const getUser = async (req, res) => {
     }
 
     const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
-    const user = await User.findOne({ ...query, ...activeUser }).select("-password -github.accessToken");
+    const user = await User.findOne({ ...query, ...activeUser }).select(
+      "-password -github.accessToken",
+    );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -132,7 +143,6 @@ export const getUser = async (req, res) => {
     return res.status(status).json({ success: false, message });
   }
 };
-
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -166,7 +176,9 @@ export const getAllUsers = async (req, res) => {
 
     const [users, totalUsers] = await Promise.all([
       User.find(query)
-        .select("avatar createdAt email fullName isBanned isDeleted role userName")
+        .select(
+          "avatar createdAt email fullName isBanned isDeleted role userName",
+        )
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -194,6 +206,78 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+export const getUserPage = async (req, res) => {
+  let { userName } = req.params;
+
+  if (!userName) {
+    return res.status(400).json({ message: "Require userName" });
+  }
+
+  userName = userName.trim().toLowerCase();
+
+  try {
+    const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
+
+    const user = await User.findOne({ userName, ...activeUser }).lean();
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const requester = req.user || null;
+    const isAdmin = requester?.role === "admin";
+    const isOwner = requester?._id?.toString() === user._id.toString();
+
+    const collections = await Collection.aggregate([
+      {
+        $match: {
+          userId: user._id,
+          ...(isOwner || isAdmin ? {} : { visibility: "public" }),
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "users",
+          let: { collabIds: { $ifNull: ["$collaborators", []] } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ["$_id", "$$collabIds"] },
+                isDeleted: { $ne: true },
+                isBanned: { $ne: true },
+              },
+            },
+            { $project: { _id: 0, userName: 1, fullName: 1, avatar: 1 } },
+          ],
+          as: "collaborators",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          slug: 1,
+          visibility: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          collaborators: 1,
+        },
+      },
+    ]);
+
+    const { password, ...safeUser } = user;
+
+    return res.status(200).json({
+      user: safeUser,
+      collections,
+    });
+  } catch (error) {
+    console.error("Error in getUserPage controller:", error);
+    const { status, message } = handleDbError(error);
+    return res.status(status).json({ success: false, message });
+  }
+};
 
 export const uploadAvatar = async (req, res) => {
   try {
@@ -214,7 +298,12 @@ export const uploadAvatar = async (req, res) => {
 
     // Upload new avatar
     const folder = `user_profiles/${user._id}`;
-    const { secure_url } = await uploadStream(file.buffer, folder, "avatar", file);
+    const { secure_url } = await uploadStream(
+      file.buffer,
+      folder,
+      "avatar",
+      file,
+    );
 
     user.avatar = secure_url;
     await user.save();
@@ -271,7 +360,12 @@ export const uploadCover = async (req, res) => {
     }
 
     const folder = `user_covers/${user._id}`;
-    const { secure_url } = await uploadStream(file.buffer, folder, "cover", file);
+    const { secure_url } = await uploadStream(
+      file.buffer,
+      folder,
+      "cover",
+      file,
+    );
 
     user.cover = secure_url;
     await user.save();
@@ -357,7 +451,10 @@ export const updateProfile = async (req, res) => {
     await user.save();
 
     const { password, ...userWithoutPassword } = user.toObject();
-    res.status(200).json({ user: userWithoutPassword, message: "Profile updated successfully." });
+    res.status(200).json({
+      user: userWithoutPassword,
+      message: "Profile updated successfully.",
+    });
   } catch (error) {
     console.error("Error in updateProfile:", error);
     const { status, message } = handleDbError(error);

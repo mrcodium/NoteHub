@@ -25,6 +25,7 @@ const collectionSchema = new mongoose.Schema(
 
 /* ===================== COLLECTION MODEL INDEXES ===================== */
 // Primary unique constraint (your existing)
+collectionSchema.index({ slug: 1 });
 collectionSchema.index({ userId: 1, slug: 1 }, { unique: true }); // ✅ Keep this
 
 // OPTIMIZED: For getAllCollections and getCollection pipelines

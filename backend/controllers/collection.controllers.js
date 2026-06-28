@@ -1,7 +1,15 @@
 import mongoose from "mongoose";
 import Collection from "../models/collection.model.js";
 import Note from "../models/note.model.js";
-import { getCache, setCache, cacheKeys, invalidateFeedsAndSearch, invalidateCollectionCache, invalidateNoteCache, fetchWithCache } from "../services/cache.service.js";
+import {
+  getCache,
+  setCache,
+  cacheKeys,
+  invalidateFeedsAndSearch,
+  invalidateCollectionCache,
+  invalidateNoteCache,
+  fetchWithCache,
+} from "../services/cache.service.js";
 import User from "../models/user.model.js";
 import { handleDbError } from "../utils/dbError.js";
 
@@ -112,7 +120,11 @@ export const renameCollection = async (req, res) => {
     const oldSlug = collection.slug;
     collection.name = newName;
     if (newSlug && newSlug !== oldSlug) {
-      collection.slug = newSlug.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      collection.slug = newSlug
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
     }
     await collection.save();
 
@@ -147,7 +159,6 @@ export const checkCollectionAvailability = async (req, res) => {
     };
 
     if (collectionId && mongoose.Types.ObjectId.isValid(collectionId)) {
-
       query._id = { $ne: collectionId };
     }
 
@@ -166,16 +177,21 @@ const getCollectionsAggregatePipeline = (
   includeNoteCollaborators = false,
 ) => {
   const requestingUserId = requester?._id;
-  const requestingUserIdStr = requestingUserId ? String(requestingUserId) : null;
+  const requestingUserIdStr = requestingUserId
+    ? String(requestingUserId)
+    : null;
   const userIdStr = userId ? String(userId) : null;
 
-  const isOwner = requestingUserIdStr && userIdStr && requestingUserIdStr === userIdStr;
+  const isOwner =
+    requestingUserIdStr && userIdStr && requestingUserIdStr === userIdStr;
   const isAdmin = requester?.role === "admin";
   const isCollaborator = requestingUserId && !isOwner && !isAdmin;
   const hasFullAccess = isOwner || isAdmin;
 
   const userIdObj = userIdStr ? new mongoose.Types.ObjectId(userIdStr) : null;
-  const requestingUserIdObj = requestingUserIdStr ? new mongoose.Types.ObjectId(requestingUserIdStr) : null;
+  const requestingUserIdObj = requestingUserIdStr
+    ? new mongoose.Types.ObjectId(requestingUserIdStr)
+    : null;
 
   // Base note projection
   const noteProjection = {
@@ -200,15 +216,15 @@ const getCollectionsAggregatePipeline = (
           ...(hasFullAccess
             ? []
             : [
-              {
-                $or: [
-                  { visibility: "public" },
-                  ...(isCollaborator
-                    ? [{ collaborators: requestingUserIdObj }]
-                    : []),
-                ],
-              },
-            ]),
+                {
+                  $or: [
+                    { visibility: "public" },
+                    ...(isCollaborator
+                      ? [{ collaborators: requestingUserIdObj }]
+                      : []),
+                  ],
+                },
+              ]),
           ...(slug ? [{ slug: slug.toLowerCase() }] : []),
         ],
       },
@@ -249,10 +265,10 @@ const getCollectionsAggregatePipeline = (
                       ...(hasFullAccess ? [{ $eq: [true, true] }] : []),
                       ...(isCollaborator
                         ? [
-                          {
-                            $in: [requestingUserIdObj, "$collaborators"], // ✅ checking note.collaborators
-                          },
-                        ]
+                            {
+                              $in: [requestingUserIdObj, "$collaborators"], // ✅ checking note.collaborators
+                            },
+                          ]
                         : []),
                     ],
                   },
@@ -265,27 +281,27 @@ const getCollectionsAggregatePipeline = (
           },
           ...(includeNoteCollaborators
             ? [
-              {
-                $lookup: {
-                  from: "users",
-                  localField: "collaborators",
-                  foreignField: "_id",
-                  as: "collaborators",
-                  pipeline: [
-                    {
-                      $project: {
-                        _id: 1,
-                        role: 1,
-                        fullName: 1,
-                        userName: 1,
-                        avatar: 1,
-                        email: 1,
+                {
+                  $lookup: {
+                    from: "users",
+                    localField: "collaborators",
+                    foreignField: "_id",
+                    as: "collaborators",
+                    pipeline: [
+                      {
+                        $project: {
+                          _id: 1,
+                          role: 1,
+                          fullName: 1,
+                          userName: 1,
+                          avatar: 1,
+                          email: 1,
+                        },
                       },
-                    },
-                  ],
+                    ],
+                  },
                 },
-              },
-            ]
+              ]
             : []),
         ],
         as: "notes",
@@ -387,154 +403,285 @@ export const getCollectionBySlug = async (req, res) => {
 
   const normalizedUsername = username.trim().toLowerCase();
   const normalizedSlug = collectionSlug.trim().toLowerCase();
-  const requesterId = requester?._id || null;
+  const requesterId = requester?._id?.toString() || null;
   const isAdmin = requester?.role === "admin";
-  const requesterIdObj = (requesterId && mongoose.Types.ObjectId.isValid(requesterId)) ? new mongoose.Types.ObjectId(requesterId) : null;
+  const requesterIdObj =
+    requesterId && mongoose.Types.ObjectId.isValid(requesterId)
+      ? new mongoose.Types.ObjectId(requesterId)
+      : null;
 
-  const cacheKey = cacheKeys.collection.bySlug(normalizedUsername, normalizedSlug, requesterId || "guest");
+  const cacheKey = cacheKeys.collection.bySlug(
+    normalizedUsername,
+    normalizedSlug,
+  );
 
   try {
-    const { data } = await fetchWithCache(cacheKey, async () => {
-      const activeUser = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
-      const user = await User.findOne(
-        { userName: normalizedUsername, ...activeUser },
-        { _id: 1, userName: 1, fullName: 1, avatar: 1 }
-      ).lean();
+    const { data } = await fetchWithCache(
+      cacheKey,
+      async () => {
+        const result = await Collection.aggregate([
+          // ─── STAGE 1: match collection owner ─────────────────────────────
+          {
+            $lookup: {
+              from: "users",
+              let: { uname: normalizedUsername },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$userName", "$$uname"] },
+                    isDeleted: { $ne: true },
+                    isBanned: { $ne: true },
+                  },
+                },
+                { $project: { _id: 1, userName: 1, fullName: 1, avatar: 1 } },
+                { $limit: 1 },
+              ],
+              as: "ownerArr",
+            },
+          },
 
-      if (!user) {
-        throw { status: 404, message: "User not found", code: "USER_NOT_FOUND" };
-      }
+          // ─── STAGE 2: bail early if user not found ────────────────────────
+          { $match: { "ownerArr.0": { $exists: true } } },
 
-      const collection = await Collection.findOne(
-        {
-          userId: user._id,
-          slug: normalizedSlug,
-          $or: [
-            { visibility: "public" },
-            ...(isAdmin ? [{ _id: { $exists: true } }] : []),
-            ...(requesterId ? [
-              { userId: requesterIdObj },
-              { collaborators: requesterIdObj }
-            ] : [])
-          ]
-        },
-        { _id: 1, name: 1, slug: 1, visibility: 1, userId: 1, createdAt: 1, updatedAt: 1, collaborators: 1 }
-      ).lean();
+          // ─── STAGE 3: match the collection itself ─────────────────────────
+          {
+            $match: {
+              $expr: {
+                $eq: ["$userId", { $arrayElemAt: ["$ownerArr._id", 0] }],
+              },
+              slug: normalizedSlug,
+              isDeleted: { $ne: true },
+            },
+          },
 
-      if (!collection) {
-        const exists = await Collection.exists({ userId: user._id, slug: normalizedSlug });
-        if (exists) {
-          throw { status: 403, message: "Access denied", code: "ACCESS_DENIED" };
+          // ─── STAGE 4: populate collection owner ───────────────────────────
+          {
+            $lookup: {
+              from: "users",
+              let: { ownerId: "$userId" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$_id", "$$ownerId"] },
+                    isDeleted: { $ne: true },
+                    isBanned: { $ne: true },
+                  },
+                },
+                { $project: { _id: 0, userName: 1, fullName: 1, avatar: 1 } },
+                { $limit: 1 },
+              ],
+              as: "userIdPopulated",
+            },
+          },
+
+          // ─── STAGE 5: populate collaborators ─────────────────────────────
+          {
+            $lookup: {
+              from: "users",
+              let: { collabIds: { $ifNull: ["$collaborators", []] } },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $in: ["$_id", "$$collabIds"] },
+                    isDeleted: { $ne: true },
+                    isBanned: { $ne: true },
+                  },
+                },
+                { $project: { _id: 0, userName: 1, fullName: 1, avatar: 1 } },
+              ],
+              as: "collaboratorsPopulated",
+            },
+          },
+
+          // ─── STAGE 6: fetch notes ─────────────────────────────────────────
+          {
+            $lookup: {
+              from: "notes",
+              let: { colId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$collectionId", "$$colId"] },
+                    isDeleted: { $ne: true },
+                  },
+                },
+                { $sort: { createdAt: -1 } },
+                {
+                  $project: {
+                    _id: 1,
+                    name: 1,
+                    slug: 1,
+                    visibility: 1,
+                    createdAt: 1,
+                    userId: 1,
+                    "seo.title": 1,
+                    "seo.description": 1,
+                    "seo.image": 1,
+                    "seo.score": 1, // stripped post-cache for non-owners
+                  },
+                },
+              ],
+              as: "notes",
+            },
+          },
+
+          // ─── STAGE 7: populate note authors ──────────────────────────────
+          {
+            $lookup: {
+              from: "users",
+              let: {
+                noteUserIds: {
+                  $map: { input: "$notes", as: "n", in: "$$n.userId" },
+                },
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $in: ["$_id", "$$noteUserIds"] },
+                    isDeleted: { $ne: true },
+                    isBanned: { $ne: true },
+                  },
+                },
+                { $project: { _id: 1, userName: 1, fullName: 1, avatar: 1 } },
+              ],
+              as: "noteAuthors",
+            },
+          },
+
+          // ─── STAGE 8: shape final output ─────────────────────────────────
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              slug: 1,
+              visibility: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              userId: { $arrayElemAt: ["$userIdPopulated", 0] },
+              collaborators: "$collaboratorsPopulated",
+              // merge note authors back into notes
+              notes: {
+                $map: {
+                  input: "$notes",
+                  as: "note",
+                  in: {
+                    _id: "$$note._id",
+                    name: "$$note.name",
+                    slug: "$$note.slug",
+                    visibility: "$$note.visibility",
+                    createdAt: "$$note.createdAt",
+                    seo: "$$note.seo",
+                    userId: {
+                      $let: {
+                        vars: {
+                          author: {
+                            $arrayElemAt: [
+                              {
+                                $filter: {
+                                  input: "$noteAuthors",
+                                  as: "a",
+                                  cond: { $eq: ["$$a._id", "$$note.userId"] },
+                                },
+                              },
+                              0,
+                            ],
+                          },
+                        },
+                        in: {
+                          userName: "$$author.userName",
+                          fullName: "$$author.fullName",
+                          avatar: "$$author.avatar",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              // carry owner for post-cache author field
+              _owner: { $arrayElemAt: ["$ownerArr", 0] },
+            },
+          },
+        ]);
+
+        if (!result.length) {
+          // distinguish 404 vs 403
+          const exists = await Collection.exists({ slug: normalizedSlug });
+          if (exists) {
+            throw {
+              status: 403,
+              message: "Access denied",
+              code: "ACCESS_DENIED",
+            };
+          }
+          throw {
+            status: 404,
+            message: "Collection not found",
+            code: "COLLECTION_NOT_FOUND",
+          };
         }
-        throw { status: 404, message: "Collection not found", code: "COLLECTION_NOT_FOUND" };
-      }
 
-      const notes = await Note.find(
-        {
-          collectionId: collection._id,
-          $or: [
-            { visibility: "public" },
-            ...(isAdmin ? [{ _id: { $exists: true } }] : []),
-            ...(requesterId ? [
-              { userId: requesterIdObj },
-              { collaborators: requesterIdObj }
-            ] : [])
-          ]
-        },
-        {
-          _id: 1,
-          name: 1,
-          slug: 1,
-          visibility: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          contentUpdatedAt: 1,
-          userId: 1,
-          collaborators: 1,
-          seo: 1,
-        }
-      )
-        .sort({ createdAt: -1 })
-        .lean();
-
-      const collaboratorIds = [];
-      if (collection.collaborators?.length) {
-        collaboratorIds.push(...collection.collaborators);
-      }
-
-      notes.forEach(note => {
-        if (note.collaborators?.length) {
-          collaboratorIds.push(...note.collaborators);
-        }
-      });
-
-      const uniqueCollabIds = [...new Set(
-        collaboratorIds
-            .filter(id => id && mongoose.Types.ObjectId.isValid(id.toString()))
-            .map(id => id.toString())
-      )];
-
-      const activeUserCollab = { isDeleted: { $ne: true }, isBanned: { $ne: true } };
-      const collaborators = uniqueCollabIds.length > 0
-        ? await User.find(
-          { _id: { $in: uniqueCollabIds }, ...activeUserCollab },
-          { _id: 1, userName: 1, fullName: 1, avatar: 1, email: 1, role: 1 }
-        ).lean()
-        : [];
-
-      const collaboratorMap = new Map(collaborators.map(c => [c._id.toString(), c]));
-
-      const canSeeCollectionCollabs = isAdmin || (requesterId && (
-        collection.userId.toString() === requesterId.toString() ||
-        collection.collaborators?.some(id => id.toString() === requesterId.toString())
-      ));
-
-
-
-      const collectionWithCollabs = {
-        ...collection,
-        collaborators: canSeeCollectionCollabs
-          ? (collection.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
-          : undefined
-      };
-
-      const notesWithCollabs = notes.map(note => {
-        const canSeeNoteCollabs = isAdmin || (requesterId && (
-          note.userId?.toString() === requesterId.toString() ||
-          collection.userId.toString() === requesterId.toString() ||
-          note.collaborators?.some(id => id.toString() === requesterId.toString()) ||
-          collection.collaborators?.some(id => id.toString() === requesterId.toString())
-        ));
+        const raw = result[0];
 
         return {
-          ...note,
-          collaborators: canSeeNoteCollabs
-            ? (note.collaborators?.map(id => collaboratorMap.get(id.toString())).filter(Boolean) || [])
-            : undefined
+          message: "Collection fetched successfully",
+          // full data cached — visibility + score filtered per-request below
+          _raw: raw,
         };
-      });
+      },
+      300,
+    );
 
-      return {
-        message: "Collection fetched successfully",
-        collection: {
-          ...collectionWithCollabs,
-          notes: notesWithCollabs,
-          noteCount: notes.length
-        },
-        author: {
-          _id: user._id,
-          userName: user.userName,
-          fullName: user.fullName,
-          avatar: user.avatar
-        }
-      };
-    }, 300);
+    // ─── POST-CACHE: per-requester filtering (no DB touch) ──────────────
+    const raw = data._raw;
+    const ownerId = raw.userId?.userName; // userName as stable identifier
+    const isOwner = raw._owner?._id?.toString() === requesterId;
+    const canSeeScore = isAdmin || isOwner;
 
-    return res.status(200).json(data);
+    const isCollaborator = (raw.collaborators ?? []).some(
+      (c) => c.userName === requester?.userName,
+    );
 
+    const visibleNotes = raw.notes.filter((note) => {
+      if (note.visibility === "public") return true;
+      if (isAdmin) return true;
+      if (isOwner) return true;
+      if (note.userId?.userName === requester?.userName) return true;
+      if (isCollaborator) return true;
+      return false;
+    });
+
+    const shapedNotes = visibleNotes.map((note) => ({
+      ...note,
+      seo: {
+        title: note.seo?.title ?? null,
+        description: note.seo?.description ?? null,
+        image: note.seo?.image ?? null,
+        ...(canSeeScore ? { score: note.seo?.score ?? null } : {}),
+      },
+    }));
+
+    const collection = {
+      _id: raw._id,
+      name: raw.name,
+      slug: raw.slug,
+      visibility: raw.visibility,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      userId: raw.userId,
+      collaborators: raw.collaborators ?? [],
+      notes: shapedNotes,
+      noteCount: shapedNotes.length,
+    };
+
+    return res.status(200).json({
+      message: data.message,
+      collection,
+    });
   } catch (error) {
     if (error.status) {
-      return res.status(error.status).json({ message: error.message, code: error.code });
+      return res
+        .status(error.status)
+        .json({ message: error.message, code: error.code });
     }
     console.error("Error in getCollectionBySlug:", error);
     const { status, message } = handleDbError(error);
@@ -562,7 +709,8 @@ export const updateVisibility = async (req, res) => {
     const isAdmin = user.role === "admin";
     if (collection.userId.toString() !== user._id.toString() && !isAdmin) {
       return res.status(403).json({
-        message: "You don't have permission to update this collection's visibility.",
+        message:
+          "You don't have permission to update this collection's visibility.",
       });
     }
 
@@ -606,7 +754,8 @@ export const updateCollaborators = async (req, res) => {
     const isAdmin = user.role === "admin";
     if (collection.userId.toString() !== user._id.toString() && !isAdmin) {
       return res.status(403).json({
-        message: "You don't have permission to update collaborators for this collection.",
+        message:
+          "You don't have permission to update collaborators for this collection.",
       });
     }
 
@@ -620,9 +769,11 @@ export const updateCollaborators = async (req, res) => {
 
     return res.status(200).json({
       message: "Collaborators updated successfully",
-      collection: await collection.populate("collaborators", "role fullName userName email avatar _id"),
+      collection: await collection.populate(
+        "collaborators",
+        "role fullName userName email avatar _id",
+      ),
     });
-
   } catch (error) {
     console.error("Error in updateCollaborators controller:", error);
     const { status, message } = handleDbError(error);
