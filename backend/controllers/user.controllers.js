@@ -8,7 +8,6 @@ import {
   normalizeEmail,
   validateUsername,
 } from "../utils/validator.js";
-import { CONTRIBUTIONS_QUERY, decrypt } from "./github.controllers.js";
 
 export const isEmailAvailable = async (req, res) => {
   try {
