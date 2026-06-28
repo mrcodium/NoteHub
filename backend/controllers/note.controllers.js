@@ -457,6 +457,7 @@ export const getNoteBySlug = async (req, res) => {
                 userName: "$userName",
                 avatar: "$avatar",
                 fullName: "$fullName",
+                role: "$role",
               },
               collection: {
                 _id: "$collection._id",
