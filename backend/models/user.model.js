@@ -96,7 +96,7 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
       default: "",
-      maxlength: 250,
+      maxlength: 160,
       trim: true,
     },
     socials: [

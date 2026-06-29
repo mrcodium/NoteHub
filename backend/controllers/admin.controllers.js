@@ -178,7 +178,7 @@ export const updateUser = async (req, res) => {
         .filter((s) => s.length > 0)
         .slice(0, 10);
     }
-    if (role !== undefined) {
+    if (role && role !== "admin") {
       if (userId === req.user._id.toString()) {
         return res.status(403).json({
           success: false,
