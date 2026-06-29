@@ -36,7 +36,7 @@ export function extractKeywordFrequency(html) {
   });
 
   const tokens = normalizeText(text);
-  const freq = {};
+  const freq = Object.create(null);
 
   for (const token of tokens) {
     freq[token] = (freq[token] || 0) + 1;
