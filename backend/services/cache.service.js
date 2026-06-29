@@ -5,7 +5,8 @@ const CACHE_VERSION = "v1";
 // Centralized cache key generator
 export const cacheKeys = {
   note: {
-    byId: (id, userId = "guest") => `${CACHE_VERSION}:note:id:${id}:user:${userId}`,
+    byId: (id, userId = "guest") =>
+      `${CACHE_VERSION}:note:id:${id}:user:${userId}`,
     bySlug: (username, collectionSlug, noteSlug, userId = "guest") =>
       `${CACHE_VERSION}:note:slug:${username}:${collectionSlug}:${noteSlug}:user:${userId}`,
     allUserSlugs: (username, collectionSlug, noteSlug) =>
@@ -63,7 +64,11 @@ export const setCache = async (key, value, ttl = 300) => {
   try {
     const finalTTL = getJitteredTTL(ttl);
     const startTime = Date.now();
-    await redisClient.setEx(key, finalTTL, typeof value === "string" ? value : JSON.stringify(value));
+    await redisClient.setEx(
+      key,
+      finalTTL,
+      typeof value === "string" ? value : JSON.stringify(value),
+    );
     const duration = Date.now() - startTime;
     logCache("SET", key, `TTL:${finalTTL} (${duration}ms)`);
   } catch (err) {
@@ -97,17 +102,19 @@ export const fetchWithCache = async (key, fetcherFn, ttl = 300) => {
   }
 
   // 3. Create flight promise
-  const flightPromise = fetcherFn().then(async (result) => {
-    // Only cache if result is valid (not null/undefined)
-    if (result !== null && result !== undefined) {
-      await setCache(key, result, ttl);
-    }
-    return result;
-  }).catch((err) => {
-    // Make sure to reject so waiters know it failed
-    inFlightRequests.delete(key);
-    throw err;
-  });
+  const flightPromise = fetcherFn()
+    .then(async (result) => {
+      // Only cache if result is valid (not null/undefined)
+      if (result !== null && result !== undefined) {
+        await setCache(key, result, ttl);
+      }
+      return result;
+    })
+    .catch((err) => {
+      // Make sure to reject so waiters know it failed
+      inFlightRequests.delete(key);
+      throw err;
+    });
 
   inFlightRequests.set(key, flightPromise);
 
@@ -125,7 +132,7 @@ export const delCache = async (keys) => {
   try {
     if (Array.isArray(keys)) {
       if (keys.length > 0) {
-        await redisClient.del(keys);
+        await redisClient.del(...keys);
         logCache("DEL", keys.join(", "));
       }
     } else if (keys) {
@@ -143,23 +150,26 @@ export const delCacheByPattern = async (pattern) => {
     let cursor = 0;
     let deletedCount = 0;
     const startTime = Date.now();
-    
+
     do {
-      const result = await redisClient.scan(cursor, {
-        MATCH: pattern,
-        COUNT: 200,
-      });
-      cursor = result.cursor;
-      const keys = result.keys;
+      const result = await redisClient.sendCommand([
+        "SCAN",
+        String(cursor),
+        "MATCH",
+        pattern,
+        "COUNT",
+        "200",
+      ]);
+
+      cursor = Number(result[0]);
+      const keys = result[1];
 
       if (keys.length > 0) {
-        const pipeline = redisClient.multi();
-        keys.forEach((key) => pipeline.del(key));
-        await pipeline.exec();
+        await redisClient.del(...keys);
         deletedCount += keys.length;
       }
     } while (cursor !== 0);
-    
+
     const duration = Date.now() - startTime;
     if (deletedCount > 0) {
       logCache("DEL_PATTERN", pattern, `(Deleted ${deletedCount} keys in ${duration}ms)`);
@@ -182,26 +192,38 @@ export const invalidateSearchFeeds = async () => {
 export const invalidateCollectionCache = async (username, collectionSlug) => {
   const promises = [];
   if (username && collectionSlug) {
-    promises.push(delCacheByPattern(cacheKeys.collection.allUserSlugs(username, collectionSlug)));
-    promises.push(delCacheByPattern(cacheKeys.note.allInCollection(username, collectionSlug)));
+    promises.push(
+      delCacheByPattern(
+        cacheKeys.collection.allUserSlugs(username, collectionSlug),
+      ),
+    );
+    promises.push(
+      delCacheByPattern(
+        cacheKeys.note.allInCollection(username, collectionSlug),
+      ),
+    );
   }
   await Promise.all(promises);
 };
 
-export const invalidateNoteCache = async (noteId, username, collectionSlug, noteSlug) => {
+export const invalidateNoteCache = async (
+  noteId,
+  username,
+  collectionSlug,
+  noteSlug,
+) => {
   const promises = [];
   if (noteId) {
-    promises.push(delCacheByPattern(`${CACHE_VERSION}:note:id:${noteId}:user:*`));
+    const p1 = `${CACHE_VERSION}:note:id:${noteId}:user:*`;
+    promises.push(delCacheByPattern(p1));
   }
   if (username && collectionSlug && noteSlug) {
-    promises.push(delCacheByPattern(cacheKeys.note.allUserSlugs(username, collectionSlug, noteSlug)));
+    const p2 = cacheKeys.note.allUserSlugs(username, collectionSlug, noteSlug);
+    promises.push(delCacheByPattern(p2));
   }
   await Promise.all(promises);
 };
 
 export const invalidateFeedsAndSearch = async () => {
-  await Promise.all([
-    invalidatePublicFeeds(),
-    invalidateSearchFeeds()
-  ]);
+  await Promise.all([invalidatePublicFeeds(), invalidateSearchFeeds()]);
 };
